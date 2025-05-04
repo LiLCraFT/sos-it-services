@@ -41,13 +41,29 @@ export async function GET(req: NextRequest) {
  *             required:
  *               - email
  *               - password
- *               - name
+ *               - firstName
+ *               - lastName
+ *               - address
+ *               - phone
+ *               - birthDate
+ *               - city
  *             properties:
  *               email:
  *                 type: string
  *               password:
  *                 type: string
- *               name:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *                 format: date
+ *               city:
  *                 type: string
  *               role:
  *                 type: string
@@ -63,12 +79,22 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    const { email, password, name, role } = await req.json();
+    const { 
+      email, 
+      password, 
+      firstName, 
+      lastName, 
+      address, 
+      phone, 
+      birthDate, 
+      city, 
+      role 
+    } = await req.json();
     
     // Vérification des données requises
-    if (!email || !password || !name) {
+    if (!email || !password || !firstName || !lastName || !address || !phone || !birthDate || !city) {
       return NextResponse.json(
-        { error: 'Email, mot de passe et nom sont requis' },
+        { error: 'Tous les champs sont requis' },
         { status: 400 }
       );
     }
@@ -86,7 +112,12 @@ export async function POST(req: NextRequest) {
     const user = await User.create({
       email,
       password,
-      name,
+      firstName,
+      lastName,
+      address,
+      phone,
+      birthDate,
+      city,
       role: role || 'user',
     });
     
@@ -94,7 +125,12 @@ export async function POST(req: NextRequest) {
     const sanitizedUser = {
       _id: user._id,
       email: user.email,
-      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      address: user.address,
+      phone: user.phone,
+      birthDate: user.birthDate,
+      city: user.city,
       role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

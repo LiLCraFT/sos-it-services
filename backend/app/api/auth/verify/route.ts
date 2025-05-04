@@ -22,6 +22,26 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_developmen
  *               properties:
  *                 user:
  *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     address:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     birthDate:
+ *                       type: string
+ *                       format: date
+ *                     city:
+ *                       type: string
+ *                     role:
+ *                       type: string
  *       401:
  *         description: Token invalide ou expiré
  *       500:

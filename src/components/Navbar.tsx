@@ -3,6 +3,7 @@ import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, L
 import { Link } from './ui/Link';
 import { Modal } from './ui/Modal';
 import LoginForm from './LoginForm';
+import RegisterModal from './RegisterModal';
 import { useAuth } from '../contexts/AuthContext';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -77,6 +79,16 @@ const Navbar: React.FC = () => {
       // Si l'utilisateur n'est pas connecté, ouvrir la modal de connexion
       setIsLoginModalOpen(true);
     }
+  };
+
+  const openRegisterModal = () => {
+    setIsLoginModalOpen(false);
+    setIsRegisterModalOpen(true);
+  };
+
+  const openLoginModal = () => {
+    setIsRegisterModalOpen(false);
+    setIsLoginModalOpen(true);
   };
 
   return (
@@ -171,7 +183,7 @@ const Navbar: React.FC = () => {
                       <div className="py-1">
                         <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-700">
                           Connecté en tant que<br />
-                          <span className="font-semibold text-white">{user?.name}</span>
+                          <span className="font-semibold text-white">{user?.firstName} {user?.lastName}</span>
                         </div>
                         <RouterLink
                           to="/mon-espace"
@@ -298,14 +310,21 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Modal de connexion */}
+      {/* Login Modal */}
       <Modal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         title="Connexion"
       >
-        <LoginForm onSuccess={handleLoginSuccess} />
+        <LoginForm onSuccess={handleLoginSuccess} onRegisterClick={openRegisterModal} />
       </Modal>
+      
+      {/* Register Modal */}
+      <RegisterModal 
+        isOpen={isRegisterModalOpen} 
+        onClose={() => setIsRegisterModalOpen(false)} 
+        onSwitchToLogin={openLoginModal}
+      />
     </>
   );
 };

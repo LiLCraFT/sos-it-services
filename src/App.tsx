@@ -5,9 +5,7 @@ import Hero from './components/Hero';
 import Services from './components/Services';
 import Pricing from './components/Pricing';
 import Team from './components/Team';
-import Testimonials from './components/Testimonials';
 import Faq from './components/Faq';
-import Contact from './components/Contact';
 import Footer from './components/Footer';
 import { AuthProvider } from './contexts/AuthContext';
 import UserDashboard from './pages/UserDashboard';
@@ -19,9 +17,7 @@ const HomePage = () => (
     <Services />
     <Pricing />
     <Team />
-    <Testimonials />
     <Faq />
-    <Contact />
   </>
 );
 

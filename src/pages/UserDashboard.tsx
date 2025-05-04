@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar } from 'lucide-react';
 
 const UserDashboard = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -10,6 +10,17 @@ const UserDashboard = () => {
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
+
+  // Formater la date de naissance
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl pt-24">
@@ -29,8 +40,8 @@ const UserDashboard = () => {
                 <User className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="font-semibold text-white">{user?.name}</h2>
-                <span className="text-sm text-gray-400">{user?.role}</span>
+                <h2 className="font-semibold text-white">{user?.firstName} {user?.lastName}</h2>
+                <span className="text-sm text-gray-400">{user?.role === 'admin' ? 'Administrateur' : 'Utilisateur'}</span>
               </div>
             </div>
             
@@ -58,6 +69,24 @@ const UserDashboard = () => {
             <h3 className="text-xl font-semibold text-white mb-6">Informations du compte</h3>
             
             <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-[#36393F] rounded-md">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <User className="w-5 h-5 text-gray-400" />
+                    <h4 className="font-medium text-gray-300">Prénom</h4>
+                  </div>
+                  <p className="text-white pl-8">{user?.firstName}</p>
+                </div>
+                
+                <div className="p-4 bg-[#36393F] rounded-md">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <User className="w-5 h-5 text-gray-400" />
+                    <h4 className="font-medium text-gray-300">Nom</h4>
+                  </div>
+                  <p className="text-white pl-8">{user?.lastName}</p>
+                </div>
+              </div>
+              
               <div className="p-4 bg-[#36393F] rounded-md">
                 <div className="flex items-center space-x-3 mb-2">
                   <Mail className="w-5 h-5 text-gray-400" />
@@ -68,10 +97,36 @@ const UserDashboard = () => {
               
               <div className="p-4 bg-[#36393F] rounded-md">
                 <div className="flex items-center space-x-3 mb-2">
-                  <User className="w-5 h-5 text-gray-400" />
-                  <h4 className="font-medium text-gray-300">Nom</h4>
+                  <Phone className="w-5 h-5 text-gray-400" />
+                  <h4 className="font-medium text-gray-300">Téléphone</h4>
                 </div>
-                <p className="text-white pl-8">{user?.name}</p>
+                <p className="text-white pl-8">{user?.phone}</p>
+              </div>
+              
+              <div className="p-4 bg-[#36393F] rounded-md">
+                <div className="flex items-center space-x-3 mb-2">
+                  <MapPin className="w-5 h-5 text-gray-400" />
+                  <h4 className="font-medium text-gray-300">Adresse</h4>
+                </div>
+                <p className="text-white pl-8">{user?.address}</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-[#36393F] rounded-md">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <MapPin className="w-5 h-5 text-gray-400" />
+                    <h4 className="font-medium text-gray-300">Ville</h4>
+                  </div>
+                  <p className="text-white pl-8">{user?.city}</p>
+                </div>
+                
+                <div className="p-4 bg-[#36393F] rounded-md">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <Calendar className="w-5 h-5 text-gray-400" />
+                    <h4 className="font-medium text-gray-300">Date de naissance</h4>
+                  </div>
+                  <p className="text-white pl-8">{formatDate(user?.birthDate)}</p>
+                </div>
               </div>
               
               <div className="p-4 bg-[#36393F] rounded-md">
@@ -79,7 +134,7 @@ const UserDashboard = () => {
                   <Key className="w-5 h-5 text-gray-400" />
                   <h4 className="font-medium text-gray-300">Rôle</h4>
                 </div>
-                <p className="text-white pl-8">{user?.role}</p>
+                <p className="text-white pl-8">{user?.role === 'admin' ? 'Administrateur' : 'Utilisateur'}</p>
               </div>
             </div>
           </div>

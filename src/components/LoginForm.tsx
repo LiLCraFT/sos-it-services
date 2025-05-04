@@ -6,9 +6,10 @@ import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   onSuccess: () => void;
+  onRegisterClick?: () => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -117,9 +118,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       
       <div className="text-center text-sm text-gray-400">
         Pas encore de compte?{' '}
-        <a href="#" className="text-[#5865F2] hover:text-[#5865F2]/90">
+        <button 
+          type="button" 
+          onClick={onRegisterClick}
+          className="text-[#5865F2] hover:text-[#5865F2]/90 border-none bg-transparent p-0"
+        >
           S'inscrire
-        </a>
+        </button>
       </div>
     </form>
   );

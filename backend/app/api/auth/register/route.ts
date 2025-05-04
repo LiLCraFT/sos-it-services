@@ -19,13 +19,29 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_developmen
  *             required:
  *               - email
  *               - password
- *               - name
+ *               - firstName
+ *               - lastName
+ *               - address
+ *               - phone
+ *               - birthDate
+ *               - city
  *             properties:
  *               email:
  *                 type: string
  *               password:
  *                 type: string
- *               name:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *                 format: date
+ *               city:
  *                 type: string
  *     responses:
  *       201:
@@ -46,13 +62,29 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_developmen
  */
 export async function POST(req: NextRequest) {
   try {
+    // Connecter à la base de données
     await dbConnect();
-    const { email, password, name } = await req.json();
+    
+    // Récupérer les données du corps de la requête
+    const { 
+      email, 
+      password, 
+      firstName, 
+      lastName, 
+      address, 
+      phone, 
+      birthDate, 
+      city 
+    } = await req.json();
+    
+    console.log('Registration data received:', { 
+      email, firstName, lastName, address, phone, birthDate, city 
+    });
     
     // Vérification des données requises
-    if (!email || !password || !name) {
+    if (!email || !password || !firstName || !lastName || !address || !phone || !birthDate || !city) {
       return NextResponse.json(
-        { error: 'Email, mot de passe et nom sont requis' },
+        { error: 'Tous les champs sont requis' },
         { status: 400 }
       );
     }
@@ -66,13 +98,28 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Création de l'utilisateur
-    const user = await User.create({
+    // Création du document utilisateur (sans l'enregistrer encore)
+    const userData = {
       email,
       password,
-      name,
+      firstName,
+      lastName,
+      address,
+      phone,
+      birthDate,
+      city,
       role: 'user', // Par défaut, tous les nouveaux utilisateurs ont le rôle 'user'
+    };
+    
+    console.log('Creating user with data:', {
+      ...userData,
+      password: '******' // Ne pas afficher le mot de passe en clair dans les logs
     });
+    
+    // Création de l'utilisateur
+    const user = await User.create(userData);
+    
+    console.log('User created successfully:', user._id);
     
     // Génération du token JWT
     const token = jwt.sign(
@@ -89,7 +136,8 @@ export async function POST(req: NextRequest) {
     const userWithoutPassword = {
       _id: user._id,
       email: user.email,
-      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role,
     };
     

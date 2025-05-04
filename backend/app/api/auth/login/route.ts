@@ -34,6 +34,26 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_developmen
  *               properties:
  *                 user:
  *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     address:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     birthDate:
+ *                       type: string
+ *                       format: date
+ *                     city:
+ *                       type: string
+ *                     role:
+ *                       type: string
  *                 token:
  *                   type: string
  *       400:
@@ -89,7 +109,12 @@ export async function POST(req: NextRequest) {
     const userWithoutPassword = {
       _id: user._id,
       email: user.email,
-      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      address: user.address,
+      phone: user.phone,
+      birthDate: user.birthDate,
+      city: user.city,
       role: user.role,
     };
     

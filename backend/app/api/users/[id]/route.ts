@@ -67,7 +67,18 @@ export async function GET(
  *             properties:
  *               email:
  *                 type: string
- *               name:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *                 format: date
+ *               city:
  *                 type: string
  *               role:
  *                 type: string

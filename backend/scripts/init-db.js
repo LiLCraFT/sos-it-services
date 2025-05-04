@@ -9,7 +9,12 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sos-it
 const UserSchema = new mongoose.Schema({
   email: String,
   password: String,
-  name: String,
+  firstName: String,
+  lastName: String,
+  address: String,
+  phone: String,
+  birthDate: Date,
+  city: String,
   role: String,
   createdAt: Date,
   updatedAt: Date
@@ -36,7 +41,12 @@ async function initDB() {
       {
         email: 'admin@example.com',
         password: await bcrypt.hash('admin123', 10),
-        name: 'Administrateur',
+        firstName: 'Admin',
+        lastName: 'System',
+        address: '123 Rue de l\'Administration',
+        phone: '0123456789',
+        birthDate: new Date('1990-01-01'),
+        city: 'Paris',
         role: 'admin',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -44,7 +54,12 @@ async function initDB() {
       {
         email: 'user@example.com',
         password: await bcrypt.hash('user123', 10),
-        name: 'Utilisateur',
+        firstName: 'Jean',
+        lastName: 'Dupont',
+        address: '456 Avenue des Utilisateurs',
+        phone: '0987654321',
+        birthDate: new Date('1995-05-15'),
+        city: 'Lyon',
         role: 'user',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -55,8 +70,8 @@ async function initDB() {
     await User.insertMany(users);
     console.log(`${users.length} utilisateurs de test créés.`);
     console.log('Utilisateurs:');
-    console.log('- admin@example.com / admin123 (Admin)');
-    console.log('- user@example.com / user123 (User)');
+    console.log('- admin@example.com / admin123 (Admin System - Administrateur)');
+    console.log('- user@example.com / user123 (Jean Dupont - Utilisateur)');
 
     console.log('Base de données initialisée avec succès!');
   } catch (error) {

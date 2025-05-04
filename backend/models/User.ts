@@ -1,10 +1,20 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+// Force clean up pour éviter les erreurs de validation avec l'ancien modèle
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
 export interface IUser extends Document {
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+  phone: string;
+  birthDate: Date;
+  city: string;
   role: 'user' | 'admin';
   createdAt: Date;
   updatedAt: Date;
@@ -27,9 +37,33 @@ const UserSchema = new Schema<IUser>(
       required: [true, 'Mot de passe est requis'],
       minlength: [6, 'Le mot de passe doit contenir au moins 6 caractères'],
     },
-    name: {
+    firstName: {
+      type: String,
+      required: [true, 'Prénom est requis'],
+      trim: true,
+    },
+    lastName: {
       type: String,
       required: [true, 'Nom est requis'],
+      trim: true,
+    },
+    address: {
+      type: String,
+      required: [true, 'Adresse est requise'],
+      trim: true,
+    },
+    phone: {
+      type: String,
+      required: [true, 'Numéro de téléphone est requis'],
+      trim: true,
+    },
+    birthDate: {
+      type: Date,
+      required: [true, 'Date de naissance est requise'],
+    },
+    city: {
+      type: String,
+      required: [true, 'Ville est requise'],
       trim: true,
     },
     role: {
@@ -61,4 +95,7 @@ UserSchema.methods.comparePassword = async function(this: IUser, candidatePasswo
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema); 
+// Créer un nouveau modèle (après avoir supprimé l'ancien si présent)
+const User = mongoose.model<IUser>('User', UserSchema);
+
+export default User; 
