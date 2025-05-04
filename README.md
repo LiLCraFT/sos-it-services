@@ -1,6 +1,64 @@
 # SOS-IT-Services
 
-Application de services informatiques avec une architecture frontend/backend.
+Projet composé d'un frontend React/Vite et d'un backend Next.js.
+
+## Structure du projet
+
+- `src/` - Code source du frontend React/Vite
+- `backend/` - Code source du backend Next.js (API)
+
+## Installation et démarrage
+
+### Frontend (React/Vite)
+
+1. À la racine du projet, installez les dépendances:
+```bash
+npm install
+```
+
+2. Lancez le serveur de développement frontend:
+```bash
+npm run dev
+```
+
+Le frontend sera accessible sur http://localhost:5173 (ou un autre port si 5173 est déjà utilisé).
+
+### Backend (Next.js)
+
+1. Allez dans le dossier backend:
+```bash
+cd backend
+```
+
+2. Installez les dépendances:
+```bash
+npm install
+```
+
+3. Lancez le serveur de développement backend:
+```bash
+npm run dev
+```
+
+Le backend sera accessible sur http://localhost:3001.
+
+## Configuration de l'authentification
+
+L'authentification utilise JSON Web Tokens (JWT) et est gérée par le backend. Le frontend utilise un contexte d'authentification pour communiquer avec l'API.
+
+### Points d'API disponibles
+
+- `POST /api/auth/login` - Authentification avec email/mot de passe
+- `GET /api/auth/verify` - Vérification de la validité d'un token
+
+### Utilisateurs de test
+
+- Email: admin@example.com, Mot de passe: admin123
+- Email: user@example.com, Mot de passe: user123
+
+## Développement
+
+Pour travailler sur ce projet, vous devez avoir les deux serveurs (frontend et backend) en cours d'exécution simultanément.
 
 ## Structure du projet
 
@@ -135,3 +193,7 @@ npm run dev
 ## Licence
 
 Tous droits réservés. 
+
+Utilisateurs:
+- admin@example.com / admin123 (Admin)
+- user@example.com / user123 (User)

@@ -6,6 +6,8 @@ interface ButtonProps {
   className?: string;
   children: React.ReactNode;
   onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({ 
@@ -13,7 +15,9 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'md', 
   className = '',
   children, 
-  onClick 
+  onClick,
+  type = 'button',
+  disabled = false
 }) => {
   const baseClasses = 'rounded-md font-medium transition-all duration-200 inline-flex items-center justify-center';
   
@@ -29,10 +33,17 @@ export const Button: React.FC<ButtonProps> = ({
     lg: 'px-6 py-3 text-lg'
   };
   
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+  const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : '';
+  
+  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClass} ${className}`;
   
   return (
-    <button className={classes} onClick={onClick}>
+    <button 
+      className={classes} 
+      onClick={onClick}
+      type={type}
+      disabled={disabled}
+    >
       {children}
     </button>
   );

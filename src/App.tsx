@@ -8,6 +8,7 @@ import Testimonials from './components/Testimonials';
 import Faq from './components/Faq';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   useEffect(() => {
@@ -22,17 +23,19 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#36393F] text-white">
-      <Navbar />
-      <Hero />
-      <Services />
-      <Pricing />
-      <Team />
-      <Testimonials />
-      <Faq />
-      <Contact />
-      <Footer />
-    </div>
+    <AuthProvider>
+      <div className="min-h-screen bg-[#36393F] text-white">
+        <Navbar />
+        <Hero />
+        <Services />
+        <Pricing />
+        <Team />
+        <Testimonials />
+        <Faq />
+        <Contact />
+        <Footer />
+      </div>
+    </AuthProvider>
   );
 }
 

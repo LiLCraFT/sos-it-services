@@ -11,24 +11,40 @@ const protectedRoutes = [
 const publicRoutes = [
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/verify',
   '/api-docs',
   '/swagger',
 ];
 
+// Gestion des requêtes OPTIONS (preflight CORS)
+function handleOptions(request: NextRequest) {
+  const response = new NextResponse(null, { status: 204 });
+  
+  // Ajout des en-têtes CORS pour les requêtes preflight
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  response.headers.set('Access-Control-Max-Age', '86400');
+  
+  return response;
+}
+
+// Middleware qui s'exécute pour toutes les requêtes
 export async function middleware(request: NextRequest) {
+  // Gestion des requêtes OPTIONS (preflight CORS)
+  if (request.method === 'OPTIONS') {
+    return handleOptions(request);
+  }
+  
   const path = request.nextUrl.pathname;
+  let response;
   
   // Vérifie si la route est publique
   if (publicRoutes.some(route => path.startsWith(route))) {
-    return NextResponse.next();
+    response = NextResponse.next();
   }
-  
   // Vérifie si la route est protégée
-  const isProtectedRoute = protectedRoutes.some(route => 
-    path.startsWith(route)
-  );
-  
-  if (isProtectedRoute) {
+  else if (protectedRoutes.some(route => path.startsWith(route))) {
     const token = request.headers.get('authorization')?.split(' ')[1];
     
     if (!token) {
@@ -45,16 +61,24 @@ export async function middleware(request: NextRequest) {
       );
       
       await jwtVerify(token, secretKey);
-      return NextResponse.next();
+      response = NextResponse.next();
     } catch (error) {
       return NextResponse.json(
         { error: 'Token invalide ou expiré' },
         { status: 401 }
       );
     }
+  } else {
+    // Pour toutes les autres routes API
+    response = NextResponse.next();
   }
   
-  return NextResponse.next();
+  // Ajout des en-têtes CORS pour toutes les réponses
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  return response;
 }
 
 export const config = {
