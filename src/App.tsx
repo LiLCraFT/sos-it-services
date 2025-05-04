@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Services from './components/Services';
@@ -9,6 +10,20 @@ import Faq from './components/Faq';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import { AuthProvider } from './contexts/AuthContext';
+import UserDashboard from './pages/UserDashboard';
+
+// HomePage component pour regrouper les sections de la page d'accueil
+const HomePage = () => (
+  <>
+    <Hero />
+    <Services />
+    <Pricing />
+    <Team />
+    <Testimonials />
+    <Faq />
+    <Contact />
+  </>
+);
 
 function App() {
   useEffect(() => {
@@ -24,17 +39,16 @@ function App() {
 
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-[#36393F] text-white">
-        <Navbar />
-        <Hero />
-        <Services />
-        <Pricing />
-        <Team />
-        <Testimonials />
-        <Faq />
-        <Contact />
-        <Footer />
-      </div>
+      <Router>
+        <div className="min-h-screen bg-[#36393F] text-white">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/mon-espace" element={<UserDashboard />} />
+          </Routes>
+          <Footer />
+        </div>
+      </Router>
     </AuthProvider>
   );
 }

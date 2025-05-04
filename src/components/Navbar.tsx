@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut } from 'lucide-react';
 import { Link } from './ui/Link';
 import { Modal } from './ui/Modal';
 import LoginForm from './LoginForm';
 import { useAuth } from '../contexts/AuthContext';
+import { Link as RouterLink } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const userMenuRef = useRef<HTMLDivElement>(null);
   
   const whatsappNumber = "33695358625"; // Remplacez par votre numéro WhatsApp
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
@@ -23,6 +26,19 @@ const Navbar: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userMenuRef]);
 
   const services = [
     {
@@ -55,9 +71,8 @@ const Navbar: React.FC = () => {
 
   const handleUserButtonClick = () => {
     if (isAuthenticated) {
-      // Si l'utilisateur est connecté, afficher un menu déroulant
-      // Pour simplifier, nous allons juste déconnecter l'utilisateur
-      logout();
+      // Ouvrir/fermer le menu utilisateur
+      setIsUserMenuOpen(!isUserMenuOpen);
     } else {
       // Si l'utilisateur n'est pas connecté, ouvrir la modal de connexion
       setIsLoginModalOpen(true);
@@ -75,10 +90,10 @@ const Navbar: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Link href="#" className="flex items-center">
+                <RouterLink to="/" className="flex items-center">
                   <Monitor className="h-8 w-8 text-[#5865F2]" />
                   <span className="ml-2 text-white font-bold text-xl font-['Bangers'] tracking-wider">SOS IT Services</span>
-                </Link>
+                </RouterLink>
               </div>
             </div>
             
@@ -132,17 +147,54 @@ const Navbar: React.FC = () => {
                   </svg>
                   Nous contacter
                 </a>
-                <button 
-                  className={`${isAuthenticated ? 'bg-[#5865F2]' : 'bg-[#4E5058]'} hover:bg-opacity-90 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center`}
-                  aria-label={isAuthenticated ? 'Déconnecter' : 'Se connecter'}
-                  onClick={handleUserButtonClick}
-                >
-                  {isAuthenticated ? (
-                    <LogOut className="h-5 w-5" />
-                  ) : (
-                    <User className="h-5 w-5" />
+                <div className="relative" ref={userMenuRef}>
+                  <button 
+                    className={`${isAuthenticated ? 'bg-[#5865F2]' : 'bg-[#4E5058]'} hover:bg-opacity-90 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center`}
+                    aria-label={isAuthenticated ? 'Menu utilisateur' : 'Se connecter'}
+                    onClick={handleUserButtonClick}
+                  >
+                    {isAuthenticated ? (
+                      <>
+                        <User className="h-5 w-5" />
+                        <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                      </>
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
+                  </button>
+                  
+                  {/* Menu utilisateur */}
+                  {isAuthenticated && (
+                    <div 
+                      className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#2F3136] ring-1 ring-black ring-opacity-5 transition-all duration-200 ${isUserMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                    >
+                      <div className="py-1">
+                        <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-700">
+                          Connecté en tant que<br />
+                          <span className="font-semibold text-white">{user?.name}</span>
+                        </div>
+                        <RouterLink
+                          to="/mon-espace"
+                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <User className="w-5 h-5 mr-2" />
+                          <span>Mon espace</span>
+                        </RouterLink>
+                        <button
+                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full text-left"
+                          onClick={() => {
+                            logout();
+                            setIsUserMenuOpen(false);
+                          }}
+                        >
+                          <LogOut className="w-5 h-5 mr-2" />
+                          <span>Déconnexion</span>
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </button>
+                </div>
               </div>
             </div>
             
@@ -211,10 +263,24 @@ const Navbar: React.FC = () => {
               </svg>
               Nous contacter
             </a>
+            {/* Ajout du lien Mon espace pour mobile */}
+            {isAuthenticated && (
+              <RouterLink 
+                to="/mon-espace"
+                className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                onClick={() => setIsOpen(false)}
+              >
+                <User className="h-5 w-5 mr-2" />
+                <span>Mon espace</span>
+              </RouterLink>
+            )}
             <button 
               className={`${isAuthenticated ? 'bg-[#5865F2]' : 'bg-[#4E5058]'} hover:bg-opacity-90 text-white flex items-center px-3 py-2 rounded-md text-base font-medium w-full`}
               aria-label={isAuthenticated ? 'Déconnecter' : 'Se connecter'}
-              onClick={handleUserButtonClick}
+              onClick={isAuthenticated ? logout : () => {
+                setIsOpen(false);
+                setIsLoginModalOpen(true);
+              }}
             >
               {isAuthenticated ? (
                 <>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from './ui/Button';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -13,6 +14,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +27,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       
       // Notifier le parent du succès
       onSuccess();
+      
+      // Rediriger vers la page "Mon espace"
+      navigate('/mon-espace');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de connexion');
     } finally {
