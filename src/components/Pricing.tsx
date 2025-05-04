@@ -51,11 +51,12 @@ const Pricing: React.FC = () => {
   const abonnements: Record<'solo' | 'famille', AbonnementOption> = {
     solo: {
       name: "Solo",
-      price: "29 €",
-      duration: "par mois",
+      price: "29",
+      duration: "/mois",
       description: "1 personne",
       icon: <User className="h-5 w-5 text-[#5865F2]" />,
       features: [
+        "1 personne",
         "Interventions à distance illimitées",
         "Assistance prioritaire",
         "Sans engagement",
@@ -65,13 +66,14 @@ const Pricing: React.FC = () => {
     },
     famille: {
       name: "Famille",
-      price: "69 €",
-      duration: "par mois",
+      price: "69",
+      duration: "/mois",
       description: "Jusqu'à 5 personnes",
       badge: "Économique",
       highlight: true,
       icon: <Users className="h-5 w-5 text-[#5865F2]" />,
       features: [
+        "Jusqu'à 5 personnes",
         "Interventions à distance illimitées",
         "Assistance prioritaire",
         "Sans engagement",
@@ -84,13 +86,14 @@ const Pricing: React.FC = () => {
   const depannages: Record<'distance' | 'domicile', DepannageOption> = {
     distance: {
       name: "Dépannage à distance",
-      price: "49 €",
+      price: "49",
       priceSubtext: "à partir de",
-      duration: "0 à 60 min",
+      duration: "",
       highlight: true,
       badge: "Populaire",
       icon: <Wifi className="h-5 w-5 text-[#5865F2]" />,
       features: [
+        "Intervention jusqu'à 60 min",
         "Diagnostic gratuit inclus",
         "Sans engagement",
         "Paiement uniquement si problème résolu",
@@ -99,12 +102,13 @@ const Pricing: React.FC = () => {
     },
     domicile: {
       name: "Intervention à domicile",
-      price: "119 €",
+      price: "119",
       priceSubtext: "déplacement inclus",
       description: "1h max incluse",
       badge: "Service Premium",
       icon: <Home className="h-5 w-5 text-[#5865F2]" />,
       features: [
+        "1h d'intervention incluse",
         "Frais de déplacement : 25 € (jusqu'à 30 km)",
         "Intervention possible le jour-même",
         "Satisfait ou remboursé",
@@ -134,180 +138,199 @@ const Pricing: React.FC = () => {
   return (
     <section id="pricing" className="py-20 bg-gradient-to-b from-[#2F3136] to-[#36393F]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#5865F2]/20 text-[#5865F2] mb-5">
-            <BadgeCheck size={16} className="mr-2" />
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2]/20 text-[#5865F2] mb-4">
+            <BadgeCheck size={16} className="mr-1.5" />
             <span className="text-sm font-medium">Tarifs transparents</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            <span>Nos offres de</span>{' '}
-            <span className="text-[#5865F2]">services</span>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            Nos offres de <span className="text-[#5865F2]">services</span>
           </h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
             Des solutions adaptées à vos besoins avec diagnostic gratuit et sans engagement
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Dépannages section */}
-          <div className="mb-8 flex flex-col">
-            <div className="flex flex-col items-center text-center mb-10">
-              <div className="rounded-full bg-[#5865F2]/10 p-4 mb-4">
-                {serviceGroups[0].icon}
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">{serviceGroups[0].title}</h3>
-              <p className="text-gray-300">{serviceGroups[0].description}</p>
-            </div>
-            
-            <div className="flex justify-center flex-1">
-              <Card className="h-full relative w-full max-w-md border-2 border-[#5865F2] flex flex-col">
-                {selectedDepannage.badge && (
-                  <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
-                    <div className="bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                      {selectedDepannage.badge}
-                    </div>
+          <div className="flex justify-center">
+            <Card className="h-full relative w-full max-w-md border-2 border-[#5865F2] flex flex-col">
+              {selectedDepannage.badge && (
+                <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                  <div className="bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                    {selectedDepannage.badge}
                   </div>
-                )}
-                
-                <CardHeader className="bg-[#5865F2]/10">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="inline-flex flex-wrap items-center justify-center bg-[#2F3136] rounded-full p-1 mb-4">
-                      <button 
-                        onClick={() => setDepannageType('distance')}
-                        className={`flex items-center px-4 py-2 m-1 rounded-full transition-colors ${depannageType === 'distance' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
-                      >
-                        <Wifi className="h-4 w-4 mr-1" />
-                        <span>À distance</span>
-                      </button>
-                      <button 
-                        onClick={() => setDepannageType('domicile')}
-                        className={`flex items-center px-4 py-2 m-1 rounded-full transition-colors ${depannageType === 'domicile' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
-                      >
-                        <Home className="h-4 w-4 mr-1" />
-                        <span>À domicile</span>
-                      </button>
+                </div>
+              )}
+              
+              <CardHeader className="bg-[#5865F2]/10 pt-4 pb-5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center mb-2">
+                    <div className="bg-[#5865F2]/20 rounded-full p-2 mr-2">
+                      {serviceGroups[0].icon}
                     </div>
-                    
-                    <h4 className="text-xl font-bold text-white mb-2">{selectedDepannage.name}</h4>
-                    <div className="mt-2 flex flex-col items-center justify-center">
+                    <h3 className="text-xl font-bold text-white">{serviceGroups[0].title}</h3>
+                  </div>
+                  
+                  <p className="text-gray-300 text-sm mb-3">{serviceGroups[0].description}</p>
+                  
+                  <div className="inline-flex flex-wrap items-center justify-center bg-[#2F3136] rounded-lg p-1 mb-3">
+                    <button 
+                      onClick={() => setDepannageType('distance')}
+                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-colors ${depannageType === 'distance' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
+                    >
+                      <Wifi className="h-4 w-4 mr-1.5" />
+                      <span>À distance</span>
+                    </button>
+                    <button 
+                      onClick={() => setDepannageType('domicile')}
+                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-colors ${depannageType === 'domicile' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
+                    >
+                      <Home className="h-4 w-4 mr-1.5" />
+                      <span>À domicile</span>
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-col items-center w-full">
+                    <div className="flex flex-col items-center">
                       {'priceSubtext' in selectedDepannage && selectedDepannage.priceSubtext && (
-                        <span className="text-green-400 text-sm font-medium mb-1 uppercase tracking-wider">
+                        <span className="text-green-400 text-xs font-medium uppercase tracking-wider mb-1">
                           {selectedDepannage.priceSubtext}
                         </span>
                       )}
-                      <span className="text-4xl font-bold text-white">{selectedDepannage.price}</span>
-                      {selectedDepannage.duration && (
-                        <span className="text-gray-400 ml-0 mt-1 text-sm">{selectedDepannage.duration}</span>
-                      )}
-                    </div>
-                    {selectedDepannage.description && (
-                      <p className="text-gray-300 mt-2">{selectedDepannage.description}</p>
-                    )}
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="flex-1">
-                  <ul className="space-y-3">
-                    {selectedDepannage.features?.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start">
-                        <div className="bg-green-400/10 rounded-full p-1 mr-2 mt-0.5">
-                          <Check className="text-green-400 h-3 w-3 flex-shrink-0" />
+                      
+                      <div className="flex justify-center items-center mb-1">
+                        <div className="flex items-center">
+                          <div className="bg-gray-800/50 rounded p-1.5 border border-gray-700">
+                            <span className="text-gray-400 text-sm line-through">{selectedDepannage.price} €</span>
+                          </div>
+                          <div className="bg-green-400/10 rounded p-2 border border-green-400/30 ml-3">
+                            <div className="flex flex-col items-center">
+                              <span className="text-green-400 text-2xl font-bold">
+                                {Math.round(parseInt(selectedDepannage.price) / 2)} €
+                              </span>
+                              <span className="text-xs text-gray-300">après crédit d'impôt</span>
+                              {selectedDepannage.duration && (
+                                <span className="text-xs text-gray-300 mt-1">{selectedDepannage.duration}</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-gray-200 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                
-                <CardFooter className="mt-auto">
-                  <Button 
-                    variant="primary"
-                    className="w-full group"
-                  >
-                    Sélectionner
-                    <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">→</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="flex-1">
+                <ul className="space-y-3">
+                  {selectedDepannage.features?.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-start">
+                      <div className="bg-green-400/10 rounded-full p-1 mr-2 mt-0.5">
+                        <Check className="text-green-400 h-3 w-3 flex-shrink-0" />
+                      </div>
+                      <span className="text-gray-200 text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              
+              <CardFooter className="mt-auto">
+                <Button 
+                  variant="primary"
+                  className="w-full group"
+                >
+                  Sélectionner
+                  <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
 
           {/* Abonnements section */}
-          <div className="mb-8 flex flex-col">
-            <div className="flex flex-col items-center text-center mb-10">
-              <div className="rounded-full bg-[#5865F2]/10 p-4 mb-4">
-                {serviceGroups[1].icon}
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">{serviceGroups[1].title}</h3>
-              <p className="text-gray-300">{serviceGroups[1].description}</p>
-            </div>
-            
-            <div className="flex justify-center flex-1">
-              <Card className="h-full relative w-full max-w-md border-2 border-[#5865F2] flex flex-col">
-                {selectedAbonnement.badge && (
-                  <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
-                    <div className="bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                      {selectedAbonnement.badge}
-                    </div>
+          <div className="flex justify-center">
+            <Card className="h-full relative w-full max-w-md border-2 border-[#5865F2] flex flex-col">
+              {selectedAbonnement.badge && (
+                <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                  <div className="bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                    {selectedAbonnement.badge}
                   </div>
-                )}
-                
-                <CardHeader className="bg-[#5865F2]/10">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="inline-flex items-center bg-[#2F3136] rounded-full p-1 mb-4">
-                      <button 
-                        onClick={() => setAbonnementType('solo')}
-                        className={`flex items-center px-4 py-2 m-1 rounded-full transition-colors ${abonnementType === 'solo' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
-                      >
-                        <User className="h-5 w-5 mr-2" />
-                        <span>Solo</span>
-                      </button>
-                      <button 
-                        onClick={() => setAbonnementType('famille')}
-                        className={`flex items-center px-4 py-2 m-1 rounded-full transition-colors ${abonnementType === 'famille' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
-                      >
-                        <Users className="h-5 w-5 mr-2" />
-                        <span>Famille</span>
-                      </button>
+                </div>
+              )}
+              
+              <CardHeader className="bg-[#5865F2]/10 pt-4 pb-5">
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center mb-2">
+                    <div className="bg-[#5865F2]/20 rounded-full p-2 mr-2">
+                      {serviceGroups[1].icon}
                     </div>
-                    
-                    <h4 className="text-xl font-bold text-white mb-2">{selectedAbonnement.name}</h4>
-                    <div className="mt-2 flex flex-col items-center justify-center">
-                      <span className="text-4xl font-bold text-white">{selectedAbonnement.price}</span>
-                      {selectedAbonnement.duration && (
-                        <span className="text-gray-400 ml-0 mt-1 text-sm">{selectedAbonnement.duration}</span>
-                      )}
-                    </div>
-                    {selectedAbonnement.description && (
-                      <p className="text-gray-300 mt-2">{selectedAbonnement.description}</p>
-                    )}
+                    <h3 className="text-xl font-bold text-white">{serviceGroups[1].title}</h3>
                   </div>
-                </CardHeader>
-                
-                <CardContent className="flex-1">
-                  <ul className="space-y-3">
-                    {selectedAbonnement.features?.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start">
-                        <div className="bg-green-400/10 rounded-full p-1 mr-2 mt-0.5">
-                          <Check className="text-green-400 h-3 w-3 flex-shrink-0" />
+                  
+                  <p className="text-gray-300 text-sm mb-3">{serviceGroups[1].description}</p>
+                  
+                  <div className="inline-flex items-center justify-center bg-[#2F3136] rounded-lg p-1 mb-3">
+                    <button 
+                      onClick={() => setAbonnementType('solo')}
+                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-colors ${abonnementType === 'solo' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
+                    >
+                      <User className="h-4 w-4 mr-1.5" />
+                      <span>Solo</span>
+                    </button>
+                    <button 
+                      onClick={() => setAbonnementType('famille')}
+                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-colors ${abonnementType === 'famille' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
+                    >
+                      <Users className="h-4 w-4 mr-1.5" />
+                      <span>Famille</span>
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-col items-center w-full">
+                    <div className="flex flex-col items-center">
+                      <div className="flex justify-center items-center mb-1">
+                        <div className="flex items-center">
+                          <div className="bg-gray-800/50 rounded p-1.5 border border-gray-700">
+                            <span className="text-gray-400 text-sm line-through">{selectedAbonnement.price} €</span>
+                          </div>
+                          <div className="bg-green-400/10 rounded p-2 border border-green-400/30 ml-3">
+                            <div className="flex flex-col items-center">
+                              <span className="text-green-400 text-2xl font-bold">
+                                {Math.round(parseInt(selectedAbonnement.price) / 2)} € <span className="text-sm font-normal">{selectedAbonnement.duration}</span>
+                              </span>
+                              <span className="text-xs text-gray-300">après crédit d'impôt</span>
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-gray-200 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                
-                <CardFooter className="mt-auto">
-                  <Button 
-                    variant="primary"
-                    className="w-full group"
-                  >
-                    Souscrire
-                    <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">→</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="flex-1">
+                <ul className="space-y-3">
+                  {selectedAbonnement.features?.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-start">
+                      <div className="bg-green-400/10 rounded-full p-1 mr-2 mt-0.5">
+                        <Check className="text-green-400 h-3 w-3 flex-shrink-0" />
+                      </div>
+                      <span className="text-gray-200 text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              
+              <CardFooter className="mt-auto">
+                <Button 
+                  variant="primary"
+                  className="w-full group"
+                >
+                  Souscrire
+                  <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
         

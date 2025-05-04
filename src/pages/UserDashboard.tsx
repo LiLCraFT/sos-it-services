@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar } from 'lucide-react';
