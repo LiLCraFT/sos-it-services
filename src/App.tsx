@@ -9,12 +9,12 @@ import Faq from './components/Faq';
 import Footer from './components/Footer';
 import { AuthProvider } from './contexts/AuthContext';
 import UserDashboard from './pages/UserDashboard';
+import DepannageInformatique from './pages/DepannageInformatique';
 
 // HomePage component pour regrouper les sections de la page d'accueil
 const HomePage = () => (
   <>
     <Hero />
-    <Services />
     <Pricing />
     <Team />
     <Faq />
@@ -40,6 +40,7 @@ function App() {
           <Navbar />
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/depannage-informatique" element={<DepannageInformatique />} />
             <Route path="/mon-espace" element={<UserDashboard />} />
           </Routes>
           <Footer />

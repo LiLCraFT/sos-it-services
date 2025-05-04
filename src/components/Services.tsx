@@ -7,7 +7,8 @@ import {
   Globe, 
   Database, 
   Shield, 
-  Printer 
+  Printer,
+  ArrowRight
 } from 'lucide-react';
 
 interface ServiceCardProps {
@@ -18,18 +19,22 @@ interface ServiceCardProps {
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, description }) => {
   return (
-    <div className="group relative bg-white/5 backdrop-blur-sm hover:bg-white/10 rounded-xl p-6 transition-all duration-300 overflow-hidden border border-transparent hover:border-white/10">
-      {/* Highlight effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#5865F2] to-[#EB459E] opacity-0 group-hover:opacity-30 blur rounded-xl transition-opacity duration-300"></div>
+    <div className="group relative bg-white/5 backdrop-blur-sm hover:bg-white/10 rounded-xl p-5 transition-all duration-300 overflow-hidden border border-white/5 hover:border-white/10 flex flex-col h-full">
+      {/* Hover gradient effect */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#5865F2] to-[#EB459E] opacity-0 group-hover:opacity-20 blur rounded-xl transition-opacity duration-300"></div>
       
-      <div className="relative z-10 flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-full bg-[#5865F2]/10 flex items-center justify-center mb-4 group-hover:bg-[#5865F2]/20 transition-all duration-300">
-          <div className="w-10 h-10 rounded-full bg-[#5865F2]/20 flex items-center justify-center text-[#5865F2]">
-            {icon}
-          </div>
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="w-12 h-12 rounded-lg bg-[#5865F2]/10 flex items-center justify-center mb-4 group-hover:bg-[#5865F2]/20 transition-all duration-300 text-[#5865F2]">
+          {icon}
         </div>
-        <h3 className="text-white text-lg font-medium leading-tight mb-2">{title}</h3>
+        
+        <h3 className="text-white text-base font-medium leading-tight mb-2">{title}</h3>
         {description && <p className="text-gray-400 text-sm">{description}</p>}
+        
+        <div className="mt-auto pt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#5865F2] text-sm font-medium flex items-center">
+          <span>En savoir plus</span>
+          <ArrowRight size={14} className="ml-1 transform group-hover:translate-x-1 transition-transform duration-300" />
+        </div>
       </div>
     </div>
   );
@@ -38,62 +43,70 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, description }) =
 const Services: React.FC = () => {
   const services = [
     {
-      icon: <Wrench size={20} />,
-      title: "J'ai besoin d'aide pour installer, configurer ou accéder à un logiciel."
+      icon: <Wrench size={18} />,
+      title: "Dépannage logiciel",
+      description: "Installation, configuration et résolution de problèmes logiciels."
     },
     {
-      icon: <Wifi size={20} />,
-      title: "J'ai des problèmes de connexion à Internet, de configuration wifi."
+      icon: <Wifi size={18} />,
+      title: "Problèmes de réseau",
+      description: "Connexion internet, configuration WiFi et résolution de problèmes réseau."
     },
     {
-      icon: <Mail size={20} />,
-      title: "Je n'accède pas à mes mails, je n'arrive pas à les synchroniser."
+      icon: <Mail size={18} />,
+      title: "Gestion des emails",
+      description: "Accès, synchronisation et configuration de votre messagerie électronique."
     },
     {
-      icon: <Monitor size={20} />,
-      title: "Mon ordinateur est lent, bloqué, ou rien ne s'affiche."
+      icon: <Monitor size={18} />,
+      title: "Performance PC",
+      description: "Optimisation, dépannage et résolution des problèmes de lenteur."
     },
     {
-      icon: <Globe size={20} />,
-      title: "J'ai un problème avec mes applications web (M365, Drive, réseaux sociaux,...)."
+      icon: <Globe size={18} />,
+      title: "Applications web",
+      description: "Support pour M365, Google Workspace et autres applications cloud."
     },
     {
-      icon: <Database size={20} />,
-      title: "Je souhaite récupérer des données, les transférer ou les sauvegarder."
+      icon: <Database size={18} />,
+      title: "Gestion de données",
+      description: "Récupération, transfert et sauvegarde sécurisée de vos données."
     },
     {
-      icon: <Shield size={20} />,
-      title: "J'ai un virus ou je souhaite renforcer ma sécurité."
+      icon: <Shield size={18} />,
+      title: "Sécurité informatique",
+      description: "Protection antivirus, sécurisation et élimination des menaces."
     },
     {
-      icon: <Printer size={20} />,
-      title: "Mon imprimante est inaccessible ou doit être configurée."
+      icon: <Printer size={18} />,
+      title: "Support imprimantes",
+      description: "Configuration, dépannage et optimisation de vos imprimantes."
     }
   ];
 
   return (
     <section id="services" className="py-20 bg-gradient-to-b from-[#2F3136] to-[#36393F]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#5865F2]/20 text-[#5865F2] mb-5">
-            <Wrench size={16} className="mr-2" />
-            <span className="text-sm font-medium">Nos Services</span>
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2]/10 text-[#5865F2] mb-4">
+            <Wrench size={14} className="mr-1.5" />
+            <span className="text-xs font-medium">Nos Services</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            <span>Des solutions pour</span>{' '}
-            <span className="text-[#5865F2]">tous vos problèmes</span>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            Des solutions <span className="text-[#5865F2]">expertes</span> pour tous vos besoins
           </h2>
-          <p className="text-gray-300 max-w-2xl mx-auto">
-            Notre équipe d'experts vous accompagne dans la résolution de tous vos problèmes informatiques.
+          <p className="text-gray-300 max-w-xl mx-auto text-sm">
+            Notre équipe de spécialistes vous accompagne pour résoudre efficacement vos problèmes informatiques.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {services.map((service, index) => (
             <ServiceCard
               key={index}
               icon={service.icon}
               title={service.title}
+              description={service.description}
             />
           ))}
         </div>

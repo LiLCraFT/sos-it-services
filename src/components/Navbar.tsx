@@ -45,7 +45,7 @@ const Navbar: React.FC = () => {
   const services = [
     {
       name: "Dépannage informatique",
-      href: "#depannage",
+      href: "/depannage-informatique",
       icon: <Wrench className="h-5 w-5" />
     },
     {
