@@ -1,7 +1,9 @@
 import { useAuth } from '../contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import TicketList from '../components/TicketList';
+import CreateTicketForm from '../components/CreateTicketForm';
 
 // URL de l'image par défaut
 const DEFAULT_IMAGE = 'http://localhost:3001/api/default-avatar';
@@ -10,6 +12,22 @@ const UserDashboard = () => {
   const { user, isAuthenticated, logout, updateUser } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [profileImage, setProfileImage] = useState(user?.profileImage || '');
+  const [showCreateTicket, setShowCreateTicket] = useState(false);
+  
+  // Récupérer le paramètre tab de l'URL
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get('tab');
+  
+  // Définir l'onglet actif en fonction du paramètre de l'URL
+  const [activeTab, setActiveTab] = useState(tabParam === 'tickets' ? 'tickets' : 'profile');
+  
+  // Mettre à jour l'onglet actif si le paramètre d'URL change
+  useEffect(() => {
+    if (tabParam === 'tickets') {
+      setActiveTab('tickets');
+    }
+  }, [tabParam]);
   
   // Rediriger vers la page d'accueil si l'utilisateur n'est pas connecté
   if (!isAuthenticated) {
@@ -101,6 +119,12 @@ const UserDashboard = () => {
     }
   };
 
+  // Gérer la création de ticket
+  const handleTicketCreated = () => {
+    setShowCreateTicket(false);
+    // Refetch tickets if needed
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl pt-24">
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
@@ -147,14 +171,38 @@ const UserDashboard = () => {
               </div>
               <div className="text-center">
                 <h2 className="font-semibold text-white">{user?.firstName} {user?.lastName}</h2>
-                <span className="text-sm text-gray-400">{translateRole(user?.role)}</span>
+                <div className="flex items-center justify-center mt-1">
+                  <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                    user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
+                    user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
+                    user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
+                    'bg-[#5865F2]/20 text-[#5865F2]'
+                  }`}>
+                    {user?.role === 'admin' ? 'Admin' :
+                     user?.role === 'fondateur' ? 'Fondateur' :
+                     user?.role === 'freelancer' ? 'Freelancer' :
+                     'Utilisateur'}
+                  </span>
+                </div>
               </div>
             </div>
             
             <nav className="space-y-1">
-              <a href="#" className="flex items-center space-x-3 p-3 rounded-md bg-[#5865F2]/10 text-[#5865F2] font-medium">
+              <a 
+                href="#" 
+                className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'profile' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
+                onClick={() => setActiveTab('profile')}
+              >
                 <User className="w-5 h-5" />
                 <span>Mon profil</span>
+              </a>
+              <a 
+                href="#" 
+                className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'tickets' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
+                onClick={() => setActiveTab('tickets')}
+              >
+                <Ticket className="w-5 h-5" />
+                <span>Mes tickets</span>
               </a>
               <a href="#" className="flex items-center space-x-3 p-3 rounded-md text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]">
                 <Settings className="w-5 h-5" />
@@ -170,79 +218,119 @@ const UserDashboard = () => {
             </nav>
           </div>
           
-          {/* Contenu principal */}
+          {/* Contenu principal - Différent selon l'onglet actif */}
           <div className="col-span-3 p-6 bg-[#2F3136]">
-            <h3 className="text-xl font-semibold text-white mb-6">Informations du compte</h3>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-[#36393F] rounded-md">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <User className="w-5 h-5 text-gray-400" />
-                    <h4 className="font-medium text-gray-300">Prénom</h4>
-                  </div>
-                  <p className="text-white pl-8">{user?.firstName}</p>
-                </div>
+            {activeTab === 'profile' && (
+              <>
+                <h3 className="text-xl font-semibold text-white mb-6">Informations du compte</h3>
                 
-                <div className="p-4 bg-[#36393F] rounded-md">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <User className="w-5 h-5 text-gray-400" />
-                    <h4 className="font-medium text-gray-300">Nom</h4>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-4 bg-[#36393F] rounded-md">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <User className="w-5 h-5 text-gray-400" />
+                        <h4 className="font-medium text-gray-300">Prénom</h4>
+                      </div>
+                      <p className="text-white pl-8">{user?.firstName}</p>
+                    </div>
+                    
+                    <div className="p-4 bg-[#36393F] rounded-md">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <User className="w-5 h-5 text-gray-400" />
+                        <h4 className="font-medium text-gray-300">Nom</h4>
+                      </div>
+                      <p className="text-white pl-8">{user?.lastName}</p>
+                    </div>
                   </div>
-                  <p className="text-white pl-8">{user?.lastName}</p>
-                </div>
-              </div>
-              
-              <div className="p-4 bg-[#36393F] rounded-md">
-                <div className="flex items-center space-x-3 mb-2">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                  <h4 className="font-medium text-gray-300">Email</h4>
-                </div>
-                <p className="text-white pl-8">{user?.email}</p>
-              </div>
-              
-              <div className="p-4 bg-[#36393F] rounded-md">
-                <div className="flex items-center space-x-3 mb-2">
-                  <Phone className="w-5 h-5 text-gray-400" />
-                  <h4 className="font-medium text-gray-300">Téléphone</h4>
-                </div>
-                <p className="text-white pl-8">{user?.phone}</p>
-              </div>
-              
-              <div className="p-4 bg-[#36393F] rounded-md">
-                <div className="flex items-center space-x-3 mb-2">
-                  <MapPin className="w-5 h-5 text-gray-400" />
-                  <h4 className="font-medium text-gray-300">Adresse</h4>
-                </div>
-                <p className="text-white pl-8">{user?.address}</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-[#36393F] rounded-md">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <MapPin className="w-5 h-5 text-gray-400" />
-                    <h4 className="font-medium text-gray-300">Ville</h4>
+                  
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <Mail className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Email</h4>
+                    </div>
+                    <p className="text-white pl-8">{user?.email}</p>
                   </div>
-                  <p className="text-white pl-8">{user?.city}</p>
-                </div>
-                
-                <div className="p-4 bg-[#36393F] rounded-md">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <Calendar className="w-5 h-5 text-gray-400" />
-                    <h4 className="font-medium text-gray-300">Date de naissance</h4>
+                  
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <Phone className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Téléphone</h4>
+                    </div>
+                    <p className="text-white pl-8">{user?.phone}</p>
                   </div>
-                  <p className="text-white pl-8">{formatDate(user?.birthDate)}</p>
+                  
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <MapPin className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Adresse</h4>
+                    </div>
+                    <p className="text-white pl-8">{user?.address}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-4 bg-[#36393F] rounded-md">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <MapPin className="w-5 h-5 text-gray-400" />
+                        <h4 className="font-medium text-gray-300">Ville</h4>
+                      </div>
+                      <p className="text-white pl-8">{user?.city}</p>
+                    </div>
+                    
+                    <div className="p-4 bg-[#36393F] rounded-md">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <Calendar className="w-5 h-5 text-gray-400" />
+                        <h4 className="font-medium text-gray-300">Date de naissance</h4>
+                      </div>
+                      <p className="text-white pl-8">{formatDate(user?.birthDate)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <Key className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Rôle</h4>
+                    </div>
+                    <div className="pl-8 flex items-center">
+                      <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                        user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
+                        user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
+                        user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
+                        'bg-[#5865F2]/20 text-[#5865F2]'
+                      }`}>
+                        {user?.role === 'admin' ? 'Admin' :
+                         user?.role === 'fondateur' ? 'Fondateur' :
+                         user?.role === 'freelancer' ? 'Freelancer' :
+                         'Utilisateur'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="p-4 bg-[#36393F] rounded-md">
-                <div className="flex items-center space-x-3 mb-2">
-                  <Key className="w-5 h-5 text-gray-400" />
-                  <h4 className="font-medium text-gray-300">Rôle</h4>
+              </>
+            )}
+
+            {activeTab === 'tickets' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-white">Mes tickets</h3>
+                  <button
+                    onClick={() => setShowCreateTicket(true)}
+                    className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none flex items-center"
+                  >
+                    <Ticket className="w-4 h-4 mr-2" />
+                    Créer un ticket
+                  </button>
                 </div>
-                <p className="text-white pl-8">{translateRole(user?.role)}</p>
+
+                {showCreateTicket ? (
+                  <CreateTicketForm 
+                    onTicketCreated={handleTicketCreated} 
+                    onCancel={() => setShowCreateTicket(false)} 
+                  />
+                ) : (
+                  <TicketList />
+                )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

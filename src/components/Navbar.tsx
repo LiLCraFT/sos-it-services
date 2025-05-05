@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut } from 'lucide-react';
+import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut, Ticket } from 'lucide-react';
 import { Link } from './ui/Link';
 import { Modal } from './ui/Modal';
 import LoginForm from './LoginForm';
@@ -198,7 +198,20 @@ const Navbar: React.FC = () => {
                       <div className="py-1">
                         <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-700">
                           Connecté en tant que<br />
-                          <span className="font-semibold text-white">{user?.firstName} {user?.lastName}</span>
+                          <div className="flex items-center mt-1">
+                            <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium mr-2 ${
+                              user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
+                              user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
+                              user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
+                              'bg-[#5865F2]/20 text-[#5865F2]'
+                            }`}>
+                              {user?.role === 'admin' ? 'Admin' :
+                               user?.role === 'fondateur' ? 'Fondateur' :
+                               user?.role === 'freelancer' ? 'Freelancer' :
+                               'Utilisateur'}
+                            </span>
+                            <span className="font-semibold text-white">{user?.firstName} {user?.lastName}</span>
+                          </div>
                         </div>
                         <RouterLink
                           to="/mon-espace"
@@ -207,6 +220,14 @@ const Navbar: React.FC = () => {
                         >
                           <User className="w-5 h-5 mr-2" />
                           <span>Mon espace</span>
+                        </RouterLink>
+                        <RouterLink
+                          to="/mon-espace?tab=tickets"
+                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <Ticket className="w-5 h-5 mr-2" />
+                          <span>Mes tickets</span>
                         </RouterLink>
                         <button
                           className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full text-left"
@@ -292,14 +313,38 @@ const Navbar: React.FC = () => {
             </a>
             {/* Ajout du lien Mon espace pour mobile */}
             {isAuthenticated && (
-              <RouterLink 
-                to="/mon-espace"
-                className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
-                onClick={() => setIsOpen(false)}
-              >
-                <User className="h-5 w-5 mr-2" />
-                <span>Mon espace</span>
-              </RouterLink>
+              <>
+                <RouterLink 
+                  to="/mon-espace"
+                  className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <User className="h-5 w-5 mr-2" />
+                  <span>Mon espace</span>
+                </RouterLink>
+                <RouterLink 
+                  to="/mon-espace?tab=tickets"
+                  className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Ticket className="h-5 w-5 mr-2" />
+                  <span>Mes tickets</span>
+                </RouterLink>
+                <div className="px-3 py-2 flex items-center">
+                  <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium mr-2 ${
+                    user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
+                    user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
+                    user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
+                    'bg-[#5865F2]/20 text-[#5865F2]'
+                  }`}>
+                    {user?.role === 'admin' ? 'Admin' :
+                     user?.role === 'fondateur' ? 'Fondateur' :
+                     user?.role === 'freelancer' ? 'Freelancer' :
+                     'Utilisateur'}
+                  </span>
+                  <span className="font-semibold text-white truncate">{user?.firstName} {user?.lastName}</span>
+                </div>
+              </>
             )}
             <button 
               className={`${isAuthenticated ? 'bg-[#5865F2]' : 'bg-[#4E5058]'} hover:bg-opacity-90 text-white flex items-center px-3 py-2 rounded-md text-base font-medium w-full`}

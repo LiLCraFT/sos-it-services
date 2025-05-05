@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import jwt from 'jsonwebtoken';
+import { hasAdminRights } from '@/lib/auth-utils';
 
 /**
  * @swagger
@@ -21,29 +23,60 @@ import User from '@/models/User';
  *       500:
  *         description: Erreur serveur
  */
+
+// Helper function to get user ID and role from JWT token
+const getUserFromToken = (req: NextRequest): { userId: string | null, role: string | null } => {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { userId: null, role: null };
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development') as { 
+      userId: string,
+      role: string
+    };
+    return { 
+      userId: decoded.userId,
+      role: decoded.role
+    };
+  } catch (error) {
+    return { userId: null, role: null };
+  }
+};
+
+// Get a specific user
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     await dbConnect();
-    const { id } = params;
     
-    const user = await User.findById(id).select('-password');
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Utilisateur non trouvé' },
-        { status: 404 }
-      );
+    const { userId, role } = getUserFromToken(req);
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+    }
+
+    // Users can only get their own info unless they're admin/founder/freelancer
+    if (userId !== params.id) {
+      const requester = await User.findById(userId);
+      if (!requester || (!hasAdminRights(requester.role) && requester.role !== 'freelancer')) {
+        return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
+      }
     }
     
-    return NextResponse.json(user, { status: 200 });
-  } catch (error) {
-    console.error(`Error fetching user with id ${params.id}:`, error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la récupération de l\'utilisateur' },
-      { status: 500 }
-    );
+    const user = await User.findById(params.id).select('-password');
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ user }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
@@ -93,40 +126,55 @@ export async function GET(
  *       500:
  *         description: Erreur serveur
  */
+
+// Update a user
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     await dbConnect();
-    const { id } = params;
-    const updateData = await req.json();
     
-    // On ne permet pas de mettre à jour le mot de passe via cette route
-    if (updateData.password) {
-      delete updateData.password;
+    const { userId, role } = getUserFromToken(req);
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+    }
+
+    // Users can only update their own info unless they're admin/founder
+    if (userId !== params.id) {
+      const requester = await User.findById(userId);
+      if (!requester || !hasAdminRights(requester.role)) {
+        return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
+      }
     }
     
+    const data = await req.json();
+    
+    // Prevent role escalation
+    if (data.role) {
+      const requester = await User.findById(userId);
+      if (!requester || !hasAdminRights(requester.role)) {
+        delete data.role;
+      }
+    }
+    
+    // Do not allow password updates through this endpoint
+    delete data.password;
+    
     const user = await User.findByIdAndUpdate(
-      id,
-      updateData,
+      params.id,
+      { $set: data },
       { new: true, runValidators: true }
     ).select('-password');
     
     if (!user) {
-      return NextResponse.json(
-        { error: 'Utilisateur non trouvé' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
     }
     
-    return NextResponse.json(user, { status: 200 });
+    return NextResponse.json({ user }, { status: 200 });
   } catch (error: any) {
-    console.error(`Error updating user with id ${params.id}:`, error);
-    return NextResponse.json(
-      { error: error.message || 'Erreur lors de la mise à jour de l\'utilisateur' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
