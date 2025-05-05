@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
-import { Check, Wifi, Monitor, Home, Zap, Clock, BadgeCheck, Shield, Award, User, Users, Wrench, Settings } from 'lucide-react';
+import { Check, Wifi, Monitor, Home, Zap, Clock, BadgeCheck, Shield, Award, User, Users, Wrench, Settings, Package } from 'lucide-react';
 
 interface ServicePlan {
   name: string;
@@ -146,8 +146,8 @@ const Pricing: React.FC = () => {
             <BadgeCheck size={16} className="mr-1.5" />
             <span className="text-sm font-medium">Tarifs transparents</span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-            Nos offres de <span className="text-[#5865F2]">services</span>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 flex items-center justify-center">
+            <Package className="mr-2 text-[#5865F2]" size={32} /> Nos offres de&nbsp;<span className="text-[#5865F2]">services</span>
           </h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
             Des solutions adaptées à vos besoins avec diagnostic gratuit et sans engagement
