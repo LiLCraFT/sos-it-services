@@ -340,7 +340,7 @@ const Pricing: React.FC = () => {
         <div className="mt-16 text-center bg-[#2F3136] p-8 rounded-xl border border-gray-700 shadow-xl">
           <div className="flex items-center justify-center mb-4">
             <Shield className="text-[#5865F2] h-8 w-8 mr-3" />
-            <h3 className="text-2xl font-bold text-white">Besoin d'un service personnalisé ?</h3>
+            <h3 className="text-2xl font-bold text-white">Besoin d'un service <span className="text-[#5865F2]">personnalisé ?</span></h3>
           </div>
           <p className="text-gray-300 mb-4 max-w-2xl mx-auto">
             Nous proposons des solutions sur mesure adaptées à vos besoins spécifiques. Contactez-nous pour un devis gratuit.
