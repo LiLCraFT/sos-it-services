@@ -19,19 +19,19 @@ interface ServiceCardProps {
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, description }) => {
   return (
-    <div className="group relative bg-white/5 backdrop-blur-sm hover:bg-white/10 rounded-xl p-5 transition-all duration-300 overflow-hidden border border-white/5 hover:border-white/10 flex flex-col h-full">
+    <div className="group relative bg-white/5 backdrop-blur-sm hover:bg-white/10 rounded-xl card-spacing transition-all duration-300 overflow-hidden border border-white/5 hover:border-white/10 flex flex-col h-full">
       {/* Hover gradient effect */}
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#5865F2] to-[#EB459E] opacity-0 group-hover:opacity-20 blur rounded-xl transition-opacity duration-300"></div>
       
-      <div className="relative z-10 flex flex-col h-full">
-        <div className="w-12 h-12 rounded-lg bg-[#5865F2]/10 flex items-center justify-center mb-4 group-hover:bg-[#5865F2]/20 transition-all duration-300 text-[#5865F2]">
+      <div className="relative z-10 flex flex-col h-full content-spacing">
+        <div className="w-12 h-12 rounded-lg bg-[#5865F2]/10 flex items-center justify-center group-hover:bg-[#5865F2]/20 transition-all duration-300 text-[#5865F2]">
           {icon}
         </div>
         
-        <h3 className="text-white text-base font-medium leading-tight mb-2">{title}</h3>
+        <h3 className="text-white text-base font-medium leading-tight">{title}</h3>
         {description && <p className="text-gray-400 text-sm">{description}</p>}
         
-        <div className="mt-auto pt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#5865F2] text-sm font-medium flex items-center">
+        <div className="mt-auto pt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#5865F2] text-sm font-medium flex items-center">
           <span>En savoir plus</span>
           <ArrowRight size={14} className="ml-1 transform group-hover:translate-x-1 transition-transform duration-300" />
         </div>
@@ -85,14 +85,14 @@ const Services: React.FC = () => {
   ];
 
   return (
-    <section id="services" className="py-20 bg-gradient-to-b from-[#2F3136] to-[#36393F]">
+    <section id="services" className="section-spacing bg-gradient-to-b from-[#2F3136] to-[#36393F]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2]/10 text-[#5865F2] mb-4">
+        <div className="text-center section-title-spacing">
+          <div className="section-subtitle-badge">
             <Wrench size={14} className="mr-1.5" />
             <span className="text-xs font-medium">Nos Services</span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
             Des solutions <span className="text-[#5865F2]">expertes</span> pour tous vos besoins
           </h2>
           <p className="text-gray-300 max-w-xl mx-auto text-sm">
@@ -100,7 +100,7 @@ const Services: React.FC = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((service, index) => (
             <ServiceCard
               key={index}

@@ -98,3 +98,28 @@ img.loaded {
   color: transparent;
   background-image: linear-gradient(to right, #5865F2, #EB459E);
 }
+
+/* Standardized spacing utilities */
+.section-spacing {
+  @apply py-24;
+}
+
+.section-title-spacing {
+  @apply mb-16;
+}
+
+.section-subtitle-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2]/20 text-[#5865F2] mb-6;
+}
+
+.card-spacing {
+  @apply p-6;
+}
+
+.content-spacing {
+  @apply space-y-4;
+}
+
+.section-divider {
+  @apply py-8;
+}

@@ -164,16 +164,16 @@ const Hero: React.FC = () => {
   };
   
   return (
-    <div id="home" className="relative min-h-screen bg-[#36393F] pt-8 overflow-hidden">
+    <div id="home" className="relative min-h-screen bg-[#36393F] pt-16 overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <div className="absolute top-[10%] left-[-5%] w-[40%] h-[40%] bg-[#5865F2] opacity-10 rounded-full blur-[100px]"></div>
         <div className="absolute bottom-[10%] right-[-5%] w-[40%] h-[40%] bg-[#5865F2] opacity-10 rounded-full blur-[100px]"></div>
       </div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-24 relative z-10">
         <div className="flex flex-col lg:flex-row items-center">
-          <div className="lg:w-1/2 pl-0" style={{ marginLeft: "3%" }}>
+          <div className="lg:w-1/2 pl-0 mb-10 lg:mb-0" style={{ marginLeft: "3%" }}>
             {/* Ajout de l'image de fond */}
             <div className="absolute top-0 left-0 w-full h-full z-0">
               <div className="relative w-full h-full">
@@ -185,12 +185,12 @@ const Hero: React.FC = () => {
               </div>
             </div>
             
-            <div className="relative z-10 p-8 pl-0">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2] bg-opacity-20 text-[#5865F2] mb-5">
+            <div className="relative z-10 p-6 pl-0">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2] bg-opacity-20 text-[#5865F2] mb-6">
                 <Users size={16} className="mr-2" />
                 <span className="text-sm font-medium">Communauté d'experts</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-6">
                 <div>Votre diagnostic gratuit</div>
                 <div className="text-[#5865F2]">Satisfait ou remboursé</div>
               </h1>

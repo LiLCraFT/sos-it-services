@@ -95,7 +95,7 @@ const Faq: React.FC<FaqProps> = ({ showLink = true, showAllQuestions = false }) 
   const faqItems = showAllQuestions ? allFaqItems : shortFaqItems;
 
   return (
-    <section id="faq" className="py-20 pt-10 pb-20 bg-[#2F3136]">
+    <section id="faq" className="section-spacing bg-[#36393F]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-[#2F3136] p-8 rounded-xl border border-gray-700 shadow-xl overflow-hidden">
           <div className="flex items-center justify-center mb-4">
@@ -107,7 +107,7 @@ const Faq: React.FC<FaqProps> = ({ showLink = true, showAllQuestions = false }) 
             n'hésitez pas à nous contacter directement.
           </p>
           
-          <div className="bg-[#36393F] rounded-lg overflow-hidden">
+          <div className="bg-[#36393F] rounded-lg overflow-hidden border border-gray-700">
             <div className="p-6 space-y-0">
               {faqItems.map((item, index) => (
                 <FaqItem 

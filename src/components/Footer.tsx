@@ -30,14 +30,14 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-[#202225] text-gray-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           <div className="lg:col-span-2">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-6">
               <Monitor className="h-8 w-8 text-[#5865F2]" />
               <span className="ml-2 text-white font-bold text-xl font-['Bangers'] tracking-wider">SOS IT Services</span>
             </div>
-            <p className="mb-4 text-gray-400">
+            <p className="mb-6 text-gray-400">
               Services de dépannage informatique et support IT pour particuliers et entreprises.
               Solutions rapides et fiables pour tous vos besoins technologiques.
             </p>
@@ -79,8 +79,8 @@ const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h3 className="text-white font-semibold mb-4">Liens Rapides</h3>
-            <ul className="space-y-2">
+            <h3 className="text-white font-semibold mb-5">Liens Rapides</h3>
+            <ul className="space-y-3">
               <li>
                 <Link href="#services" className="text-gray-400 hover:text-[#5865F2] transition-colors">
                   Services
@@ -105,8 +105,8 @@ const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h3 className="text-white font-semibold mb-4">Services</h3>
-            <ul className="space-y-2">
+            <h3 className="text-white font-semibold mb-5">Services</h3>
+            <ul className="space-y-3">
               <li>
                 <a href="/depannage-informatique" className="text-gray-400 hover:text-[#5865F2] transition-colors flex items-center">
                   <Wrench size={16} className="mr-2" />
@@ -129,12 +129,12 @@ const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h3 className="text-white font-semibold mb-4">Contactez-nous</h3>
-            <ul className="space-y-2">
+            <h3 className="text-white font-semibold mb-5">Contactez-nous</h3>
+            <ul className="space-y-3">
               <li>
                 <a 
                   href="tel:0660447550"
-                  className="bg-[#5865F2] hover:bg-opacity-90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center mb-2 inline-flex"
+                  className="bg-[#5865F2] hover:bg-opacity-90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center mb-3 inline-flex"
                 >
                   <Phone className="h-5 w-5 mr-2" />
                   06 60 44 75 50
@@ -163,12 +163,12 @@ const Footer: React.FC = () => {
           </div>
         </div>
         
-        <div className="border-t border-gray-700 mt-10 pt-8">
+        <div className="border-t border-gray-700 mt-12 pt-10">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-gray-400">
               © {new Date().getFullYear()} SOS IT Services. Tous droits réservés.
             </p>
-            <div className="mt-4 md:mt-0 flex space-x-6">
+            <div className="mt-4 md:mt-0 flex space-x-8">
               <a href="#" className="text-sm text-gray-400 hover:text-[#5865F2]">
                 Politique de Confidentialité
               </a>

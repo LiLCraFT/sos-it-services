@@ -15,9 +15,12 @@ import DepannageInformatique from './pages/DepannageInformatique';
 const HomePage = () => (
   <>
     <Hero />
+    <div className="section-divider"></div>
     <TrustpilotWidget />
     <Pricing />
+    <div className="section-divider"></div>
     <Team />
+    <div className="section-divider"></div>
     <Faq />
   </>
 );

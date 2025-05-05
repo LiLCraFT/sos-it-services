@@ -139,14 +139,14 @@ const Pricing: React.FC = () => {
   ];
 
   return (
-    <section id="pricing" className="py-20 bg-gradient-to-b from-[#2F3136] to-[#36393F]">
+    <section id="pricing" className="section-spacing bg-gradient-to-b from-[#2F3136] to-[#36393F]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2]/20 text-[#5865F2] mb-4">
+        <div className="text-center section-title-spacing">
+          <div className="section-subtitle-badge">
             <BadgeCheck size={16} className="mr-1.5" />
             <span className="text-sm font-medium">Tarifs transparents</span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 flex items-center justify-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 flex items-center justify-center">
             <Package className="mr-2 text-[#5865F2]" size={32} /> Nos offres de&nbsp;<span className="text-[#5865F2]">services</span>
           </h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
@@ -154,7 +154,7 @@ const Pricing: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Dépannages section */}
           <div className="flex justify-center">
             <Card className="h-full relative w-full max-w-md border-2 border-[#5865F2] flex flex-col">
@@ -166,16 +166,16 @@ const Pricing: React.FC = () => {
                 </div>
               )}
               
-              <CardHeader className="bg-[#5865F2]/10 pt-4 pb-5">
+              <CardHeader className="bg-[#5865F2]/10 pt-6 pb-6">
                 <div className="flex flex-col items-center text-center">
-                  <div className="flex items-center mb-2">
+                  <div className="flex items-center mb-3">
                     <div className="bg-[#5865F2]/20 rounded-full p-2 mr-2">
                       {serviceGroups[0].icon}
                     </div>
                     <h3 className="text-xl font-bold text-white">{serviceGroups[0].title}</h3>
                   </div>
                   
-                  <p className="text-gray-300 text-sm mb-3">{serviceGroups[0].description}</p>
+                  <p className="text-gray-300 text-sm mb-4">{serviceGroups[0].description}</p>
                   
                   <div className="inline-flex flex-wrap items-center justify-center bg-[#2F3136] rounded-lg p-1 mb-3">
                     <button 
