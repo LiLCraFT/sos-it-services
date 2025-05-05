@@ -477,12 +477,15 @@ const Hero: React.FC = () => {
               <span className="relative z-10">Je veux être dépanné</span>
               <Zap size={16} className="relative z-10 ml-2" />
             </a>
-            <button className="relative px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full border border-white/30 text-white hover:bg-white/15 transition-all flex items-center space-x-2 group overflow-hidden">
+            <a 
+              href="/depannage-informatique" 
+              className="relative px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full border border-white/30 text-white hover:bg-white/15 transition-all flex items-center space-x-2 group overflow-hidden"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent"></div>
               <span className="relative z-10">Découvrir tous nos services</span>
               <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
-            </button>
+            </a>
           </div>
         </div>
       </div>

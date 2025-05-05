@@ -98,7 +98,7 @@ const Faq: React.FC<FaqProps> = ({ showLink = true, showAllQuestions = false }) 
     <section id="faq" className="py-20 pt-10 pb-20 bg-[#2F3136]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Foire Aux Questions</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Foire Aux <span className="text-[#5865F2]">Questions</span></h2>
           <p className="text-gray-300">
             Retrouvez les réponses à nos questions les plus fréquentes. Si vous ne trouvez pas ce que vous cherchez,
             n'hésitez pas à nous contacter directement.
