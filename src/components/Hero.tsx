@@ -369,44 +369,56 @@ const Hero: React.FC = () => {
           <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-center items-stretch mx-auto px-4 py-2 pb-6 max-w-6xl">
              {/* Item 1 - Dépannage à distance */}
              <div className="relative h-full">
-               <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
-                 <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
-                   
-                   <div className="flex flex-col items-center mb-3">
-                     <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
-                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5865F2]">
-                         <path d="M12 3L19 7V17L12 21L5 17V7L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                       </svg>
+               <a 
+                 href="/depannage-informatique"
+                 className="block w-full h-full"
+               >
+                 <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
+                   <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
+                     
+                     <div className="flex flex-col items-center mb-3">
+                       <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
+                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5865F2]">
+                           <path d="M12 3L19 7V17L12 21L5 17V7L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                         </svg>
+                       </div>
+                       <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Dépannage à distance</h3>
+                       <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-[#5865F2]/40 to-transparent my-2"></div>
+                       <p className="text-gray-300 text-xs text-center">Partout en France</p>
                      </div>
-                     <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Dépannage à distance</h3>
-                     <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-[#5865F2]/40 to-transparent my-2"></div>
-                     <p className="text-gray-300 text-xs text-center">Partout en France</p>
                    </div>
                  </div>
-               </div>
+               </a>
              </div>
              
              {/* Item 2 - Intervention rapide */}
              <div className="relative h-full">
-               <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
-                 <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
-                   {/* Badge réponse assurée */}
-                   <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
-                     <div className="bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                       Réponse assurée
+               <a 
+                 href={whatsappUrl}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="block w-full h-full"
+               >
+                 <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
+                   <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
+                     {/* Badge réponse assurée */}
+                     <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                       <div className="bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                         Réponse assurée
+                       </div>
                      </div>
-                   </div>
-                   
-                   <div className="flex flex-col items-center mb-3">
-                     <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
-                       <Zap className="w-6 h-6 text-[#5865F2]" />
+                     
+                     <div className="flex flex-col items-center mb-3">
+                       <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
+                         <Zap className="w-6 h-6 text-[#5865F2]" />
+                       </div>
+                       <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Intervention rapide</h3>
+                       <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-[#5865F2]/40 to-transparent my-2"></div>
+                       <p className="text-gray-300 text-xs text-center">Prenez rendez-vous en ligne</p>
                      </div>
-                     <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Intervention rapide</h3>
-                     <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-[#5865F2]/40 to-transparent my-2"></div>
-                     <p className="text-gray-300 text-xs text-center">Prenez rendez-vous en ligne</p>
                    </div>
                  </div>
-               </div>
+               </a>
              </div>
              
              {/* Item 3 - Satisfait ou remboursé */}
