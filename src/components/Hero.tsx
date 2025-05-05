@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { LifeBuoy, ArrowRight, Monitor, Percent, Zap, CreditCard, Settings, Clock, Send, Users } from 'lucide-react';
 import { FaApple } from 'react-icons/fa';
@@ -6,6 +6,162 @@ import { FaApple } from 'react-icons/fa';
 const Hero: React.FC = () => {
   const whatsappNumber = "33695358625"; // Même numéro que dans Navbar
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
+  
+  // Animation states for dynamic conversation
+  const [visibleMessages, setVisibleMessages] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingMessageIndex, setTypingMessageIndex] = useState(-1);
+  const [typingText, setTypingText] = useState("");
+  const [isAnimationRunning, setIsAnimationRunning] = useState(false);
+  const [showTypingIndicator, setShowTypingIndicator] = useState(false);
+  const [indicatorPosition, setIndicatorPosition] = useState("user"); // "user" or "assistant"
+  
+  // Messages for the conversation
+  const messages = [
+    { sender: "user", text: "Mon PC est très lent, pouvez-vous m'aider ?", time: "10:15" },
+    { sender: "assistant", text: "Un expert est disponible ! Résolution en 30min garantie ou remboursé.", time: "10:15" },
+    { sender: "user", text: "Parfait ! On commence ?", time: "10:16" }
+  ];
+  
+  // Handle typing animation effect
+  useEffect(() => {
+    if (typingMessageIndex >= 0 && typingMessageIndex < messages.length) {
+      const fullText = messages[typingMessageIndex].text;
+      if (typingText.length < fullText.length) {
+        const timer = setTimeout(() => {
+          setTypingText(fullText.substring(0, typingText.length + 1));
+        }, 20);
+        return () => clearTimeout(timer);
+      } else {
+        setIsTyping(false);
+        setTypingMessageIndex(-1);
+        setShowTypingIndicator(false);
+        setVisibleMessages(prev => {
+          const newValue = prev + 1;
+          // If we've shown all messages, mark the animation as complete after the pause
+          if (newValue >= messages.length) {
+            setTimeout(() => {
+              setIsAnimationRunning(false);
+            }, 4000); // 4 second pause after showing all messages
+          }
+          return newValue;
+        });
+      }
+    }
+  }, [typingText, typingMessageIndex, messages]);
+  
+  // Start the conversation animation
+  useEffect(() => {
+    let animationTimer: ReturnType<typeof setTimeout>;
+    
+    // Function to check and start animation cycle if not running
+    const checkAndStartAnimation = () => {
+      if (!isAnimationRunning) {
+        startAnimationCycle();
+      }
+      animationTimer = setTimeout(checkAndStartAnimation, 1000); // Check every second
+    };
+    
+    // Function to reset and start animation cycle
+    const startAnimationCycle = () => {
+      // Only start if not already running
+      if (isAnimationRunning) return;
+      
+      setIsAnimationRunning(true);
+      
+      // Reset states
+      setVisibleMessages(0);
+      setIsTyping(false);
+      setTypingMessageIndex(-1);
+      setTypingText("");
+      setShowTypingIndicator(false);
+      
+      // Schedule the full conversation with typing indicators
+      const schedule = [
+        { time: 300, action: () => { 
+          setShowTypingIndicator(true); 
+          setIndicatorPosition("user"); 
+        }},
+        { time: 1500, action: () => { 
+          setShowTypingIndicator(false);
+          setIsTyping(true);
+          setTypingMessageIndex(0);
+        }},
+        { time: 3500, action: () => {
+          setShowTypingIndicator(true);
+          setIndicatorPosition("assistant");
+        }},
+        { time: 4700, action: () => {
+          setShowTypingIndicator(false);
+          setIsTyping(true);
+          setTypingMessageIndex(1);
+        }},
+        { time: 7000, action: () => {
+          setShowTypingIndicator(true);
+          setIndicatorPosition("user");
+        }},
+        { time: 8200, action: () => {
+          setShowTypingIndicator(false);
+          setIsTyping(true);
+          setTypingMessageIndex(2);
+        }}
+      ];
+      
+      schedule.forEach(item => {
+        setTimeout(item.action, item.time);
+      });
+    };
+    
+    // Start checking immediately
+    checkAndStartAnimation();
+    
+    // Cleanup function to clear any pending timeouts when component unmounts
+    return () => {
+      clearTimeout(animationTimer);
+    };
+  }, [isAnimationRunning]);
+  
+  // Function to render message bubble with typing animation
+  const renderMessage = (message: typeof messages[0], index: number) => {
+    const isUser = message.sender === "user";
+    const isCurrentlyTyping = isTyping && typingMessageIndex === index;
+    const isVisible = index < visibleMessages || isCurrentlyTyping;
+    
+    if (!isVisible) return null;
+    
+    return (
+      <div key={index} className={`flex ${isUser ? "" : "justify-end"}`}>
+        <div className={`${isUser ? "bg-white bg-opacity-5 rounded-lg rounded-tl-none" : "bg-[#5865F2] rounded-lg rounded-tr-none"} p-2 sm:p-3 max-w-[80%] relative`}>
+          <p className={`${isUser ? "text-gray-300" : "text-white"} text-xs sm:text-sm`}>
+            {isCurrentlyTyping ? typingText : message.text}
+            {isCurrentlyTyping && <span className="inline-block w-1 h-3 ml-1 bg-gray-400 animate-pulse"></span>}
+          </p>
+          <p className={`${isUser ? "text-white" : "text-white"} text-[8px] sm:text-[10px] mt-1`}>{message.time} {isUser ? "✓" : "✓✓"}</p>
+        </div>
+      </div>
+    );
+  };
+  
+  // Render the typing indicator ("...")
+  const renderTypingIndicator = () => {
+    if (!showTypingIndicator) return null;
+    
+    const isUser = indicatorPosition === "user";
+    
+    return (
+      <div className={`flex ${isUser ? "" : "justify-end"}`}>
+        <div className={`${isUser ? "bg-white bg-opacity-5 rounded-lg rounded-tl-none" : "bg-[#5865F2] rounded-lg rounded-tr-none"} p-2 sm:p-3 max-w-[80%] relative min-w-[40px]`}>
+          <p className={`${isUser ? "text-gray-300" : "text-white"} text-xs sm:text-sm flex items-center`}>
+            <span className="flex items-center gap-[3px]">
+              <span className="inline-block w-1 h-1 rounded-full bg-current opacity-60 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+              <span className="inline-block w-1 h-1 rounded-full bg-current opacity-60 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              <span className="inline-block w-1 h-1 rounded-full bg-current opacity-60 animate-bounce" style={{ animationDelay: '600ms' }}></span>
+            </span>
+          </p>
+        </div>
+      </div>
+    );
+  };
   
   return (
     <div id="home" className="relative min-h-screen bg-[#36393F] pt-16 overflow-hidden">
@@ -39,7 +195,7 @@ const Hero: React.FC = () => {
                 <div className="text-[#5865F2]">Satisfait ou remboursé</div>
               </h1>
               <p className="text-gray-300 text-lg mb-8 max-w-lg">
-              Confiez vos soucis informatiques à des professionnels. Intervention rapide à distance ou à domicile, avec garantie satisfait ou remboursé. Que ce soit pour un bug, un PC lent ou une aide technique, on s'occupe de tout, depuis chez vous.
+              Confiez vos soucis informatiques à des professionnels. Intervention rapide à distance, avec garantie satisfait ou remboursé. Que ce soit pour un bug, un PC lent ou une aide technique, on s'occupe de tout, depuis chez vous.
               </p>
               <div className="flex flex-wrap gap-4">
                 <a
@@ -48,12 +204,17 @@ const Hero: React.FC = () => {
                   rel="noopener noreferrer"
                   className="rounded-md font-medium transition-all duration-200 inline-flex items-center justify-center bg-[#5865F2] text-white hover:bg-opacity-90 px-6 py-3 text-lg"
                 >
-                  Demander un diagnostic
+                  Diagnostic gratuit
                 </a>
-                <Button variant="outline" size="lg" className="group">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-md font-medium transition-all duration-200 inline-flex items-center justify-center border border-white/20 bg-transparent hover:bg-white/10 text-white px-6 py-3 text-lg group"
+                >
                   Discuter avec un expert
                   <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
-                </Button>
+                </a>
               </div>
               
               <div className="mt-10">
@@ -144,26 +305,8 @@ const Hero: React.FC = () => {
 
                     {/* Chat messages - WhatsApp style */}
                     <div className="space-y-3 sm:space-y-4 pointer-events-none">
-                      <div className="flex">
-                        <div className="bg-white bg-opacity-5 rounded-lg rounded-tl-none p-2 sm:p-3 max-w-[80%] relative">
-                          <p className="text-gray-300 text-xs sm:text-sm">Mon PC est très lent, pouvez-vous m'aider ?</p>
-                          <p className="text-white text-[8px] sm:text-[10px] mt-1">10:15 ✓</p>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end">
-                        <div className="bg-[#5865F2] rounded-lg rounded-tr-none p-2 sm:p-3 max-w-[80%] relative">
-                          <p className="text-white text-xs sm:text-sm">Un expert est disponible ! Résolution en 30min garantie ou remboursé.</p>
-                          <p className="text-white text-[8px] sm:text-[10px] mt-1">10:15 ✓✓</p>
-                        </div>
-                      </div>
-
-                      <div className="flex">
-                        <div className="bg-white bg-opacity-5 rounded-lg rounded-tl-none p-2 sm:p-3 max-w-[80%] relative">
-                          <p className="text-gray-300 text-xs sm:text-sm">Parfait ! On commence ?</p>
-                          <p className="text-white text-[8px] sm:text-[10px] mt-1">10:16 ✓</p>
-                        </div>
-                      </div>
+                      {messages.map((message, index) => renderMessage(message, index))}
+                      {renderTypingIndicator()}
                     </div>
 
                     {/* Message input - WhatsApp style */}
