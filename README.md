@@ -35,7 +35,11 @@ cp .env.example .env.local
 # Initialiser la base de données avec des données de test
 node scripts/init-db.js
 
-# Démarrer l'application en mode développement
+# Démarrer l'application en mode développement (deux options)
+# Option 1: Démarrer frontend et backend en une seule commande
+npm run dev:all
+
+# Option 2: Démarrer séparément dans deux terminaux
 # Terminal 1 (Frontend)
 npm run dev
 
@@ -165,6 +169,33 @@ npm run build
 ### Backend
 ```bash
 cd backend && npm run build
+```
+
+## 📜 Scripts disponibles
+
+Le projet contient plusieurs scripts npm pour faciliter le développement:
+
+```bash
+# Démarrer le frontend et le backend simultanément
+npm run dev:all
+
+# Démarrer uniquement le frontend
+npm run dev:frontend
+
+# Démarrer uniquement le backend
+npm run dev:backend
+
+# Autre façon de démarrer le frontend et le backend (équivalent à dev:all)
+npm run dev
+
+# Construire le frontend pour la production
+npm run build
+
+# Lancer le linting sur le code frontend
+npm run lint
+
+# Prévisualiser la build de production
+npm run preview
 ```
 
 ## 📄 Licence

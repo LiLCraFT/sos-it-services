@@ -151,4 +151,28 @@ Pour construire l'application pour la production:
 npm run build
 ```
 
-Les fichiers générés seront placés dans le répertoire `.next/`. 
+Les fichiers générés seront placés dans le répertoire `.next/`.
+
+## 📜 Scripts disponibles
+
+Le dossier backend contient plusieurs scripts npm pour faciliter le développement:
+
+```bash
+# Démarrer le serveur de développement
+npm run dev
+
+# Construire l'application pour la production
+npm run build
+
+# Démarrer l'application en mode production
+npm run start
+
+# Exécuter les tests
+npm test
+
+# Initialiser la base de données
+node scripts/init-db.js
+
+# Remplir la base de données avec des experts
+node scripts/seed-experts.js
+``` 

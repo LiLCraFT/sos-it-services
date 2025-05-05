@@ -236,12 +236,25 @@ const UserDashboard = () => {
         fieldData.city = `${formData.city} (${postalCode})`;
       }
 
-      const response = await fetch(`http://localhost:3001/api/users/${user._id}`, {
-        method: 'PATCH',  // Utiliser PATCH pour mettre à jour un seul champ
+      const API_URL = 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/users/${user._id}`, {
+        method: 'PUT',  // Utiliser PUT au lieu de PATCH car le backend n'implémente pas PATCH
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify(fieldData),
+        body: JSON.stringify({
+          // Inclure toutes les données de l'utilisateur pour éviter d'écraser les autres champs
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          address: user.address,
+          city: user.city,
+          birthDate: user.birthDate,
+          // Écraser seulement le champ modifié
+          ...fieldData
+        })
       });
       
       if (!response.ok) {
@@ -251,7 +264,14 @@ const UserDashboard = () => {
       const data = await response.json();
       
       // Mettre à jour les informations utilisateur dans le contexte d'authentification
-      updateUser(data);
+      if (data.user) {
+        updateUser(data.user);
+        // Also update localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+      } else {
+        console.error('Format de réponse inattendu:', data);
+        throw new Error('Format de réponse inattendu');
+      }
       
       // Réinitialiser l'état d'édition
       setEditingField(null);

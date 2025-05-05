@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { User, MapPin, Phone, Calendar, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { geocodeByAddress } from 'react-google-places-autocomplete';
 
+// Type pour l'adresse sélectionnée
 type AddressOption = {
   value: {
     description: string;
@@ -11,6 +13,7 @@ type AddressOption = {
   label: string;
 };
 
+// Type pour les composants d'adresse
 type AddressComponents = {
   street_number?: string;
   route?: string;
@@ -18,6 +21,13 @@ type AddressComponents = {
   postal_code?: string;
   country?: string;
 };
+
+// Type pour les composants renvoyés par l'API Google
+interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
 
 const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) => {
   const { user, updateUser } = useAuth();
@@ -48,7 +58,7 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
       let streetNumber = '';
       let route = '';
 
-      results[0].address_components.forEach((component) => {
+      results[0].address_components.forEach((component: AddressComponent) => {
         const types = component.types;
         
         if (types.includes('street_number')) {
@@ -110,10 +120,13 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
         city
       };
 
-      const response = await fetch(`http://localhost:3001/api/users/${user._id}`, {
+      // Use the API_URL from the same place where it's defined in AuthContext
+      const API_URL = 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify(updatedFormData),
       });
@@ -123,7 +136,14 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
       }
       
       const data = await response.json();
-      updateUser(data);
+      if (data.user) {
+        updateUser(data.user);
+        // Also update localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+      } else {
+        console.error('Unexpected response format:', data);
+        throw new Error('Format de réponse inattendu');
+      }
       onSuccess();
     } catch (error) {
       console.error('Error updating profile:', error);

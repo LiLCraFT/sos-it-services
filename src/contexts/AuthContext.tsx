@@ -88,7 +88,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      // Check if response has content before trying to parse JSON
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json') && response.status !== 204) {
+        data = await response.json();
+      } else {
+        data = { error: 'Erreur de connexion' };
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Erreur de connexion');
@@ -113,7 +121,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateUser = (userData: Partial<User>) => {
     if (user) {
-      setUser({ ...user, ...userData });
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     }
   };
 
