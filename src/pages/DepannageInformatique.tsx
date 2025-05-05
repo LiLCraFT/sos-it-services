@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import Services from '../components/Services';
+import Faq from '../components/Faq';
 
 const DepannageInformatique: React.FC = () => {
   useEffect(() => {
@@ -26,6 +27,7 @@ const DepannageInformatique: React.FC = () => {
       </div>
       
       <Services />
+      <Faq showLink={false} showAllQuestions={true} />
     </div>
   );
 };

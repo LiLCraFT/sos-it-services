@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from './ui/Button';
+import { Link as RouterLink } from 'react-router-dom';
 
 interface FaqItem {
   question: string;
@@ -35,11 +36,16 @@ const FaqItem: React.FC<FaqItem> = ({ question, answer }) => {
   );
 };
 
-const Faq: React.FC = () => {
+interface FaqProps {
+  showLink?: boolean;
+  showAllQuestions?: boolean;
+}
+
+const Faq: React.FC<FaqProps> = ({ showLink = true, showAllQuestions = false }) => {
   const whatsappNumber = "33695358625";
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
   
-  const faqItems: FaqItem[] = [
+  const allFaqItems: FaqItem[] = [
     {
       question: 'Combien de temps prend une réparation informatique typique ?',
       answer: 'La plupart des réparations basiques peuvent être effectuées en 24-48 heures. Les problèmes plus complexes peuvent prendre 3-5 jours ouvrables. Nous fournissons toujours une estimation de temps avant de commencer tout travail et offrons une garantie "résolution en 30 minutes ou remboursé" pour certains services à distance.'
@@ -49,28 +55,12 @@ const Faq: React.FC = () => {
       answer: 'Oui, nous offrons des services à domicile pour les particuliers et les entreprises. Les frais de déplacement sont de 25€ pour un rayon jusqu\'à 30 km. Pour les interventions à distance, nous proposons un tarif à partir de 49€ avec diagnostic gratuit inclus et paiement uniquement si le problème est résolu.'
     },
     {
-      question: 'Pouvez-vous récupérer des données d\'un disque dur défaillant ?',
-      answer: 'Dans la plupart des cas, oui. Notre taux de réussite pour la récupération de données est supérieur à 90% pour les disques qui n\'ont pas subi de dommages physiques. Pour les disques physiquement endommagés, nous collaborons avec des services de récupération spécialisés pour maximiser vos chances de récupérer vos données précieuses.'
-    },
-    {
-      question: 'Offrez-vous une garantie sur vos réparations ?',
-      answer: 'Toutes nos réparations sont couvertes par une garantie de 90 jours sur les pièces et la main-d\'œuvre. Nous proposons également une politique "satisfait ou remboursé" pour nos interventions à domicile et un paiement uniquement en cas de résolution pour nos services à distance.'
-    },
-    {
-      question: 'Quelles méthodes de paiement acceptez-vous ?',
-      answer: 'Nous acceptons toutes les principales cartes de crédit, PayPal, Apple Pay, Google Pay et les espèces. Pour les clients professionnels, nous proposons également des modalités de paiement adaptées. De plus, nos services sont éligibles à un crédit d\'impôt de 50% pour les particuliers.'
-    },
-    {
       question: 'Quels types de problèmes informatiques pouvez-vous résoudre ?',
       answer: 'Notre équipe d\'experts peut résoudre une large gamme de problèmes : dépannage logiciel, problèmes de réseau, configuration WiFi, gestion des emails, optimisation des performances PC, support pour applications web, récupération de données, sécurité informatique (suppression de virus) et support d\'imprimantes. Nous intervenons aussi bien pour les particuliers que pour les professionnels.'
     },
     {
-      question: 'Proposez-vous des services pour les entreprises ?',
-      answer: 'Absolument. Nous offrons des services spécialisés pour les entreprises, y compris l\'infogérance, la configuration réseau professionnelle, le support pour les solutions cloud (M365, Google Workspace), et des interventions rapides pour minimiser l\'impact sur votre activité. Des forfaits sur mesure sont disponibles pour répondre aux besoins spécifiques de votre entreprise.'
-    },
-    {
-      question: 'Comment puis-je prendre rendez-vous pour une intervention ?',
-      answer: 'Vous pouvez facilement prendre rendez-vous en nous contactant par WhatsApp, par téléphone ou via notre formulaire de contact en ligne. Pour les problèmes urgents, nous proposons souvent des interventions le jour même. Les diagnostics rapides et les réparations mineures peuvent être effectués sans rendez-vous pour les services à distance.'
+      question: 'Offrez-vous une garantie sur vos réparations ?',
+      answer: 'Toutes nos réparations sont couvertes par une garantie de 90 jours sur les pièces et la main-d\'œuvre. Nous proposons également une politique "satisfait ou remboursé" pour nos interventions à domicile et un paiement uniquement en cas de résolution pour nos services à distance.'
     },
     {
       question: 'Mon ordinateur est très lent, pouvez-vous l\'accélérer ?',
@@ -79,11 +69,33 @@ const Faq: React.FC = () => {
     {
       question: 'Proposez-vous des abonnements pour une assistance régulière ?',
       answer: 'Oui, nous proposons des abonnements d\'assistance illimitée pour une tranquillité permanente. Nos forfaits d\'abonnement incluent des interventions prioritaires, un support téléphonique dédié, et des vérifications régulières de sécurité et de performance. C\'est la solution idéale pour les particuliers qui ont besoin d\'une assistance fréquente ou les entreprises qui souhaitent externaliser leur support informatique.'
+    },
+    {
+      question: 'Pouvez-vous récupérer des données d\'un disque dur défaillant ?',
+      answer: 'Dans la plupart des cas, oui. Notre taux de réussite pour la récupération de données est supérieur à 90% pour les disques qui n\'ont pas subi de dommages physiques. Pour les disques physiquement endommagés, nous collaborons avec des services de récupération spécialisés pour maximiser vos chances de récupérer vos données précieuses.'
+    },
+    {
+      question: 'Quelles méthodes de paiement acceptez-vous ?',
+      answer: 'Nous acceptons toutes les principales cartes de crédit, PayPal, Apple Pay, Google Pay et les espèces. Pour les clients professionnels, nous proposons également des modalités de paiement adaptées. De plus, nos services sont éligibles à un crédit d\'impôt de 50% pour les particuliers.'
+    },
+    {
+      question: 'Proposez-vous des services pour les entreprises ?',
+      answer: 'Absolument. Nous offrons des services spécialisés pour les entreprises, y compris l\'infogérance, la configuration réseau professionnelle, le support pour les solutions cloud (M365, Google Workspace), et des interventions rapides pour minimiser l\'impact sur votre activité. Des forfaits sur mesure sont disponibles pour répondre aux besoins spécifiques de votre entreprise.'
+    },
+    {
+      question: 'Comment puis-je prendre rendez-vous pour une intervention ?',
+      answer: 'Vous pouvez facilement prendre rendez-vous en nous contactant par WhatsApp, par téléphone ou via notre formulaire de contact en ligne. Pour les problèmes urgents, nous proposons souvent des interventions le jour même. Les diagnostics rapides et les réparations mineures peuvent être effectués sans rendez-vous pour les services à distance.'
     }
   ];
+  
+  // Liste réduite de 6 questions pour la page d'accueil
+  const shortFaqItems: FaqItem[] = allFaqItems.slice(0, 6);
+  
+  // Choisir quelle liste afficher
+  const faqItems = showAllQuestions ? allFaqItems : shortFaqItems;
 
   return (
-    <section id="faq" className="py-20 bg-[#2F3136]">
+    <section id="faq" className="py-20 pt-10 pb-20 bg-[#2F3136]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Foire Aux Questions</h2>
@@ -107,7 +119,11 @@ const Faq: React.FC = () => {
         
         <div className="mt-10 text-center">
           <p className="text-gray-300 mb-4">
-            D'autres questions ? Contactez-nous directement :
+            {showLink ? (
+              <><RouterLink to="/depannage-informatique" className="text-[#5865F2] hover:underline">D'autres questions ?</RouterLink> Contactez-nous directement :</>
+            ) : (
+              <>D'autres questions ? Contactez-nous directement :</>
+            )}
           </p>
           <a 
             href={whatsappUrl}
