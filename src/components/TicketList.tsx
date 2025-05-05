@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink } from 'lucide-react';
+import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Attachment {
   filename: string;
@@ -41,13 +41,23 @@ interface Ticket {
   updatedAt: string;
 }
 
-const TicketList: React.FC = () => {
+interface TicketListProps {
+  viewMode: 'cards' | 'table';
+}
+
+type SortField = 'status' | 'title' | 'category' | 'priority' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+
+const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const { user, isAuthenticated } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updateLoading, setUpdateLoading] = useState<{[key: string]: boolean}>({});
   const [dropdownOpen, setDropdownOpen] = useState<{[key: string]: boolean}>({});
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const dropdownRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
 
   const fetchTickets = async () => {
     try {
@@ -228,6 +238,66 @@ const TicketList: React.FC = () => {
     else return (bytes / 1048576).toFixed(1) + ' MB';
   };
 
+  // Fonction de tri des tickets
+  const sortTickets = (ticketsToSort: Ticket[]): Ticket[] => {
+    return [...ticketsToSort].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'category':
+          const categoryA = a.category || 'Autre';
+          const categoryB = b.category || 'Autre';
+          comparison = categoryA.localeCompare(categoryB);
+          break;
+        case 'priority': {
+          const priorityOrder = { urgent: 3, high: 2, medium: 1, low: 0 };
+          comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
+          break;
+        }
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  // Gérer le clic sur un en-tête de colonne
+  const handleSortClick = (field: SortField) => {
+    if (sortField === field) {
+      // Si on clique sur la même colonne, on inverse la direction
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Sinon, on change de colonne et on remet la direction par défaut
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Gestion de la fermeture des dropdowns quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      Object.entries(dropdownOpen).forEach(([ticketId, isOpen]) => {
+        if (isOpen && dropdownRefs.current[ticketId] && !dropdownRefs.current[ticketId]?.contains(event.target as Node)) {
+          closeDropdown(ticketId);
+        }
+      });
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
   if (loading) {
     return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
   }
@@ -247,7 +317,166 @@ const TicketList: React.FC = () => {
     return <div className="text-center py-4 text-gray-300">Aucun ticket trouvé</div>;
   }
 
-  return (
+  // Rendu en mode tableau
+  const renderTableView = () => {
+    const sortedTickets = sortTickets(tickets);
+    
+    // Helper pour afficher l'icône de tri
+    const renderSortIcon = (field: SortField) => {
+      if (sortField !== field) return null;
+      return sortDirection === 'asc' ? 
+        <ChevronUp className="w-4 h-4 ml-1" /> : 
+        <ChevronDown className="w-4 h-4 ml-1" />;
+    };
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-[#2F3136] rounded-md overflow-hidden">
+          <thead className="bg-[#202225]">
+            <tr>
+              <th 
+                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                onClick={() => handleSortClick('status')}
+              >
+                <div className="flex items-center">
+                  <span>Statut</span>
+                  {renderSortIcon('status')}
+                </div>
+              </th>
+              <th 
+                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                onClick={() => handleSortClick('title')}
+              >
+                <div className="flex items-center">
+                  <span>Titre</span>
+                  {renderSortIcon('title')}
+                </div>
+              </th>
+              <th 
+                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                onClick={() => handleSortClick('category')}
+              >
+                <div className="flex items-center">
+                  <span>Catégorie</span>
+                  {renderSortIcon('category')}
+                </div>
+              </th>
+              <th 
+                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                onClick={() => handleSortClick('priority')}
+              >
+                <div className="flex items-center">
+                  <span>Priorité</span>
+                  {renderSortIcon('priority')}
+                </div>
+              </th>
+              <th 
+                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                onClick={() => handleSortClick('createdAt')}
+              >
+                <div className="flex items-center">
+                  <span>Créé le</span>
+                  {renderSortIcon('createdAt')}
+                </div>
+              </th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#202225]">
+            {sortedTickets.map((ticket) => (
+              <tr key={ticket._id} className="hover:bg-[#36393F] transition-colors">
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(ticket.status)}`}>
+                    {translateStatus(ticket.status)}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-sm text-white">{ticket.title}</td>
+                <td className="px-4 py-3 text-sm text-gray-300">
+                  <div className="flex items-center">
+                    <Folder className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate max-w-[150px]">
+                      {ticket.category || 'Autre'}{(ticket.subcategory && ticket.subcategory !== 'Non spécifié') ? ` > ${ticket.subcategory}` : ticket.category ? '' : ' > Non spécifié'}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex items-center">
+                    {getPriorityIcon(ticket.priority)}
+                    <span className="ml-1 text-sm text-gray-300">{translatePriority(ticket.priority)}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-300">{formatDate(ticket.createdAt)}</td>
+                <td className="px-4 py-3 text-right text-sm whitespace-nowrap">
+                  <div className="flex justify-end">
+                    <a
+                      href={`/tickets/${ticket._id}`}
+                      className="text-blue-500 hover:text-blue-400 mr-3"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    
+                    {user && ticket.createdBy._id === user._id && ticket.status !== 'closed' && (
+                      <div className="relative">
+                        <button 
+                          onClick={() => toggleDropdown(ticket._id)}
+                          className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
+                          aria-label="Plus d'options"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        
+                        {dropdownOpen[ticket._id] && (
+                          <div 
+                            ref={el => dropdownRefs.current[ticket._id] = el}
+                            className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
+                          >
+                            <div className="py-1" role="menu" aria-orientation="vertical">
+                              <a
+                                href={`/tickets/${ticket._id}`}
+                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                                role="menuitem"
+                              >
+                                <ExternalLink className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                                <span className="truncate">Voir les détails</span>
+                              </a>
+                              
+                              <div className="my-1 border-t border-[#202225]"></div>
+                              
+                              <button
+                                onClick={() => updateTicketStatus(ticket._id, 'resolved')}
+                                disabled={updateLoading[ticket._id]}
+                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                                role="menuitem"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                                <span className="truncate">Marquer comme résolu</span>
+                              </button>
+                              <button
+                                onClick={() => updateTicketStatus(ticket._id, 'closed')}
+                                disabled={updateLoading[ticket._id]}
+                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                                role="menuitem"
+                              >
+                                <X className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                                <span className="truncate">Clôturer le ticket</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Rendu en mode carte (vue actuelle)
+  const renderCardView = () => (
     <div className="space-y-4">
       {tickets.map((ticket) => (
         <div key={ticket._id} className="bg-[#36393F] rounded-md p-4 shadow-sm">
@@ -272,7 +501,10 @@ const TicketList: React.FC = () => {
                   </button>
                   
                   {dropdownOpen[ticket._id] && (
-                    <div className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10">
+                    <div 
+                      ref={el => dropdownRefs.current[ticket._id] = el}
+                      className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
+                    >
                       <div className="py-1" role="menu" aria-orientation="vertical">
                         <a
                           href={`/tickets/${ticket._id}`}
@@ -381,6 +613,13 @@ const TicketList: React.FC = () => {
           </div>
         </div>
       ))}
+    </div>
+  );
+
+  return (
+    <div>
+      {/* Affichage conditionnel selon le mode */}
+      {viewMode === 'cards' ? renderCardView() : renderTableView()}
     </div>
   );
 };

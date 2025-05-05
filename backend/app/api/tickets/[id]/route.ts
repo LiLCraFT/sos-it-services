@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Ticket from '@/models/Ticket';
+import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 
 // Helper function to get user ID from JWT token
@@ -75,15 +76,71 @@ export async function PUT(
       return NextResponse.json({ error: 'Ticket non trouvé' }, { status: 404 });
     }
     
+    // Get the user for audit
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+    
     // Check if user has permission to update
-    if (ticket.createdBy.toString() !== userId) {
+    // On permet aussi aux administrateurs et aux techniciens assignés de modifier
+    const canModify = 
+      ticket.createdBy.toString() === userId || 
+      user.role === 'admin' || 
+      (ticket.assignedTo && ticket.assignedTo.toString() === userId);
+    
+    if (!canModify) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
+    }
+    
+    // Préparer l'événement d'audit
+    const auditEvent = {
+      date: new Date(),
+      action: 'update',
+      user: {
+        _id: userId,
+        name: `${user.firstName} ${user.lastName}`
+      },
+      details: {}
+    };
+    
+    // Enregistrer les changements spécifiques
+    if (data.status && data.status !== ticket.status) {
+      auditEvent.action = 'status_change';
+      auditEvent.details = {
+        from: ticket.status,
+        to: data.status
+      };
+    }
+    
+    if (data.assignedTo && (!ticket.assignedTo || data.assignedTo !== ticket.assignedTo.toString())) {
+      const assignedUser = await User.findById(data.assignedTo);
+      if (assignedUser) {
+        auditEvent.action = 'assignment';
+        auditEvent.details = {
+          from: ticket.assignedTo ? ticket.assignedTo.toString() : 'unassigned',
+          to: data.assignedTo,
+          toName: `${assignedUser.firstName} ${assignedUser.lastName}`
+        };
+      }
+    }
+    
+    // Mettre à jour le ticket - utiliser $push pour ajouter à l'array auditTrail
+    const update = {
+      ...data,
+      $push: { auditTrail: auditEvent }
+    };
+    
+    // Supprimer auditTrail de l'objet principal pour éviter la duplication
+    if (update.auditTrail) {
+      delete update.auditTrail;
     }
     
     // Update the ticket
     const updatedTicket = await Ticket.findByIdAndUpdate(
       params.id,
-      { $set: data },
+      update,
       { new: true, runValidators: true }
     ).populate('createdBy', 'firstName lastName email')
      .populate('targetUser', 'firstName lastName email')

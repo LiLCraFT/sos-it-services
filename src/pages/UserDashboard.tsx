@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
@@ -24,6 +24,11 @@ const UserDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [profileImage, setProfileImage] = useState(user?.profileImage || '');
   const [showCreateTicket, setShowCreateTicket] = useState(false);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
+    // Récupérer le mode d'affichage depuis le localStorage ou utiliser 'cards' par défaut
+    const savedViewMode = localStorage.getItem('ticketViewMode');
+    return (savedViewMode === 'cards' || savedViewMode === 'table') ? savedViewMode : 'cards';
+  });
   
   // États pour l'édition des champs
   const [editingField, setEditingField] = useState<EditableField | null>(null);
@@ -67,6 +72,11 @@ const UserDashboard = () => {
       });
     }
   }, [user]);
+  
+  // Mettre à jour le localStorage quand le mode d'affichage change
+  useEffect(() => {
+    localStorage.setItem('ticketViewMode', viewMode);
+  }, [viewMode]);
   
   // Rediriger vers la page d'accueil si l'utilisateur n'est pas connecté
   if (!isAuthenticated) {
@@ -554,13 +564,33 @@ const UserDashboard = () => {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-semibold text-white">Mes tickets</h3>
-                  <button
-                    onClick={() => setShowCreateTicket(true)}
-                    className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none flex items-center"
-                  >
-                    <Ticket className="w-4 h-4 mr-2" />
-                    Créer un ticket
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    {/* Switcher pour basculer entre les modes d'affichage */}
+                    <div className="inline-flex items-center bg-[#36393F] rounded-md mr-3">
+                      <button 
+                        onClick={() => setViewMode('cards')} 
+                        className={`px-3 py-2 rounded-l-md flex items-center text-sm ${viewMode === 'cards' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#36393F]'}`}
+                      >
+                        <Grid className="w-4 h-4 mr-2" />
+                        Cartes
+                      </button>
+                      <button 
+                        onClick={() => setViewMode('table')} 
+                        className={`px-3 py-2 rounded-r-md flex items-center text-sm ${viewMode === 'table' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#36393F]'}`}
+                      >
+                        <List className="w-4 h-4 mr-2" />
+                        Tableau
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => setShowCreateTicket(true)}
+                      className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none flex items-center"
+                    >
+                      <Ticket className="w-4 h-4 mr-2" />
+                      Créer un ticket
+                    </button>
+                  </div>
                 </div>
 
                 {showCreateTicket ? (
@@ -569,7 +599,7 @@ const UserDashboard = () => {
                     onCancel={() => setShowCreateTicket(false)} 
                   />
                 ) : (
-                  <TicketList />
+                  <TicketList viewMode={viewMode} />
                 )}
               </div>
             )}

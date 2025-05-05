@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Ticket from '@/models/Ticket';
 import jwt from 'jsonwebtoken';
+import User from '@/models/User';
 
 // Helper function to get user ID from JWT token
 const getUserIdFromToken = (req: NextRequest): string | null => {
@@ -124,11 +125,33 @@ export async function POST(req: NextRequest) {
       );
     }
     
+    // Récupérer l'utilisateur pour l'audit
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+    
+    // Créer un événement d'audit pour la création du ticket
+    const creationAudit = {
+      date: new Date(),
+      action: 'creation',
+      user: {
+        _id: userId,
+        name: `${user.firstName} ${user.lastName}`
+      },
+      details: {
+        title: data.title,
+        category: data.category
+      }
+    };
+    
     // Create ticket
     const ticketData = {
       ...data,
       createdBy: userId,
-      attachments: attachments.length > 0 ? attachments : undefined
+      attachments: attachments.length > 0 ? attachments : undefined,
+      auditTrail: [creationAudit]
     };
     
     const ticket = await Ticket.create(ticketData);

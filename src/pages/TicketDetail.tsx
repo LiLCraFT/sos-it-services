@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertTriangle, Check, Clock, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, Download, X, CheckCircle, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, Check, Clock, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, Download, X, CheckCircle, ArrowLeft, History, CheckSquare, RefreshCw, List, MoreVertical, ChevronDown } from 'lucide-react';
 
 interface Attachment {
   filename: string;
@@ -9,6 +9,16 @@ interface Attachment {
   path: string;
   mimetype: string;
   size: number;
+}
+
+interface AuditEvent {
+  date: Date;
+  action: string;
+  user: {
+    _id: string;
+    name: string;
+  };
+  details?: any;
 }
 
 interface Ticket {
@@ -20,6 +30,7 @@ interface Ticket {
   category: string;
   subcategory: string;
   attachments?: Attachment[];
+  auditTrail?: AuditEvent[];
   createdBy: {
     _id: string;
     firstName: string;
@@ -50,6 +61,7 @@ const TicketDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -219,6 +231,75 @@ const TicketDetail: React.FC = () => {
     }
   };
 
+  // Fonction pour obtenir une icône et une couleur pour chaque type d'action
+  const getAuditActionInfo = (action: string) => {
+    switch (action) {
+      case 'creation':
+        return { 
+          icon: <CheckSquare className="w-4 h-4" />, 
+          color: 'text-blue-400', 
+          label: 'Création du ticket' 
+        };
+      case 'status_change':
+        return { 
+          icon: <RefreshCw className="w-4 h-4" />, 
+          color: 'text-yellow-400', 
+          label: 'Changement de statut' 
+        };
+      case 'assignment':
+        return { 
+          icon: <UserCheck className="w-4 h-4" />, 
+          color: 'text-green-400', 
+          label: 'Assignation' 
+        };
+      case 'update':
+      default:
+        return { 
+          icon: <Clock className="w-4 h-4" />, 
+          color: 'text-gray-400', 
+          label: 'Mise à jour' 
+        };
+    }
+  };
+
+  // Fonction pour formater un événement d'audit en texte lisible
+  const formatAuditEvent = (event: AuditEvent) => {
+    const { action, details } = event;
+    
+    switch (action) {
+      case 'creation':
+        return 'Ticket créé';
+      case 'status_change':
+        if (details?.from && details?.to) {
+          return `Statut changé de "${translateStatus(details.from)}" à "${translateStatus(details.to)}"`;
+        }
+        return 'Statut mis à jour';
+      case 'assignment':
+        if (details?.toName) {
+          return `Assigné à ${details.toName}`;
+        }
+        return 'Assignation modifiée';
+      case 'update':
+      default:
+        return 'Ticket mis à jour';
+    }
+  };
+
+  // Fonction pour fermer le dropdown quand on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const dropdown = document.getElementById('action-dropdown');
+      if (dropdown && !dropdown.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -366,38 +447,114 @@ const TicketDetail: React.FC = () => {
               </div>
             </div>
           )}
-          
-          {/* Actions sur le ticket */}
-          {canModifyTicket() && ticket.status !== 'closed' && (
-            <div className="bg-[#2F3136] border border-[#202225] rounded-md p-5">
-              <div className="flex items-center mb-3">
-                <span className="text-gray-300 text-sm font-medium">Actions</span>
-              </div>
-              <div className="flex space-x-3">
-                {ticket.status !== 'resolved' && (
-                  <button
-                    onClick={() => updateTicketStatus('resolved')}
-                    disabled={updateLoading}
-                    className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors disabled:opacity-50"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Marquer comme résolu
-                  </button>
-                )}
-                
-                <button
-                  onClick={() => updateTicketStatus('closed')}
-                  disabled={updateLoading}
-                  className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors disabled:opacity-50"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Clôturer le ticket
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Boutons d'action et retour */}
+      <div className="flex justify-end mt-6 space-x-3">
+        {/* Dropdown des actions */}
+        {canModifyTicket() && ticket.status !== 'closed' && (
+          <div className="relative" id="action-dropdown">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center px-4 py-2 bg-[#424549] hover:bg-[#36393F] text-white rounded-md transition-colors shadow-md"
+            >
+              <MoreVertical className="w-4 h-4 mr-2" />
+              Actions
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </button>
+            
+            {dropdownOpen && (
+              <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10">
+                <div className="py-1" role="menu">
+                  {ticket.status !== 'resolved' && (
+                    <button
+                      onClick={() => {
+                        updateTicketStatus('resolved');
+                        setDropdownOpen(false);
+                      }}
+                      disabled={updateLoading}
+                      className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                      role="menuitem"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                      <span>Marquer comme résolu</span>
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => {
+                      updateTicketStatus('closed');
+                      setDropdownOpen(false);
+                    }}
+                    disabled={updateLoading}
+                    className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+                    role="menuitem"
+                  >
+                    <X className="w-4 h-4 mr-2 text-red-500" />
+                    <span>Clôturer le ticket</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Bouton pour revenir à la liste */}
+        <button
+          onClick={() => {
+            // Pas besoin de passer de paramètre ici, car le mode d'affichage est stocké dans localStorage
+            navigate('/mon-espace?tab=tickets');
+          }}
+          className="flex items-center px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-md transition-colors shadow-md"
+        >
+          <List className="w-4 h-4 mr-2" />
+          Revenir à la liste
+        </button>
+      </div>
+      
+      {/* Historique d'audit */}
+      {ticket.auditTrail && ticket.auditTrail.length > 0 && (
+        <div className="bg-[#36393F] border border-[#202225] rounded-md p-5 mt-6">
+          <div className="flex items-center mb-4">
+            <History className="w-5 h-5 text-gray-400 mr-2" />
+            <span className="text-gray-300 text-sm font-medium">Historique des actions</span>
+          </div>
+          
+          <div className="space-y-3">
+            {ticket.auditTrail.slice().reverse().map((event, index) => {
+              const { icon, color, label } = getAuditActionInfo(event.action);
+              const date = new Date(event.date);
+              
+              return (
+                <div key={index} className="flex">
+                  <div className="mr-3 flex-shrink-0">
+                    <div className={`w-8 h-8 rounded-full bg-[#202225] flex items-center justify-center ${color}`}>
+                      {icon}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                      <span className="text-sm font-medium text-white">
+                        {label}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {formatDate(date.toISOString())}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-300 mt-1">
+                      {formatAuditEvent(event)}
+                    </p>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Par {event.user.name}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
