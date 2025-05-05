@@ -6,6 +6,7 @@ import Pricing from './components/Pricing';
 import Team from './components/Team';
 import Faq from './components/Faq';
 import Footer from './components/Footer';
+import TrustpilotWidget from './components/TrustpilotWidget';
 import { AuthProvider } from './contexts/AuthContext';
 import UserDashboard from './pages/UserDashboard';
 import DepannageInformatique from './pages/DepannageInformatique';
@@ -14,6 +15,7 @@ import DepannageInformatique from './pages/DepannageInformatique';
 const HomePage = () => (
   <>
     <Hero />
+    <TrustpilotWidget />
     <Pricing />
     <Team />
     <Faq />
