@@ -48,6 +48,9 @@ const Pricing: React.FC = () => {
   const [abonnementType, setAbonnementType] = useState<'solo' | 'famille'>('solo');
   const [depannageType, setDepannageType] = useState<'distance' | 'domicile'>('distance');
   
+  const whatsappNumber = "33695358625"; // Remplacez par votre numéro WhatsApp
+  const whatsappUrl = `https://wa.me/${whatsappNumber}`;
+
   const abonnements: Record<'solo' | 'famille', AbonnementOption> = {
     solo: {
       name: "Solo",
@@ -339,10 +342,41 @@ const Pricing: React.FC = () => {
             <Shield className="text-[#5865F2] h-8 w-8 mr-3" />
             <h3 className="text-2xl font-bold text-white">Besoin d'un service personnalisé ?</h3>
           </div>
-          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+          <p className="text-gray-300 mb-4 max-w-2xl mx-auto">
             Nous proposons des solutions sur mesure adaptées à vos besoins spécifiques. Contactez-nous pour un devis gratuit.
           </p>
-          <Button variant="primary" size="lg" className="px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-6">
+            <div className="bg-[#36393F] p-4 rounded-lg border border-gray-700 flex flex-col items-center text-center h-32">
+              <div className="bg-[#5865F2]/20 rounded-full p-3 mb-2">
+                <Clock className="text-[#5865F2] h-5 w-5" />
+              </div>
+              <span className="text-white text-sm font-medium">Intervention +60min</span>
+            </div>
+            <div className="bg-[#36393F] p-4 rounded-lg border border-gray-700 flex flex-col items-center text-center h-32">
+              <div className="bg-[#5865F2]/20 rounded-full p-3 mb-2">
+                <Home className="text-[#5865F2] h-5 w-5" />
+              </div>
+              <span className="text-white text-sm font-medium">Domicile non couvert par un expert</span>
+            </div>
+            <div className="bg-[#36393F] p-4 rounded-lg border border-gray-700 flex flex-col items-center text-center h-32">
+              <div className="bg-[#5865F2]/20 rounded-full p-3 mb-2">
+                <Settings className="text-[#5865F2] h-5 w-5" />
+              </div>
+              <span className="text-white text-sm font-medium">Configuration pour les professionnels</span>
+            </div>
+            <div className="bg-[#36393F] p-4 rounded-lg border border-gray-700 flex flex-col items-center text-center h-32">
+              <div className="bg-[#5865F2]/20 rounded-full p-3 mb-2">
+                <Monitor className="text-[#5865F2] h-5 w-5" />
+              </div>
+              <span className="text-white text-sm font-medium">Matériel spécifique</span>
+            </div>
+          </div>
+          <Button 
+            variant="primary" 
+            size="lg" 
+            className="px-8"
+            onClick={() => window.open(whatsappUrl, '_blank')}
+          >
             Demander un devis
           </Button>
         </div>
