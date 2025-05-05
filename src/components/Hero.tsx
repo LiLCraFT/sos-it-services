@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
-import { LifeBuoy, ArrowRight, Monitor, Percent, Zap, CreditCard, Settings, Clock, Send, Users } from 'lucide-react';
+import { LifeBuoy, ArrowRight, Monitor, Percent, Zap, CreditCard, Settings, Clock, Send, Users, BadgeCheck } from 'lucide-react';
 import { FaApple } from 'react-icons/fa';
 
 const Hero: React.FC = () => {
@@ -164,14 +164,14 @@ const Hero: React.FC = () => {
   };
   
   return (
-    <div id="home" className="relative min-h-screen bg-[#36393F] pt-16 overflow-hidden">
+    <div id="home" className="relative min-h-screen bg-[#36393F] pt-8 overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <div className="absolute top-[10%] left-[-5%] w-[40%] h-[40%] bg-[#5865F2] opacity-10 rounded-full blur-[100px]"></div>
         <div className="absolute bottom-[10%] right-[-5%] w-[40%] h-[40%] bg-[#5865F2] opacity-10 rounded-full blur-[100px]"></div>
       </div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24 relative z-10">
         <div className="flex flex-col lg:flex-row items-center">
           <div className="lg:w-1/2 pl-0" style={{ marginLeft: "3%" }}>
             {/* Ajout de l'image de fond */}
@@ -194,7 +194,7 @@ const Hero: React.FC = () => {
                 <div>Votre diagnostic gratuit</div>
                 <div className="text-[#5865F2]">Satisfait ou remboursé</div>
               </h1>
-              <p className="text-gray-300 text-lg mb-8 max-w-lg">
+              <p className="text-gray-300 text-lg mb-8 max-w-xl">
               Confiez vos soucis informatiques à des professionnels. Intervention rapide à distance, avec garantie satisfait ou remboursé. Que ce soit pour un bug, un PC lent ou une aide technique, on s'occupe de tout, depuis chez vous.
               </p>
               <div className="flex flex-wrap gap-4">
@@ -359,73 +359,79 @@ const Hero: React.FC = () => {
           <div className="absolute inset-0 bg-grid-blue-500/[0.03] bg-[length:20px_20px] -z-10"></div>
           
           {/* Cercle central */}
-          <div className="flex flex-col items-center justify-center text-center pb-12">
+          <div className="flex flex-col items-center justify-center text-center pb-8">
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2]/20 text-[#5865F2] mb-4">
+              <BadgeCheck size={16} className="mr-1.5" />
+              <span className="text-sm font-medium">Nos avantages</span>
+            </div>
           </div>
           
-          <div className="relative flex flex-col md:flex-row justify-center items-center mx-auto px-4 py-2 pb-6 max-w-6xl">
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-center items-stretch mx-auto px-4 py-2 pb-6 max-w-6xl">
              {/* Item 1 - Dépannage à distance */}
-             <div className="relative w-full md:w-[280px] mb-5 md:mb-0 md:mx-3">
-               <div className="w-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
-                 <div className="relative bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6 flex flex-col justify-center min-h-[150px] overflow-hidden">
-                   {/* Effet vitré/reflet supérieur */}
-                   <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-2xl"></div>
-                   <div className="absolute -left-10 -top-10 w-20 h-20 bg-[#5865F2]/30 rounded-full blur-xl"></div>
-                   <div className="absolute -right-10 -bottom-10 w-20 h-20 bg-[#5865F2]/20 rounded-full blur-xl"></div>
-                   <div className="absolute inset-0 bg-white/5"></div>
-                   <div className="absolute bottom-0 right-0 w-full h-full bg-gradient-to-tl from-white/10 to-transparent rounded-br-2xl"></div>
+             <div className="relative h-full">
+               <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
+                 <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
                    
                    <div className="flex flex-col items-center mb-3">
-                     <div className="bg-[#36393F]/70 rounded-full p-3 flex-shrink-0 mb-4">
-                       <Monitor className="w-6 h-6 text-[#5865F2]" />
+                     <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
+                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5865F2]">
+                         <path d="M12 3L19 7V17L12 21L5 17V7L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                       </svg>
                      </div>
                      <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Dépannage à distance</h3>
                      <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-[#5865F2]/40 to-transparent my-2"></div>
                      <p className="text-gray-300 text-xs text-center">Partout en France</p>
                    </div>
                  </div>
-                 {/* Triangle pointant vers le bas pour l'effet bulle - droite */}
-                 <div className="hidden md:block absolute -bottom-2 right-4 w-4 h-4 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl rotate-45 border-r border-b border-white/30"></div>
                </div>
              </div>
              
-             {/* Item 2 - Satisfait ou remboursé */}
-             <div className="relative w-full md:w-[280px] mb-5 md:mb-0 md:mx-3">
-               <div className="w-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
-                 <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6 flex flex-col justify-center min-h-[150px] overflow-hidden">
-                   {/* Effet vitré/reflet supérieur */}
-                   <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-2xl"></div>
-                   <div className="absolute -left-10 -top-10 w-20 h-20 bg-purple-500/20 rounded-full blur-xl"></div>
-                   <div className="absolute -right-10 -bottom-10 w-20 h-20 bg-blue-500/20 rounded-full blur-xl"></div>
-                   <div className="absolute inset-0 bg-white/5"></div>
-                   <div className="absolute bottom-0 right-0 w-full h-full bg-gradient-to-tl from-white/10 to-transparent rounded-br-2xl"></div>
+             {/* Item 2 - Intervention rapide */}
+             <div className="relative h-full">
+               <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
+                 <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
+                   {/* Badge réponse assurée */}
+                   <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                     <div className="bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                       Réponse assurée
+                     </div>
+                   </div>
                    
                    <div className="flex flex-col items-center mb-3">
-                     <div className="bg-[#36393F]/70 rounded-full p-3 flex-shrink-0 mb-4">
+                     <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
+                       <Zap className="w-6 h-6 text-[#5865F2]" />
+                     </div>
+                     <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Intervention rapide</h3>
+                     <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-[#5865F2]/40 to-transparent my-2"></div>
+                     <p className="text-gray-300 text-xs text-center">Prenez rendez-vous en ligne</p>
+                   </div>
+                 </div>
+               </div>
+             </div>
+             
+             {/* Item 3 - Satisfait ou remboursé */}
+             <div className="relative h-full">
+               <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
+                 <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
+                   <div className="flex flex-col items-center mb-3">
+                     <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
                        <CreditCard className="w-6 h-6 text-[#5865F2]" />
                      </div>
                      <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Satisfait ou remboursé</h3>
-                     <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-white/30 to-transparent my-2"></div>
-                     <p className="text-gray-300 text-xs text-center">Seulement si résolu</p>
+                     <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-[#5865F2]/40 to-transparent my-2"></div>
+                     <p className="text-gray-300 text-xs text-center">Débité seulement si résolu</p>
                    </div>
                  </div>
-                 {/* Triangle pointant vers le bas pour l'effet bulle - gauche */}
-                 <div className="hidden md:block absolute -bottom-2 right-4 w-4 h-4 bg-white/10 backdrop-blur-xl rotate-45 border-r border-b border-white/30"></div>
                </div>
              </div>
              
-             {/* Item 3 - Crédit d'impôt */}
-             <div className="relative w-full md:w-[280px] mb-5 md:mb-0 md:mx-3">
-               <div className="w-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
-                 <div className="relative bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6 flex flex-col justify-center min-h-[150px] overflow-hidden">
-                   {/* Effet vitré/reflet supérieur */}
-                   <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-2xl"></div>
-                   <div className="absolute -left-10 -top-10 w-20 h-20 bg-[#5865F2]/30 rounded-full blur-xl"></div>
-                   <div className="absolute -right-10 -bottom-10 w-20 h-20 bg-[#5865F2]/20 rounded-full blur-xl"></div>
-                   <div className="absolute inset-0 bg-white/5"></div>
-                   <div className="absolute bottom-0 right-0 w-full h-full bg-gradient-to-tl from-white/10 to-transparent rounded-br-2xl"></div>
+             {/* Item 4 - Crédit d'impôt */}
+             <div className="relative h-full">
+               <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
+                 <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
                    
                    <div className="flex flex-col items-center mb-3">
-                     <div className="bg-[#36393F]/70 rounded-full p-3 flex-shrink-0 mb-4">
+                     <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
                        <Percent className="w-6 h-6 text-[#5865F2]" />
                      </div>
                      <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Crédit d'impôt 50%</h3>
@@ -433,33 +439,6 @@ const Hero: React.FC = () => {
                      <p className="text-gray-300 text-xs text-center">Sous réserve d'éligibilité</p>
                    </div>
                  </div>
-                 {/* Triangle pointant vers le bas pour l'effet bulle - droite */}
-                 <div className="hidden md:block absolute -bottom-2 right-4 w-4 h-4 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl rotate-45 border-r border-b border-white/30"></div>
-               </div>
-             </div>
-             
-             {/* Item 4 - Intervention rapide */}
-             <div className="relative w-full md:w-[280px] mb-5 md:mb-0 md:mx-3">
-               <div className="w-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
-                 <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6 flex flex-col justify-center min-h-[150px] overflow-hidden">
-                   {/* Effet vitré/reflet supérieur */}
-                   <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-2xl"></div>
-                   <div className="absolute -left-10 -top-10 w-20 h-20 bg-cyan-500/20 rounded-full blur-xl"></div>
-                   <div className="absolute -right-10 -bottom-10 w-20 h-20 bg-orange-500/20 rounded-full blur-xl"></div>
-                   <div className="absolute inset-0 bg-white/5"></div>
-                   <div className="absolute bottom-0 right-0 w-full h-full bg-gradient-to-tl from-white/10 to-transparent rounded-br-2xl"></div>
-                   
-                   <div className="flex flex-col items-center mb-3">
-                     <div className="bg-[#36393F]/70 rounded-full p-3 flex-shrink-0 mb-4">
-                       <Zap className="w-6 h-6 text-[#5865F2]" />
-                     </div>
-                     <h3 className="text-white font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis text-center">Intervention rapide</h3>
-                     <div className="h-[1px] w-3/4 bg-gradient-to-r from-transparent via-white/30 to-transparent my-2"></div>
-                     <p className="text-gray-300 text-xs text-center">Prenez rendez-vous en ligne</p>
-                   </div>
-                 </div>
-                 {/* Triangle pointant vers le bas pour l'effet bulle - gauche */}
-                 <div className="hidden md:block absolute -bottom-2 right-4 w-4 h-4 bg-white/10 backdrop-blur-xl rotate-45 border-r border-b border-white/30"></div>
                </div>
              </div>
           </div>
