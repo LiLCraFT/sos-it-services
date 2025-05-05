@@ -10,6 +10,7 @@ import TrustpilotWidget from './components/TrustpilotWidget';
 import { AuthProvider } from './contexts/AuthContext';
 import UserDashboard from './pages/UserDashboard';
 import DepannageInformatique from './pages/DepannageInformatique';
+import TicketDetail from './pages/TicketDetail';
 
 // HomePage component pour regrouper les sections de la page d'accueil
 const HomePage = () => (
@@ -46,6 +47,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/depannage-informatique" element={<DepannageInformatique />} />
             <Route path="/mon-espace" element={<UserDashboard />} />
+            <Route path="/tickets/:id" element={<TicketDetail />} />
           </Routes>
           <Footer />
         </div>

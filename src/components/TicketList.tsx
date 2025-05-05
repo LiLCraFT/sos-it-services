@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download } from 'lucide-react';
+import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink } from 'lucide-react';
 
 interface Attachment {
   filename: string;
@@ -46,6 +46,8 @@ const TicketList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updateLoading, setUpdateLoading] = useState<{[key: string]: boolean}>({});
+  const [dropdownOpen, setDropdownOpen] = useState<{[key: string]: boolean}>({});
 
   const fetchTickets = async () => {
     try {
@@ -82,6 +84,58 @@ const TicketList: React.FC = () => {
       fetchTickets();
     }
   }, [isAuthenticated]);
+
+  const toggleDropdown = (ticketId: string) => {
+    setDropdownOpen(prev => ({
+      ...prev,
+      [ticketId]: !prev[ticketId]
+    }));
+  };
+
+  const closeDropdown = (ticketId: string) => {
+    setDropdownOpen(prev => ({
+      ...prev,
+      [ticketId]: false
+    }));
+  };
+
+  const updateTicketStatus = async (ticketId: string, status: 'closed' | 'resolved') => {
+    try {
+      setUpdateLoading(prev => ({ ...prev, [ticketId]: true }));
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        setError('Non authentifié');
+        return;
+      }
+      
+      const response = await fetch(`http://localhost:3001/api/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de la mise à jour du ticket');
+      }
+      
+      // Mettre à jour l'état local du ticket
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket._id === ticketId ? { ...ticket, status } : ticket
+        )
+      );
+      
+      closeDropdown(ticketId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setUpdateLoading(prev => ({ ...prev, [ticketId]: false }));
+    }
+  };
 
   // Retourner un icône basé sur la priorité
   const getPriorityIcon = (priority: string) => {
@@ -202,9 +256,60 @@ const TicketList: React.FC = () => {
               {getPriorityIcon(ticket.priority)}
               <h3 className="text-white font-medium ml-2">{ticket.title}</h3>
             </div>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(ticket.status)}`}>
-              {translateStatus(ticket.status)}
-            </span>
+            <div className="flex items-center">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(ticket.status)}`}>
+                {translateStatus(ticket.status)}
+              </span>
+              
+              {user && ticket.createdBy._id === user._id && ticket.status !== 'closed' && (
+                <div className="relative ml-2">
+                  <button 
+                    onClick={() => toggleDropdown(ticket._id)}
+                    className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
+                    aria-label="Plus d'options"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                  
+                  {dropdownOpen[ticket._id] && (
+                    <div className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10">
+                      <div className="py-1" role="menu" aria-orientation="vertical">
+                        <a
+                          href={`/tickets/${ticket._id}`}
+                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                          role="menuitem"
+                          onClick={() => closeDropdown(ticket._id)}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                          <span className="truncate">Voir les détails</span>
+                        </a>
+                        
+                        <div className="my-1 border-t border-[#202225]"></div>
+                        
+                        <button
+                          onClick={() => updateTicketStatus(ticket._id, 'resolved')}
+                          disabled={updateLoading[ticket._id]}
+                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                          role="menuitem"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                          <span className="truncate">Marquer comme résolu</span>
+                        </button>
+                        <button
+                          onClick={() => updateTicketStatus(ticket._id, 'closed')}
+                          disabled={updateLoading[ticket._id]}
+                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                          role="menuitem"
+                        >
+                          <X className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                          <span className="truncate">Clôturer le ticket</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center text-xs text-gray-400 mb-3 ml-7">
