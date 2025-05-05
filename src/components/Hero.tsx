@@ -188,7 +188,7 @@ const Hero: React.FC = () => {
             <div className="relative z-10 p-8 pl-0">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#5865F2] bg-opacity-20 text-[#5865F2] mb-5">
                 <Users size={16} className="mr-2" />
-                <span className="text-sm font-medium">Des professionels certifiés</span>
+                <span className="text-sm font-medium">Communauté d'experts</span>
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
                 <div>Votre diagnostic gratuit</div>

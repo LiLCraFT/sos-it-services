@@ -62,6 +62,21 @@ const Navbar: React.FC = () => {
           name: "Infogérance",
           href: "#infogerance",
           icon: <Server className="h-5 w-5" />
+        },
+        {
+          name: "Matériel",
+          href: "#materiel",
+          icon: <Monitor className="h-5 w-5" />
+        },
+        {
+          name: "Formation",
+          href: "#formation",
+          icon: <Settings className="h-5 w-5" />
+        },
+        {
+          name: "Conseil",
+          href: "#conseil",
+          icon: <Globe className="h-5 w-5" />
         }
       ]
     }
