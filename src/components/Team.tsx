@@ -158,7 +158,7 @@ const Team: React.FC = () => {
       <section id="team" className="py-20 bg-[#2F3136]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Notre Équipe d'Experts</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Notre équipe d'experts</h2>
             <p className="text-gray-300 max-w-2xl mx-auto">
               Chargement...
             </p>
@@ -172,7 +172,7 @@ const Team: React.FC = () => {
     <section id="team" className="py-20 bg-[#2F3136]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Notre Équipe d'Experts</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Notre équipe <span className="text-[#5865F2]">d'experts</span></h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
             Nos techniciens certifiés ont des années d'expérience dans la résolution des problèmes techniques les plus complexes.
             Confiez vos appareils aux meilleurs du métier.
