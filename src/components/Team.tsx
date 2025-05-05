@@ -1,29 +1,63 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from './ui/Card';
-import { Github, Linkedin, Twitter } from 'lucide-react';
+import { Github, Linkedin, Twitter, User } from 'lucide-react';
+
+// URL de l'image par défaut
+const DEFAULT_IMAGE = 'http://localhost:3001/api/default-avatar';
 
 interface TeamMember {
-  name: string;
+  _id: string;
+  firstName: string;
+  lastName: string;
   role: string;
-  image: string;
-  bio: string;
-  social: {
+  profileImage: string;
+  email: string;
+  social?: {
     twitter?: string;
     linkedin?: string;
     github?: string;
   };
 }
 
-const TeamCard: React.FC<TeamMember> = ({ name, role, image, bio, social }) => {
+const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImage, social = {} }) => {
+  // Fonction pour construire l'URL de l'image
+  const getImageUrl = (path: string) => {
+    if (!path) return DEFAULT_IMAGE;
+    
+    // Si l'URL commence par http, c'est déjà une URL complète
+    if (path.startsWith('http')) {
+      return path;
+    }
+    
+    // Essayer plusieurs formats d'URL
+    if (path.startsWith('/')) {
+      // Pour les chemins qui commencent par /
+      const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      return `http://localhost:3001/api/public/${cleanPath}`;
+    } else {
+      // Pour les autres chemins
+      return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
+    }
+  };
+
   return (
     <Card className="h-full">
       <CardContent className="p-0">
         <div className="relative overflow-hidden aspect-square bg-gray-800">
-          <img 
-            src={image} 
-            alt={name} 
-            className="w-full h-full object-cover object-center"
-          />
+          {profileImage ? (
+            <img 
+              src={getImageUrl(profileImage)} 
+              alt={`${firstName} ${lastName}`} 
+              className="w-full h-full object-cover object-center"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = DEFAULT_IMAGE;
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <User size={60} className="text-gray-400" />
+            </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#36393F] to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end">
             <div className="p-4 w-full">
               <div className="flex justify-center space-x-3">
@@ -47,9 +81,10 @@ const TeamCard: React.FC<TeamMember> = ({ name, role, image, bio, social }) => {
           </div>
         </div>
         <div className="p-4">
-          <h3 className="text-lg font-semibold text-white">{name}</h3>
-          <p className="text-[#5865F2] mb-2">{role}</p>
-          <p className="text-gray-300 text-sm">{bio}</p>
+          <h3 className="text-lg font-semibold text-white">{firstName} {lastName}</h3>
+          <p className="text-[#5865F2] mb-2">{role === 'fondateur' ? 'Fondateur' : 
+                                            role === 'freelancer' ? 'Freelancer' : 
+                                            role === 'admin' ? 'Administrateur' : 'Expert'}</p>
         </div>
       </CardContent>
     </Card>
@@ -57,66 +92,105 @@ const TeamCard: React.FC<TeamMember> = ({ name, role, image, bio, social }) => {
 };
 
 const Team: React.FC = () => {
-  const teamMembers: TeamMember[] = [
-    {
-      name: 'Alex Mitchell',
-      role: 'Lead Technician',
-      image: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      bio: 'Over 10 years of experience in hardware diagnostics and repair. CompTIA A+ and Microsoft certified.',
-      social: {
-        twitter: 'https://twitter.com',
-        linkedin: 'https://linkedin.com',
-        github: 'https://github.com'
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        // Récupérer tous les utilisateurs avec les rôles fondateur ou freelancer
+        const response = await fetch('http://localhost:3001/api/users?role=fondateur,freelancer');
+        
+        if (!response.ok) {
+          throw new Error(`Erreur ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          setTeamMembers(data);
+        } else {
+          setTeamMembers([]);
+        }
+      } catch (err) {
+        setError(`Impossible de charger les experts`);
+        
+        // Utiliser des données de test en cas d'échec de l'API
+        const testData: TeamMember[] = [
+          {
+            _id: '1',
+            firstName: 'Pierre',
+            lastName: 'Dubois',
+            role: 'fondateur',
+            profileImage: '',
+            email: 'fondateur@example.com',
+            social: {
+              linkedin: 'https://linkedin.com',
+              twitter: 'https://twitter.com'
+            }
+          },
+          {
+            _id: '2',
+            firstName: 'Sophie',
+            lastName: 'Martin',
+            role: 'freelancer',
+            profileImage: '',
+            email: 'freelancer@example.com',
+            social: {
+              linkedin: 'https://linkedin.com',
+              github: 'https://github.com'
+            }
+          }
+        ];
+        setTeamMembers(testData);
+      } finally {
+        setLoading(false);
       }
-    },
-    {
-      name: 'Sarah Johnson',
-      role: 'Network Specialist',
-      image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      bio: 'Cisco certified network professional with expertise in setting up secure networks for businesses.',
-      social: {
-        twitter: 'https://twitter.com',
-        linkedin: 'https://linkedin.com'
-      }
-    },
-    {
-      name: 'Michael Torres',
-      role: 'Software Engineer',
-      image: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      bio: 'Specialized in data recovery and software troubleshooting. Expert in Windows, macOS, and Linux environments.',
-      social: {
-        linkedin: 'https://linkedin.com',
-        github: 'https://github.com'
-      }
-    },
-    {
-      name: 'Emily Chen',
-      role: 'Mobile Device Expert',
-      image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      bio: 'Apple and Samsung certified repair technician with 5+ years of experience in smartphone and tablet repairs.',
-      social: {
-        twitter: 'https://twitter.com',
-        linkedin: 'https://linkedin.com'
-      }
-    }
-  ];
+    };
+
+    fetchTeamMembers();
+  }, []);
+
+  // En cas de chargement
+  if (loading) {
+    return (
+      <section id="team" className="py-20 bg-[#2F3136]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Notre Équipe d'Experts</h2>
+            <p className="text-gray-300 max-w-2xl mx-auto">
+              Chargement...
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="team" className="py-20 bg-[#2F3136]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Meet Our Expert Team</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Notre Équipe d'Experts</h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
-            Our certified technicians have years of experience solving the most complex technical issues.
-            Trust your devices with the best in the business.
+            Nos techniciens certifiés ont des années d'expérience dans la résolution des problèmes techniques les plus complexes.
+            Confiez vos appareils aux meilleurs du métier.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {teamMembers.map((member, index) => (
-            <TeamCard key={index} {...member} />
-          ))}
-        </div>
+        {teamMembers.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {teamMembers.map((member) => (
+              <TeamCard key={member._id} {...member} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-300">
+            <p>Aucun expert n'est disponible pour le moment.</p>
+            {error && <p className="text-red-400 mt-2">{error}</p>}
+          </div>
+        )}
       </div>
     </section>
   );

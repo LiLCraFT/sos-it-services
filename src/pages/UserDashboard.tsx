@@ -1,14 +1,40 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload } from 'lucide-react';
+import { useState } from 'react';
+
+// URL de l'image par défaut
+const DEFAULT_IMAGE = 'http://localhost:3001/api/default-avatar';
 
 const UserDashboard = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, updateUser } = useAuth();
+  const [uploading, setUploading] = useState(false);
+  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
   
   // Rediriger vers la page d'accueil si l'utilisateur n'est pas connecté
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
+
+  // Fonction pour construire l'URL de l'image
+  const getImageUrl = (path: string | undefined) => {
+    if (!path) return DEFAULT_IMAGE;
+    
+    // Si l'URL commence par http, c'est déjà une URL complète
+    if (path.startsWith('http')) {
+      return path;
+    }
+    
+    // Essayer plusieurs formats d'URL
+    if (path.startsWith('/')) {
+      // Pour les chemins qui commencent par /
+      const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      return `http://localhost:3001/api/public/${cleanPath}`;
+    } else {
+      // Pour les autres chemins
+      return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
+    }
+  };
 
   // Formater la date de naissance
   const formatDate = (dateString: string | undefined) => {
@@ -19,6 +45,60 @@ const UserDashboard = () => {
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  // Traduction des types de profil
+  const translateRole = (role: string | undefined) => {
+    if (!role) return 'Utilisateur';
+    
+    switch (role) {
+      case 'admin': return 'Administrateur';
+      case 'fondateur': return 'Fondateur';
+      case 'freelancer': return 'Freelancer';
+      default: return 'Utilisateur';
+    }
+  };
+
+  // Gérer le téléchargement d'image de profil
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !files[0] || !user?._id) return;
+
+    const file = files[0];
+    
+    // Vérifier si le fichier est une image
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner une image');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch(`http://localhost:3001/api/users/${user._id}/profile-image`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      setProfileImage(data.profileImage);
+      
+      // Mettre à jour les informations utilisateur dans le contexte d'authentification
+      updateUser({ profileImage: data.profileImage });
+      
+    } catch (error) {
+      alert(`Erreur lors du téléchargement de l'image`);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -34,13 +114,40 @@ const UserDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4">
           {/* Barre latérale */}
           <div className="bg-[#36393F] p-4 md:p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-[#5865F2] rounded-full w-12 h-12 flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative mb-4 group">
+                <div className="bg-[#5865F2] rounded-full w-24 h-24 flex items-center justify-center overflow-hidden">
+                  {profileImage || user?.profileImage ? (
+                    <img 
+                      src={getImageUrl(profileImage || user?.profileImage)} 
+                      alt={`${user?.firstName} ${user?.lastName}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = DEFAULT_IMAGE;
+                      }}
+                    />
+                  ) : (
+                    <User className="w-12 h-12 text-white" />
+                  )}
+                </div>
+                <label 
+                  htmlFor="profile-image-upload" 
+                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                >
+                  <Upload className="w-8 h-8 text-white" />
+                </label>
+                <input 
+                  type="file" 
+                  id="profile-image-upload" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                />
               </div>
-              <div>
+              <div className="text-center">
                 <h2 className="font-semibold text-white">{user?.firstName} {user?.lastName}</h2>
-                <span className="text-sm text-gray-400">{user?.role === 'admin' ? 'Administrateur' : 'Utilisateur'}</span>
+                <span className="text-sm text-gray-400">{translateRole(user?.role)}</span>
               </div>
             </div>
             
@@ -133,7 +240,7 @@ const UserDashboard = () => {
                   <Key className="w-5 h-5 text-gray-400" />
                   <h4 className="font-medium text-gray-300">Rôle</h4>
                 </div>
-                <p className="text-white pl-8">{user?.role === 'admin' ? 'Administrateur' : 'Utilisateur'}</p>
+                <p className="text-white pl-8">{translateRole(user?.role)}</p>
               </div>
             </div>
           </div>

@@ -12,8 +12,16 @@ const publicRoutes = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/verify',
+  '/api/users',
   '/api-docs',
   '/swagger',
+  '/api/default-image',
+  '/api/default-avatar',
+  '/api/fallback-image',
+  '/api/profile-image',
+  '/api/static',
+  '/api/public',
+  '/api/images',
 ];
 
 // Gestion des requêtes OPTIONS (preflight CORS)
@@ -29,6 +37,21 @@ function handleOptions(request: NextRequest) {
   return response;
 }
 
+// Fonction pour vérifier si la route concerne une ressource statique
+function isStaticResourceRoute(path: string): boolean {
+  const staticRoutes = [
+    '/api/default-image',
+    '/api/default-avatar',
+    '/api/fallback-image',
+    '/api/profile-image',
+    '/api/static',
+    '/api/public',
+    '/api/images',
+  ];
+  
+  return staticRoutes.some(route => path.startsWith(route));
+}
+
 // Middleware qui s'exécute pour toutes les requêtes
 export async function middleware(request: NextRequest) {
   // Gestion des requêtes OPTIONS (preflight CORS)
@@ -39,8 +62,17 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   let response;
   
+  // Vérifie si c'est une route de ressource statique (images, etc.)
+  if (isStaticResourceRoute(path)) {
+    console.log('Accès à une ressource statique:', path);
+    response = NextResponse.next();
+  }
   // Vérifie si la route est publique
-  if (publicRoutes.some(route => path.startsWith(route))) {
+  else if (publicRoutes.some(route => path.startsWith(route))) {
+    response = NextResponse.next();
+  }
+  // Exception spéciale pour GET /api/users (pour afficher la liste des experts)
+  else if (path.startsWith('/api/users') && request.method === 'GET') {
     response = NextResponse.next();
   }
   // Vérifie si la route est protégée

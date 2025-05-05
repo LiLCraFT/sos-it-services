@@ -16,12 +16,31 @@ import User from '@/models/User';
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
-    const users = await User.find({}).select('-password');
+    
+    // Récupérer les paramètres de recherche
+    const url = new URL(req.url);
+    const roleParam = url.searchParams.get('role');
+    
+    // Construire le filtre en fonction des paramètres
+    let filter: any = {};
+    
+    if (roleParam) {
+      // Si plusieurs rôles sont spécifiés (séparés par des virgules)
+      const roles = roleParam.split(',');
+      if (roles.length > 1) {
+        filter.role = { $in: roles };
+      } else {
+        filter.role = roleParam;
+      }
+    }
+    
+    const users = await User.find(filter).select('-password');
+    
     return NextResponse.json(users, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching users:', error);
     return NextResponse.json(
-      { error: 'Erreur lors de la récupération des utilisateurs' },
+      { error: error.message || 'Erreur lors de la récupération des utilisateurs' },
       { status: 500 }
     );
   }

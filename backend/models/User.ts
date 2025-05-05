@@ -15,7 +15,8 @@ export interface IUser extends Document {
   phone: string;
   birthDate: Date;
   city: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'fondateur' | 'freelancer';
+  profileImage: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -68,8 +69,12 @@ const UserSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'admin', 'fondateur', 'freelancer'],
       default: 'user',
+    },
+    profileImage: {
+      type: String,
+      default: '/images/default-profile.png', // Image de profil par défaut
     },
   },
   {
