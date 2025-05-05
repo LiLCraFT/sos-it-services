@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle, Check, Clock, AlertTriangle } from 'lucide-react';
+import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download } from 'lucide-react';
+
+interface Attachment {
+  filename: string;
+  originalname: string;
+  path: string;
+  mimetype: string;
+  size: number;
+}
 
 interface Ticket {
   _id: string;
@@ -8,6 +16,9 @@ interface Ticket {
   description: string;
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
+  category: string;
+  subcategory: string;
+  attachments?: Attachment[];
   createdBy: {
     _id: string;
     firstName: string;
@@ -72,33 +83,33 @@ const TicketList: React.FC = () => {
     }
   }, [isAuthenticated]);
 
-  // Retourner un icône basé sur le statut du ticket
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'open':
+  // Retourner un icône basé sur la priorité
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'low':
+        return <AlertCircle className="w-5 h-5 text-green-500" />;
+      case 'medium':
         return <AlertCircle className="w-5 h-5 text-blue-500" />;
-      case 'in_progress':
-        return <Clock className="w-5 h-5 text-yellow-500" />;
-      case 'resolved':
-        return <Check className="w-5 h-5 text-green-500" />;
-      case 'closed':
-        return <Check className="w-5 h-5 text-gray-500" />;
+      case 'high':
+        return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+      case 'urgent':
+        return <AlertTriangle className="w-5 h-5 text-red-500" />;
       default:
         return <AlertCircle className="w-5 h-5 text-gray-500" />;
     }
   };
 
-  // Retourner une classe CSS basée sur la priorité
-  const getPriorityClass = (priority: string) => {
-    switch (priority) {
-      case 'low':
-        return 'bg-green-100 text-green-800';
-      case 'medium':
+  // Retourner une classe CSS basée sur le statut
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'open':
         return 'bg-blue-100 text-blue-800';
-      case 'high':
+      case 'in_progress':
         return 'bg-yellow-100 text-yellow-800';
-      case 'urgent':
-        return 'bg-red-100 text-red-800';
+      case 'resolved':
+        return 'bg-green-100 text-green-800';
+      case 'closed':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -148,6 +159,21 @@ const TicketList: React.FC = () => {
     }
   };
 
+  // Renvoie l'icône appropriée selon le type de fichier
+  const getAttachmentIcon = (mimetype: string) => {
+    if (mimetype.startsWith('image/')) {
+      return <Image className="w-4 h-4 text-blue-400" />;
+    }
+    return <FileText className="w-4 h-4 text-gray-400" />;
+  };
+  
+  // Formater la taille du fichier
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(1) + ' MB';
+  };
+
   if (loading) {
     return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
   }
@@ -171,33 +197,82 @@ const TicketList: React.FC = () => {
     <div className="space-y-4">
       {tickets.map((ticket) => (
         <div key={ticket._id} className="bg-[#36393F] rounded-md p-4 shadow-sm">
-          <div className="flex justify-between items-start mb-2">
+          <div className="flex justify-between items-start mb-1">
             <div className="flex items-center">
-              {getStatusIcon(ticket.status)}
+              {getPriorityIcon(ticket.priority)}
               <h3 className="text-white font-medium ml-2">{ticket.title}</h3>
             </div>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityClass(ticket.priority)}`}>
-              {translatePriority(ticket.priority)}
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(ticket.status)}`}>
+              {translateStatus(ticket.status)}
             </span>
           </div>
           
-          <p className="text-gray-300 text-sm mb-3">{ticket.description}</p>
+          <div className="flex items-center text-xs text-gray-400 mb-3 ml-7">
+            <Folder className="w-3 h-3 mr-1" />
+            <span>{ticket.category || 'Autre'}{(ticket.subcategory && ticket.subcategory !== 'Non spécifié') ? ` > ${ticket.subcategory}` : ticket.category ? '' : ' > Non spécifié'}</span>
+          </div>
           
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-400 mb-2">
-            <div>
-              <span className="font-medium">Créé par:</span> {ticket.createdBy.firstName} {ticket.createdBy.lastName}
+          <div className="bg-[#2F3136] border border-[#202225] rounded-md p-3 mb-3">
+            <div className="flex items-center mb-2">
+              <MessageCircle className="w-4 h-4 text-gray-400 mr-2" />
+              <span className="text-gray-300 text-xs font-medium">Description du problème</span>
             </div>
-            {ticket.targetUser && (
-              <div>
-                <span className="font-medium">Pour:</span> {ticket.targetUser.firstName} {ticket.targetUser.lastName}
+            <p className="text-white text-sm whitespace-pre-line">{ticket.description}</p>
+            
+            {ticket.attachments && ticket.attachments.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-[#202225]">
+                <div className="flex items-center mb-2">
+                  <Paperclip className="w-4 h-4 text-gray-400 mr-2" />
+                  <span className="text-gray-300 text-xs font-medium">Pièces jointes ({ticket.attachments.length})</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {ticket.attachments.map((attachment, index) => (
+                    <a 
+                      key={index}
+                      href={`http://localhost:3001${attachment.path}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center bg-[#202225] p-2 rounded hover:bg-[#2D3035] transition-colors"
+                    >
+                      {getAttachmentIcon(attachment.mimetype)}
+                      <div className="ml-2 flex-1 min-w-0">
+                        <div className="text-white text-xs truncate">{attachment.originalname}</div>
+                        <div className="text-gray-400 text-[10px]">{formatFileSize(attachment.size)}</div>
+                      </div>
+                      <Download className="w-3 h-3 text-gray-400" />
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
-            <div>
-              <span className="font-medium">Statut:</span> {translateStatus(ticket.status)}
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400 mb-2">
+            <div className="flex items-center">
+              <User className="w-3 h-3 text-gray-500 mr-1" />
+              <span className="font-medium mr-1">Créé par:</span>
+              <span>{ticket.createdBy.firstName} {ticket.createdBy.lastName}</span>
             </div>
-            <div>
-              <span className="font-medium">Créé le:</span> {formatDate(ticket.createdAt)}
+            
+            <div className="flex items-center">
+              <Calendar className="w-3 h-3 text-gray-500 mr-1" />
+              <span className="font-medium mr-1">Créé le:</span>
+              <span>{formatDate(ticket.createdAt)}</span>
             </div>
+            
+            <div className="flex items-center">
+              <Flag className="w-3 h-3 text-gray-500 mr-1" />
+              <span className="font-medium mr-1">Priorité:</span>
+              <span>{translatePriority(ticket.priority)}</span>
+            </div>
+            
+            {ticket.targetUser && (
+              <div className="flex items-center">
+                <UserCheck className="w-3 h-3 text-gray-500 mr-1" />
+                <span className="font-medium mr-1">Pour:</span>
+                <span>{ticket.targetUser.firstName} {ticket.targetUser.lastName}</span>
+              </div>
+            )}
           </div>
         </div>
       ))}

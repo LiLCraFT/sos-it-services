@@ -5,6 +5,15 @@ export interface ITicket extends Document {
   description: string;
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
+  category: string;
+  subcategory: string;
+  attachments: {
+    filename: string;
+    originalname: string;
+    path: string;
+    mimetype: string;
+    size: number;
+  }[];
   createdBy: mongoose.Types.ObjectId;
   assignedTo?: mongoose.Types.ObjectId;
   targetUser?: mongoose.Types.ObjectId;
@@ -34,6 +43,23 @@ const TicketSchema = new Schema<ITicket>(
       enum: ['low', 'medium', 'high', 'urgent'],
       default: 'medium',
     },
+    category: {
+      type: String,
+      required: [true, 'Catégorie est requise'],
+      trim: true,
+    },
+    subcategory: {
+      type: String,
+      default: 'Non spécifié',
+      trim: true,
+    },
+    attachments: [{
+      filename: String,     // Nom du fichier stocké
+      originalname: String, // Nom original du fichier
+      path: String,         // Chemin d'accès au fichier
+      mimetype: String,     // Type MIME du fichier
+      size: Number          // Taille du fichier en octets
+    }],
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',

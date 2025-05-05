@@ -70,12 +70,56 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
     }
     
-    const data = await req.json();
+    // La requête peut être multipart/form-data si des fichiers sont envoyés
+    // Nous devons vérifier le type de contenu
+    const contentType = req.headers.get('content-type') || '';
+    
+    let data: any = {};
+    let attachments = [];
+    
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      
+      // Extraire les données du formulaire
+      data = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        priority: formData.get('priority'),
+        category: formData.get('category'),
+        subcategory: formData.get('subcategory') || 'Non spécifié',
+      };
+      
+      if (formData.get('targetUser')) {
+        data.targetUser = formData.get('targetUser');
+      }
+      
+      // Extraire les pièces jointes
+      const files = formData.getAll('attachments');
+      
+      for (const file of files) {
+        if (file instanceof File) {
+          // Stocker le fichier dans un dossier d'uploads (implémentation à faire)
+          // Pour l'instant, on simule avec les détails du fichier
+          const attachment = {
+            filename: `${Date.now()}-${file.name}`, // On génère un nom unique
+            originalname: file.name,
+            path: `/uploads/${Date.now()}-${file.name}`, // Chemin simulé
+            mimetype: file.type,
+            size: file.size
+          };
+          
+          attachments.push(attachment);
+        }
+      }
+    } else {
+      // Si c'est une requête JSON standard
+      data = await req.json();
+    }
     
     // Validate required fields
-    if (!data.title || !data.description) {
+    if (!data.title || !data.description || !data.category) {
       return NextResponse.json(
-        { error: 'Le titre et la description sont requis' }, 
+        { error: 'Le titre, la description et la catégorie sont requis' }, 
         { status: 400 }
       );
     }
@@ -84,6 +128,7 @@ export async function POST(req: NextRequest) {
     const ticketData = {
       ...data,
       createdBy: userId,
+      attachments: attachments.length > 0 ? attachments : undefined
     };
     
     const ticket = await Ticket.create(ticketData);
