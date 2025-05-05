@@ -1,13 +1,52 @@
 # SOS-IT-Services
 
-Projet composé d'un frontend React/Vite et d'un backend Next.js.
+Plateforme moderne pour la gestion de services informatiques d'assistance et de support technique. Ce projet est composé d'un frontend React/Vite et d'un backend Next.js.
 
-## Structure du projet
+## 📋 Structure du projet
 
 - `src/` - Code source du frontend React/Vite
 - `backend/` - Code source du backend Next.js (API)
+- `public/` - Ressources statiques du frontend
 
-## Installation et démarrage
+## 🚀 Démarrage rapide
+
+### Prérequis
+
+- Node.js (version 18.x ou supérieure)
+- npm (version 9.x ou supérieure)
+- MongoDB (local ou distant)
+
+### Installation et démarrage complet
+
+```bash
+# Cloner le dépôt
+git clone https://github.com/votre-user/sos-it-services.git
+cd sos-it-services
+
+# Installer les dépendances frontend et backend
+npm install
+cd backend && npm install && cd ..
+
+# Configurer la base de données
+cd backend
+cp .env.example .env.local
+# Modifier le fichier .env.local avec vos informations
+
+# Initialiser la base de données avec des données de test
+node scripts/init-db.js
+
+# Démarrer l'application en mode développement
+# Terminal 1 (Frontend)
+npm run dev
+
+# Terminal 2 (Backend)
+cd backend && npm run dev
+```
+
+Le frontend sera accessible sur http://localhost:5173
+Le backend sera accessible sur http://localhost:3001
+
+## 🔧 Configuration de l'environnement
 
 ### Frontend (React/Vite)
 
@@ -21,8 +60,6 @@ npm install
 npm run dev
 ```
 
-Le frontend sera accessible sur http://localhost:5173 (ou un autre port si 5173 est déjà utilisé).
-
 ### Backend (Next.js)
 
 1. Allez dans le dossier backend:
@@ -30,170 +67,106 @@ Le frontend sera accessible sur http://localhost:5173 (ou un autre port si 5173 
 cd backend
 ```
 
-2. Installez les dépendances:
+2. Créez un fichier `.env.local` basé sur `.env.example`:
 ```bash
-npm install
+cp .env.example .env.local
 ```
 
-3. Lancez le serveur de développement backend:
-```bash
-npm run dev
-```
-
-Le backend sera accessible sur http://localhost:3001.
-
-## Configuration de l'authentification
-
-L'authentification utilise JSON Web Tokens (JWT) et est gérée par le backend. Le frontend utilise un contexte d'authentification pour communiquer avec l'API.
-
-### Points d'API disponibles
-
-- `POST /api/auth/login` - Authentification avec email/mot de passe
-- `GET /api/auth/verify` - Vérification de la validité d'un token
-
-### Utilisateurs de test
-
-- Email: admin@example.com, Mot de passe: admin123
-- Email: user@example.com, Mot de passe: user123
-
-## Développement
-
-Pour travailler sur ce projet, vous devez avoir les deux serveurs (frontend et backend) en cours d'exécution simultanément.
-
-## Structure du projet
-
-- `src/` - Code source du frontend (React, TypeScript, Vite)
-- `backend/` - Code source du backend (Next.js API)
-- `public/` - Ressources statiques du frontend
-
-## Frontend
-
-### Technologies utilisées
-
-- React 18.3
-- TypeScript 5.5
-- Vite 5.4
-- TailwindCSS 3.4
-- Lucide React (icônes)
-
-### Prérequis
-
-- Node.js (version recommandée : 18.x ou supérieure)
-- npm ou yarn
-
-### Installation
-
-```bash
-# À la racine du projet
-npm install
-```
-
-### Démarrage du développement
-
-```bash
-npm run dev
-```
-
-Le serveur de développement sera accessible sur [http://localhost:5173](http://localhost:5173).
-
-### Construction pour la production
-
-```bash
-npm run build
-```
-
-Les fichiers générés seront placés dans le répertoire `dist/`.
-
-### Aperçu de la version de production
-
-```bash
-npm run preview
-```
-
-## Backend
-
-### Technologies utilisées
-
-- Next.js 14.2
-- MongoDB & Mongoose
-- JWT pour l'authentification
-- Swagger pour la documentation API
-- TypeScript
-
-### Prérequis
-
-- Node.js (version recommandée : 18.x ou supérieure)
-- npm ou yarn
-- MongoDB (local ou distant)
-
-### Installation
-
-```bash
-# Dans le répertoire backend/
-cd backend
-npm install
-```
-
-### Configuration
-
-Créez un fichier `.env.local` dans le répertoire `backend/` avec les variables suivantes:
-
+3. Modifiez le fichier `.env.local` avec vos informations:
 ```
 # MongoDB
-MONGODB_URI=votre_uri_mongodb
+MONGODB_URI=mongodb://localhost:27017/sos-it-services
 
 # JWT
 JWT_SECRET=votre_clé_secrète
 JWT_EXPIRES_IN=30d
 
 # App
-API_URL=http://localhost:3000
+API_URL=http://localhost:3001
 ```
 
-### Démarrage du développement
-
+4. Installez les dépendances:
 ```bash
-# Dans le répertoire backend/
+npm install
+```
+
+5. Initialisez la base de données (optionnel):
+```bash
+node scripts/init-db.js
+```
+
+6. Lancez le serveur de développement backend:
+```bash
 npm run dev
 ```
 
-Le serveur backend sera accessible sur [http://localhost:3000](http://localhost:3000).
+## 🔒 Authentification
 
-### Construction pour la production
+L'authentification utilise JSON Web Tokens (JWT). Le frontend communique avec l'API via un contexte d'authentification React.
+
+### Points d'API disponibles
+
+- `POST /api/auth/register` - Inscription d'un nouvel utilisateur
+- `POST /api/auth/login` - Authentification avec email/mot de passe
+- `GET /api/auth/verify` - Vérification de la validité d'un token
+- `POST /api/auth/logout` - Déconnexion (invalidation du token)
+
+### Utilisateurs de test (après initialisation de la BD)
+
+| Email              | Mot de passe | Rôle    |
+|--------------------|--------------|---------|
+| admin@example.com  | admin123     | Admin   |
+| user@example.com   | user123      | User    |
+
+## 💻 Technologies utilisées
+
+### Frontend
+
+- React 18.3
+- TypeScript 5.5
+- Vite 5.4
+- TailwindCSS 3.4
+- Lucide React (icônes)
+- React Router
+- Axios
+
+### Backend
+
+- Next.js 14.2
+- MongoDB & Mongoose
+- JWT pour l'authentification
+- Express middleware
+- TypeScript
+- Swagger pour la documentation API
+
+## 📝 Documentation
+
+- Documentation API: http://localhost:3001/api-docs (disponible après démarrage du backend)
+- README du frontend: [README Frontend](./README.md)
+- README du backend: [README Backend](./backend/README.md)
+
+## 🧪 Tests
 
 ```bash
-# Dans le répertoire backend/
+# Frontend tests
+npm test
+
+# Backend tests
+cd backend && npm test
+```
+
+## 📦 Build pour la production
+
+### Frontend
+```bash
 npm run build
 ```
 
-### Démarrage en production
-
+### Backend
 ```bash
-# Dans le répertoire backend/
-npm run start
+cd backend && npm run build
 ```
 
-## Documentation API
+## 📄 Licence
 
-La documentation API Swagger est accessible à l'URL `/api-docs` du backend.
-
-## Démarrage complet de l'application (dev)
-
-Pour démarrer à la fois le frontend et le backend en mode développement:
-
-```bash
-# Terminal 1 (frontend, à la racine)
-npm run dev
-
-# Terminal 2 (backend)
-cd backend
-npm run dev
-```
-
-## Licence
-
-Tous droits réservés. 
-
-Utilisateurs:
-- admin@example.com / admin123 (Admin)
-- user@example.com / user123 (User)
+Tous droits réservés.
