@@ -11,6 +11,7 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
+  const [mobileDropdowns, setMobileDropdowns] = useState<Record<number, boolean>>({});
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -48,12 +49,36 @@ const Navbar: React.FC = () => {
     {
       name: "Dépannage informatique",
       href: "/depannage-informatique",
-      icon: <Wrench className="h-5 w-5" />
+      icon: <Wrench className="h-5 w-5" />,
+      dropdown: [
+        {
+          name: "Particuliers",
+          href: "/depannage-informatique#particuliers",
+          icon: <User className="h-5 w-5" />
+        },
+        {
+          name: "Professionnels",
+          href: "/depannage-informatique#professionnels",
+          icon: <Users className="h-5 w-5" />
+        }
+      ]
     },
     {
       name: "Création de sites web",
-      href: "#web",
-      icon: <Globe className="h-5 w-5" />
+      href: "/creation-site-web",
+      icon: <Globe className="h-5 w-5" />,
+      dropdown: [
+        {
+          name: "Site vitrine",
+          href: "/creation-site-web#web-vitrine",
+          icon: <Monitor className="h-5 w-5" />
+        },
+        {
+          name: "Site e-commerce",
+          href: "/creation-site-web#web-ecommerce",
+          icon: <CreditCard className="h-5 w-5" />
+        }
+      ]
     },
     {
       name: "Sur mesure",
@@ -115,6 +140,13 @@ const Navbar: React.FC = () => {
       case "none": 
       default: return "A la carte";
     }
+  };
+
+  const toggleMobileDropdown = (index: number) => {
+    setMobileDropdowns(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
   };
 
   return (
@@ -363,23 +395,24 @@ const Navbar: React.FC = () => {
                 {service.dropdown ? (
                   <>
                     <button
-                      onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
+                      onClick={() => toggleMobileDropdown(index)}
                       className="flex items-center w-full text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium"
                     >
                       {service.icon}
                       <span className="ml-2">{service.name}</span>
-                      <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${isMobileDropdownOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${mobileDropdowns[index] ? 'rotate-180' : ''}`} />
                     </button>
-                    <div className={`pl-6 space-y-1 transition-all duration-200 ${isMobileDropdownOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                    <div className={`pl-6 space-y-1 transition-all duration-200 ${mobileDropdowns[index] ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
                       {service.dropdown.map((item, dropdownIndex) => (
-                        <Link
+                        <RouterLink
                           key={dropdownIndex}
-                          href={item.href}
+                          to={item.href}
                           className="flex items-center text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium"
+                          onClick={() => setIsOpen(false)}
                         >
                           {item.icon}
                           <span className="ml-2">{item.name}</span>
-                        </Link>
+                        </RouterLink>
                       ))}
                     </div>
                   </>

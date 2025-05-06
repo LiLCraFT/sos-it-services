@@ -81,13 +81,13 @@ const UserDashboard = () => {
       id: 'users',
       label: 'Les utilisateurs',
       icon: <Users className="w-5 h-5" />,
-      roles: ['fondateur', 'admin', 'freelancer_admin'], // Pour les fondateurs et admins
+      roles: ['fondateur', 'admin', 'freelancer_admin'], // Pour les fondateurs, admins et freelancer_admin
     },
     {
       id: 'freelancers',
       label: 'Les freelancers',
       icon: <Users className="w-5 h-5" />,
-      roles: ['fondateur', 'admin', 'freelancer_admin'], // Pour les fondateurs et admins
+      roles: ['fondateur', 'admin'], // Uniquement pour les fondateurs et admins, pas pour freelancer_admin
     },
     {
       id: 'tickets',

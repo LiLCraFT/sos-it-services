@@ -114,7 +114,7 @@ const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a href="#web" className="text-gray-400 hover:text-[#5865F2] transition-colors flex items-center">
+                <a href="/creation-site-web" className="text-gray-400 hover:text-[#5865F2] transition-colors flex items-center">
                   <Globe size={16} className="mr-2" />
                   Création de sites web
                 </a>
