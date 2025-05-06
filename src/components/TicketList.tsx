@@ -45,7 +45,7 @@ interface TicketListProps {
   viewMode: 'cards' | 'table';
 }
 
-type SortField = 'status' | 'title' | 'category' | 'priority' | 'createdAt';
+type SortField = 'status' | 'title' | 'category' | 'priority' | 'createdAt' | 'createdBy';
 type SortDirection = 'asc' | 'desc';
 
 const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
@@ -275,6 +275,9 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
           break;
         }
+        case 'createdBy':
+          comparison = a.createdBy.firstName.localeCompare(b.createdBy.firstName);
+          break;
         case 'createdAt':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
@@ -378,11 +381,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               </th>
               <th 
                 className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('priority')}
+                onClick={() => handleSortClick('createdBy')}
               >
                 <div className="flex items-center">
-                  <span>Priorité</span>
-                  {renderSortIcon('priority')}
+                  <span>Créé par</span>
+                  {renderSortIcon('createdBy')}
                 </div>
               </th>
               <th 
@@ -414,10 +417,10 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
+                <td className="px-4 py-3 text-sm text-gray-300">
                   <div className="flex items-center">
-                    {getPriorityIcon(ticket.priority)}
-                    <span className="ml-1 text-sm text-gray-300">{translatePriority(ticket.priority)}</span>
+                    <User className="w-3 h-3 mr-1" />
+                    <span>{ticket.createdBy.firstName} {ticket.createdBy.lastName}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-300">{formatDate(ticket.createdAt)}</td>
