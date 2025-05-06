@@ -11,6 +11,8 @@ interface User {
   city: string;
   role: string;
   profileImage: string;
+  subscriptionType: "none" | "solo" | "family";
+  clientType: "Particulier" | "Professionnel" | "Freelancer";
 }
 
 interface AuthContextType {

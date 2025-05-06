@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
       password, 
       firstName, 
       lastName, 
+      companyName,
       address, 
       phone, 
       birthDate, 
@@ -83,23 +84,40 @@ export async function POST(req: NextRequest) {
     } = await req.json();
     
     console.log('Registration data received:', { 
-      email, firstName, lastName, address, phone, birthDate, city, clientType 
+      email, firstName, lastName, companyName, address, phone, birthDate, city, clientType 
     });
     
     // Vérification des données requises
-    if (!email || !password || !firstName || !lastName || !address || !phone || !city || !clientType) {
+    if (!email || !password || !address || !phone || !city || !clientType) {
       return NextResponse.json(
         { error: 'Tous les champs sont requis' },
         { status: 400 }
       );
     }
     
-    // Vérification de la date de naissance pour les non-professionnels
-    if (clientType !== 'Professionnel' && !birthDate) {
-      return NextResponse.json(
-        { error: 'La date de naissance est requise pour ce type de compte' },
-        { status: 400 }
-      );
+    // Validation selon le type de client
+    if (clientType === 'Professionnel') {
+      if (!companyName) {
+        return NextResponse.json(
+          { error: 'Le nom de l\'entreprise est requis' },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Pour les particuliers et freelancers
+      if (!firstName || !lastName) {
+        return NextResponse.json(
+          { error: 'Les champs prénom et nom sont requis' },
+          { status: 400 }
+        );
+      }
+
+      if (!birthDate) {
+        return NextResponse.json(
+          { error: 'La date de naissance est requise pour ce type de compte' },
+          { status: 400 }
+        );
+      }
     }
     
     // Vérification du type de client
@@ -125,11 +143,13 @@ export async function POST(req: NextRequest) {
       password,
       firstName,
       lastName,
+      companyName: clientType === 'Professionnel' ? companyName : undefined,
       address,
       phone,
-      birthDate,
+      birthDate: clientType === 'Professionnel' ? undefined : birthDate,
       city,
       clientType,
+      subscriptionType: 'none', // À la carte par défaut
       role: 'user', // Par défaut, tous les nouveaux utilisateurs ont le rôle 'user'
     };
     
@@ -160,8 +180,10 @@ export async function POST(req: NextRequest) {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      companyName: user.companyName,
       role: user.role,
       clientType: user.clientType,
+      subscriptionType: user.subscriptionType,
     };
     
     return NextResponse.json(

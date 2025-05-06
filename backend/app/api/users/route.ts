@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     const query = roleFilter ? { role: roleFilter } : {};
     
     // Ne retourner que les champs nécessaires
-    const users = await User.find(query).select('_id firstName lastName email role');
+    const users = await User.find(query).select('_id firstName lastName email role clientType');
       
     return NextResponse.json({ users }, { status: 200 });
   } catch (error: any) {

@@ -17,8 +17,8 @@ const Navbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const [hasSubscription, setHasSubscription] = useState(true);
-  const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("solo");
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("none");
   
   const whatsappNumber = "33695358625"; // Remplacez par votre numéro WhatsApp
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
@@ -44,6 +44,17 @@ const Navbar: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [userMenuRef]);
+
+  useEffect(() => {
+    // Mettre à jour le type d'abonnement quand l'utilisateur est chargé
+    if (user && user.subscriptionType) {
+      setSubscriptionType(user.subscriptionType);
+      setHasSubscription(user.subscriptionType !== "none");
+    } else {
+      setSubscriptionType("none");
+      setHasSubscription(false);
+    }
+  }, [user]);
 
   const services = [
     {
@@ -270,7 +281,7 @@ const Navbar: React.FC = () => {
                                 }`}>
                                   {user?.role === 'admin' ? 'Admin' :
                                    user?.role === 'freelancer' ? 'Freelancer' :
-                                   'Utilisateur'}
+                                   user?.clientType || 'Utilisateur'}
                                 </span>
                               )}
                               {/* Tag d'abonnement - visible uniquement pour les utilisateurs standards */}
@@ -537,7 +548,7 @@ const Navbar: React.FC = () => {
                       }`}>
                         {user?.role === 'admin' ? 'Admin' :
                          user?.role === 'freelancer' ? 'Freelancer' :
-                         'Utilisateur'}
+                         user?.clientType || 'Utilisateur'}
                       </span>
                     )}
                     {/* Tag d'abonnement pour mobile - visible uniquement pour les utilisateurs standards */}

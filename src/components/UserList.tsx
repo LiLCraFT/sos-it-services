@@ -12,6 +12,7 @@ type UserData = {
   role: string;
   profileImage: string;
   createdAt: string;
+  clientType?: string;
 };
 
 type SortField = 'firstName' | 'lastName' | 'email' | 'city' | 'createdAt';
@@ -278,7 +279,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
   }
 
   // Helper pour afficher les tags de rôle
-  const renderRoleTags = (role: string) => {
+  const renderRoleTags = (role: string, user: UserData) => {
     switch(role) {
       case 'fondateur':
         return (
@@ -317,7 +318,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
       default:
         return (
           <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#5865F2]/20 text-[#5865F2]">
-            Utilisateur
+            {user.clientType || 'Utilisateur'}
           </span>
         );
     }
@@ -417,7 +418,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-300">{formatDate(userData.createdAt)}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  {renderRoleTags(userData.role)}
+                  {renderRoleTags(userData.role, userData)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-right">
                   {userData.role !== 'fondateur' && (
@@ -461,7 +462,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
                 <div className="ml-3">
                   <h3 className="text-white font-medium">{userData.firstName} {userData.lastName}</h3>
                   <div className="flex space-x-1 mt-1">
-                    {renderRoleTags(userData.role)}
+                    {renderRoleTags(userData.role, userData)}
                   </div>
                 </div>
               </div>

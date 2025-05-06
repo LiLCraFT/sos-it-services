@@ -11,11 +11,13 @@ export interface IUser extends Document {
   password: string;
   firstName: string;
   lastName: string;
+  companyName?: string;
   address: string;
   phone: string;
-  birthDate: Date;
+  birthDate?: Date;
   city: string;
   clientType: 'Particulier' | 'Professionnel' | 'Freelancer';
+  subscriptionType: 'none' | 'solo' | 'family';
   role: 'user' | 'admin' | 'fondateur' | 'freelancer' | 'freelancer_admin';
   profileImage: string;
   createdAt: Date;
@@ -41,12 +43,23 @@ const UserSchema = new Schema<IUser>(
     },
     firstName: {
       type: String,
-      required: [true, 'Prénom est requis'],
+      required: function(this: IUser) {
+        return true; // Toujours requis, contient le nom de l'entreprise pour les professionnels
+      },
       trim: true,
     },
     lastName: {
       type: String,
-      required: [true, 'Nom est requis'],
+      required: function(this: IUser) {
+        return this.clientType !== 'Professionnel'; // Pas requis pour les professionnels
+      },
+      trim: true,
+    },
+    companyName: {
+      type: String,
+      required: function(this: IUser) {
+        return this.clientType === 'Professionnel';
+      },
       trim: true,
     },
     address: {
@@ -75,6 +88,11 @@ const UserSchema = new Schema<IUser>(
       enum: ['Particulier', 'Professionnel', 'Freelancer'],
       default: 'Particulier',
       required: [true, 'Type de client est requis'],
+    },
+    subscriptionType: {
+      type: String,
+      enum: ['none', 'solo', 'family'],
+      default: 'none', // À la carte par défaut
     },
     role: {
       type: String,

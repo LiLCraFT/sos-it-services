@@ -54,6 +54,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         clientType: formData.clientType,
         firstName: formData.clientType === 'Professionnel' ? formData.companyName : formData.firstName,
         lastName: formData.clientType === 'Professionnel' ? '' : formData.lastName,
+        companyName: formData.clientType === 'Professionnel' ? formData.companyName : '',
         email: formData.email,
         password: formData.password,
         address: formData.address,

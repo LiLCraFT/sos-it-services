@@ -66,8 +66,16 @@ const UserDashboard = () => {
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
   
-  // Simuler la présence d'un abonnement (à remplacer par une lecture depuis user.subscription dans un cas réel)
-  const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("solo");
+  // Utiliser le subscriptionType de l'utilisateur
+  useEffect(() => {
+    // Si user est chargé, initialiser le type d'abonnement
+    if (user && user.subscriptionType) {
+      setSubscriptionType(user.subscriptionType);
+    }
+  }, [user]);
+  
+  // État pour le type d'abonnement, initialisé avec "none" (à la carte) par défaut
+  const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("none");
 
   // Configuration des onglets du dashboard
   const tabConfigs: TabConfig[] = [
@@ -596,7 +604,7 @@ const UserDashboard = () => {
                     }`}>
                       {user?.role === 'admin' ? 'Admin' :
                        user?.role === 'freelancer' ? 'Freelancer' :
-                       'Utilisateur'}
+                       user?.clientType || 'Utilisateur'}
                     </span>
                   )}
                   
@@ -705,7 +713,7 @@ const UserDashboard = () => {
                         }`}>
                           {user?.role === 'admin' ? 'Admin' :
                            user?.role === 'freelancer' ? 'Freelancer' :
-                           'Utilisateur'}
+                           user?.clientType || 'Utilisateur'}
                         </span>
                       )}
                     </div>
