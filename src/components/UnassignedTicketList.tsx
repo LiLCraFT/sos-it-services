@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown } from 'lucide-react';
+import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown, Filter, ArrowUpDown } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface Attachment {
   filename: string;
@@ -45,9 +47,6 @@ interface TicketListProps {
   viewMode: 'cards' | 'table';
 }
 
-type SortField = 'status' | 'title' | 'category' | 'priority' | 'createdAt';
-type SortDirection = 'asc' | 'desc';
-
 const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const { user, isAuthenticated } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -55,8 +54,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const [error, setError] = useState<string | null>(null);
   const [updateLoading, setUpdateLoading] = useState<{[key: string]: boolean}>({});
   const [dropdownOpen, setDropdownOpen] = useState<{[key: string]: boolean}>({});
-  const [sortField, setSortField] = useState<SortField>('createdAt');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortField, setSortField] = useState<keyof Ticket>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const dropdownRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
 
   const fetchTickets = async () => {
@@ -65,25 +67,16 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
       const token = localStorage.getItem('authToken');
       
       if (!token) {
-        setError('Non authentifié. Veuillez vous reconnecter.');
+        setError('Non authentifié');
         setLoading(false);
         return;
       }
       
       const response = await fetch('http://localhost:3001/api/tickets', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`
         }
       });
-      
-      if (response.status === 401) {
-        // Token expiré ou invalide
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        setError('Session expirée. Veuillez vous reconnecter.');
-        return;
-      }
       
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des tickets');
@@ -101,8 +94,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchTickets();
-    } else {
-      setError('Veuillez vous connecter pour accéder aux tickets');
     }
   }, [isAuthenticated]);
 
@@ -120,7 +111,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     }));
   };
 
-  const updateTicketStatus = async (ticketId: string, status: 'closed' | 'resolved') => {
+  const assignTicket = async (ticketId: string) => {
     try {
       setUpdateLoading(prev => ({ ...prev, [ticketId]: true }));
       const token = localStorage.getItem('authToken');
@@ -130,24 +121,22 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         return;
       }
       
-      const response = await fetch(`http://localhost:3001/api/tickets/${ticketId}`, {
+      const response = await fetch(`http://localhost:3001/api/tickets/${ticketId}/assign`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status: 'in_progress' })
       });
       
       if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour du ticket');
+        throw new Error('Erreur lors de l\'assignation du ticket');
       }
       
       // Mettre à jour l'état local du ticket
       setTickets(prevTickets => 
-        prevTickets.map(ticket => 
-          ticket._id === ticketId ? { ...ticket, status } : ticket
-        )
+        prevTickets.filter(ticket => ticket._id !== ticketId)
       );
       
       closeDropdown(ticketId);
@@ -281,12 +270,10 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   };
 
   // Gérer le clic sur un en-tête de colonne
-  const handleSortClick = (field: SortField) => {
+  const handleSort = (field: keyof Ticket) => {
     if (sortField === field) {
-      // Si on clique sur la même colonne, on inverse la direction
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // Sinon, on change de colonne et on remet la direction par défaut
       setSortField(field);
       setSortDirection('asc');
     }
@@ -309,6 +296,23 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     };
   }, [dropdownOpen]);
 
+  // Filtrage des tickets
+  const getFilteredTickets = () => {
+    let filteredTickets = tickets;
+
+    if (statusFilter) {
+      filteredTickets = filteredTickets.filter(ticket => ticket.status === statusFilter);
+    }
+    if (priorityFilter) {
+      filteredTickets = filteredTickets.filter(ticket => ticket.priority === priorityFilter);
+    }
+    if (categoryFilter) {
+      filteredTickets = filteredTickets.filter(ticket => ticket.category === categoryFilter);
+    }
+
+    return sortTickets(filteredTickets);
+  };
+
   if (loading) {
     return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
   }
@@ -325,15 +329,15 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   }
 
   if (tickets.length === 0) {
-    return <div className="text-center py-4 text-gray-300">Aucun ticket trouvé</div>;
+    return <div className="text-center py-4 text-gray-300">Aucun ticket non assigné trouvé</div>;
   }
 
   // Rendu en mode tableau
   const renderTableView = () => {
-    const sortedTickets = sortTickets(tickets);
+    const sortedTickets = getFilteredTickets();
     
     // Helper pour afficher l'icône de tri
-    const renderSortIcon = (field: SortField) => {
+    const renderSortIcon = (field: keyof Ticket) => {
       if (sortField !== field) return null;
       return sortDirection === 'asc' ? 
         <ChevronUp className="w-4 h-4 ml-1" /> : 
@@ -347,7 +351,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             <tr>
               <th 
                 className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('status')}
+                onClick={() => handleSort('status')}
               >
                 <div className="flex items-center">
                   <span>Statut</span>
@@ -356,7 +360,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               </th>
               <th 
                 className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('title')}
+                onClick={() => handleSort('title')}
               >
                 <div className="flex items-center">
                   <span>Titre</span>
@@ -365,7 +369,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               </th>
               <th 
                 className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('category')}
+                onClick={() => handleSort('category')}
               >
                 <div className="flex items-center">
                   <span>Catégorie</span>
@@ -374,7 +378,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               </th>
               <th 
                 className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('priority')}
+                onClick={() => handleSort('priority')}
               >
                 <div className="flex items-center">
                   <span>Priorité</span>
@@ -383,7 +387,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               </th>
               <th 
                 className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('createdAt')}
+                onClick={() => handleSort('createdAt')}
               >
                 <div className="flex items-center">
                   <span>Créé le</span>
@@ -393,7 +397,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#202225]">
+          <tbody className="divide-y divide-[#292b2f]">
             {sortedTickets.map((ticket) => (
               <tr key={ticket._id} className="hover:bg-[#36393F] transition-colors">
                 <td className="px-4 py-3 whitespace-nowrap">
@@ -417,7 +421,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-300">{formatDate(ticket.createdAt)}</td>
-                <td className="px-4 py-3 text-right text-sm whitespace-nowrap">
+                <td className="px-4 py-3">
                   <div className="flex justify-end">
                     <a
                       href={`/tickets/${ticket._id}`}
@@ -426,56 +430,45 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                       <ExternalLink className="w-4 h-4" />
                     </a>
                     
-                    {user && ticket.createdBy._id === user._id && ticket.status !== 'closed' && (
-                      <div className="relative">
-                        <button 
-                          onClick={() => toggleDropdown(ticket._id)}
-                          className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                          aria-label="Plus d'options"
+                    <div className="relative">
+                      <button 
+                        onClick={() => toggleDropdown(ticket._id)}
+                        className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
+                        aria-label="Plus d'options"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      
+                      {dropdownOpen[ticket._id] && (
+                        <div 
+                          ref={el => dropdownRefs.current[ticket._id] = el}
+                          className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
                         >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                        
-                        {dropdownOpen[ticket._id] && (
-                          <div 
-                            ref={el => dropdownRefs.current[ticket._id] = el}
-                            className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
-                          >
-                            <div className="py-1" role="menu" aria-orientation="vertical">
-                              <a
-                                href={`/tickets/${ticket._id}`}
-                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
-                                role="menuitem"
-                              >
-                                <ExternalLink className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
-                                <span className="truncate">Voir les détails</span>
-                              </a>
-                              
-                              <div className="my-1 border-t border-[#202225]"></div>
-                              
-                              <button
-                                onClick={() => updateTicketStatus(ticket._id, 'resolved')}
-                                disabled={updateLoading[ticket._id]}
-                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
-                                role="menuitem"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                                <span className="truncate">Marquer comme résolu</span>
-                              </button>
-                              <button
-                                onClick={() => updateTicketStatus(ticket._id, 'closed')}
-                                disabled={updateLoading[ticket._id]}
-                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
-                                role="menuitem"
-                              >
-                                <X className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                                <span className="truncate">Clôturer le ticket</span>
-                              </button>
-                            </div>
+                          <div className="py-1" role="menu" aria-orientation="vertical">
+                            <a
+                              href={`/tickets/${ticket._id}`}
+                              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                              role="menuitem"
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                              <span className="truncate">Voir les détails</span>
+                            </a>
+                            
+                            <div className="my-1 border-t border-[#202225]"></div>
+                            
+                            <button
+                              onClick={() => assignTicket(ticket._id)}
+                              disabled={updateLoading[ticket._id]}
+                              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                              role="menuitem"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                              <span className="truncate">S'assigner le ticket</span>
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -486,7 +479,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     );
   };
 
-  // Rendu en mode carte (vue actuelle)
+  // Rendu en mode carte
   const renderCardView = () => (
     <div className="space-y-4">
       {tickets.map((ticket) => (
@@ -501,57 +494,46 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                 {translateStatus(ticket.status)}
               </span>
               
-              {user && ticket.createdBy._id === user._id && ticket.status !== 'closed' && (
-                <div className="relative ml-2">
-                  <button 
-                    onClick={() => toggleDropdown(ticket._id)}
-                    className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                    aria-label="Plus d'options"
+              <div className="relative ml-2">
+                <button 
+                  onClick={() => toggleDropdown(ticket._id)}
+                  className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
+                  aria-label="Plus d'options"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+                
+                {dropdownOpen[ticket._id] && (
+                  <div 
+                    ref={el => dropdownRefs.current[ticket._id] = el}
+                    className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
                   >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                  
-                  {dropdownOpen[ticket._id] && (
-                    <div 
-                      ref={el => dropdownRefs.current[ticket._id] = el}
-                      className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
-                    >
-                      <div className="py-1" role="menu" aria-orientation="vertical">
-                        <a
-                          href={`/tickets/${ticket._id}`}
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
-                          role="menuitem"
-                          onClick={() => closeDropdown(ticket._id)}
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
-                          <span className="truncate">Voir les détails</span>
-                        </a>
-                        
-                        <div className="my-1 border-t border-[#202225]"></div>
-                        
-                        <button
-                          onClick={() => updateTicketStatus(ticket._id, 'resolved')}
-                          disabled={updateLoading[ticket._id]}
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
-                          role="menuitem"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                          <span className="truncate">Marquer comme résolu</span>
-                        </button>
-                        <button
-                          onClick={() => updateTicketStatus(ticket._id, 'closed')}
-                          disabled={updateLoading[ticket._id]}
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
-                          role="menuitem"
-                        >
-                          <X className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                          <span className="truncate">Clôturer le ticket</span>
-                        </button>
-                      </div>
+                    <div className="py-1" role="menu" aria-orientation="vertical">
+                      <a
+                        href={`/tickets/${ticket._id}`}
+                        className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                        role="menuitem"
+                        onClick={() => closeDropdown(ticket._id)}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                        <span className="truncate">Voir les détails</span>
+                      </a>
+                      
+                      <div className="my-1 border-t border-[#202225]"></div>
+                      
+                      <button
+                        onClick={() => assignTicket(ticket._id)}
+                        disabled={updateLoading[ticket._id]}
+                        className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                        role="menuitem"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                        <span className="truncate">S'assigner le ticket</span>
+                      </button>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           
@@ -560,7 +542,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             <span>{ticket.category || 'Autre'}{(ticket.subcategory && ticket.subcategory !== 'Non spécifié') ? ` > ${ticket.subcategory}` : ticket.category ? '' : ' > Non spécifié'}</span>
           </div>
           
-          <div className="bg-[#2F3136] border border-[#202225] rounded-md p-3 mb-3">
+          <div className="ml-7">
             <div className="flex items-center mb-2">
               <MessageCircle className="w-4 h-4 text-gray-400 mr-2" />
               <span className="text-gray-300 text-xs font-medium">Description du problème</span>
@@ -595,7 +577,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             )}
           </div>
           
-          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400 mb-2">
+          <div className="mt-4 pt-4 border-t border-[#202225] ml-7 space-y-2">
             <div className="flex items-center">
               <User className="w-3 h-3 text-gray-500 mr-1" />
               <span className="font-medium mr-1">Créé par:</span>
@@ -629,8 +611,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
 
   return (
     <div>
-      {/* Affichage conditionnel selon le mode */}
-      {viewMode === 'cards' ? renderCardView() : renderTableView()}
+      {renderTableView()}
     </div>
   );
 };

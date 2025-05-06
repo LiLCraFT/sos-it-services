@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
@@ -23,7 +23,7 @@ type AddressOption = {
 type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'birthDate';
 
 // Définition des onglets disponibles
-type TabId = 'profile' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices' | 'preferences';
+type TabId = 'profile' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices' | 'preferences' | 'ticket_database';
 
 // Structure pour un onglet du dashboard
 type TabConfig = {
@@ -102,6 +102,12 @@ const UserDashboard = () => {
       label: 'Mes tickets',
       icon: <Ticket className="w-5 h-5" />,
       excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'], // Pour tous sauf ces rôles
+    },
+    {
+      id: 'ticket_database',
+      label: 'Base de tickets',
+      icon: <Database className="w-5 h-5" />,
+      roles: ['fondateur', 'admin', 'freelancer', 'freelancer_admin'], // Pour les fondateurs, admins et freelancers
     },
     {
       id: 'subscription',
@@ -768,6 +774,34 @@ const UserDashboard = () => {
                   <TicketList viewMode={viewMode} />
                 )}
               </div>
+            )}
+            
+            {activeTab === 'ticket_database' && (user?.role === 'fondateur' || user?.role === 'admin' || user?.role === 'freelancer' || user?.role === 'freelancer_admin') && (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-white">Base de tickets</h3>
+                  <div className="flex items-center space-x-3">
+                    {/* Switcher pour basculer entre les modes d'affichage */}
+                    <div className="inline-flex items-center bg-[#36393F] rounded-md">
+                      <button 
+                        onClick={() => setViewMode('cards')} 
+                        className={`px-3 py-2 rounded-l-md flex items-center text-sm ${viewMode === 'cards' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#36393F]'}`}
+                      >
+                        <Grid className="w-4 h-4 mr-2" />
+                        Cartes
+                      </button>
+                      <button 
+                        onClick={() => setViewMode('table')} 
+                        className={`px-3 py-2 rounded-r-md flex items-center text-sm ${viewMode === 'table' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#36393F]'}`}
+                      >
+                        <List className="w-4 h-4 mr-2" />
+                        Tableau
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <TicketList viewMode={viewMode} />
+              </>
             )}
             
             {activeTab === 'subscription' && (!user?.role || 

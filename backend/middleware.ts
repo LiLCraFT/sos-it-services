@@ -73,7 +73,29 @@ export async function middleware(request: NextRequest) {
   }
   // Exception spéciale pour GET /api/users (pour afficher la liste des experts)
   else if (path.startsWith('/api/users') && request.method === 'GET') {
-    response = NextResponse.next();
+    const token = request.headers.get('authorization')?.split(' ')[1];
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Authentification requise' },
+        { status: 401 }
+      );
+    }
+    
+    try {
+      // Vérifie le token JWT
+      const secretKey = new TextEncoder().encode(
+        process.env.JWT_SECRET || 'fallback_secret_key_for_development'
+      );
+      
+      await jwtVerify(token, secretKey);
+      response = NextResponse.next();
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Token invalide ou expiré' },
+        { status: 401 }
+      );
+    }
   }
   // Vérifie si la route est protégée
   else if (protectedRoutes.some(route => path.startsWith(route))) {

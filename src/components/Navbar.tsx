@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut, Ticket, CreditCard, FileText, Crown, Users } from 'lucide-react';
+import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut, Ticket, CreditCard, FileText, Crown, Users, Database } from 'lucide-react';
 import { Link } from './ui/Link';
 import { Modal } from './ui/Modal';
 import LoginForm from './LoginForm';
@@ -326,6 +326,16 @@ const Navbar: React.FC = () => {
                             </RouterLink>
                           </>
                         )}
+                        {(user?.role === 'fondateur' || user?.role === 'admin' || user?.role === 'freelancer' || user?.role === 'freelancer_admin') && (
+                          <RouterLink
+                            to="/mon-espace?tab=ticket_database"
+                            className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Database className="w-5 h-5 mr-2" />
+                            <span>Base de tickets</span>
+                          </RouterLink>
+                        )}
                         {(!user?.role || 
                           (user?.role !== 'admin' && 
                            user?.role !== 'fondateur' && 
@@ -480,7 +490,17 @@ const Navbar: React.FC = () => {
                     </RouterLink>
                   </>
                 )}
-                {(user?.role !== 'admin' && 
+                {(user?.role === 'fondateur' || user?.role === 'admin' || user?.role === 'freelancer' || user?.role === 'freelancer_admin') && (
+                  <RouterLink
+                    to="/mon-espace?tab=ticket_database"
+                    className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Database className="h-5 w-5 mr-2" />
+                    <span>Base de tickets</span>
+                  </RouterLink>
+                )}
+                {(!user?.role || 
                   (user?.role !== 'fondateur' && 
                    user?.role !== 'freelancer' &&
                    user?.role !== 'freelancer_admin')) && (
