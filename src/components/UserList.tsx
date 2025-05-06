@@ -281,54 +281,96 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   const renderFilters = () => {
     if (userType === 'regular') {
       return (
-        <div className="mb-4 flex items-center space-x-2">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-300">Filtrer:</span>
-          <div className="flex space-x-1">
-            <button
-              className={`px-3 py-1 text-sm rounded-md ${!clientTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-              onClick={() => setClientTypeFilter(null)}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <span className="text-gray-300">Filtrer:</span>
+            <div className="flex space-x-1">
+              <button
+                className={`px-3 py-1 text-sm rounded-md ${!clientTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+                onClick={() => setClientTypeFilter(null)}
+              >
+                Tous
+              </button>
+              <button
+                className={`px-3 py-1 text-sm rounded-md ${clientTypeFilter === 'Particulier' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+                onClick={() => setClientTypeFilter('Particulier')}
+              >
+                Particuliers
+              </button>
+              <button
+                className={`px-3 py-1 text-sm rounded-md ${clientTypeFilter === 'Professionnel' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+                onClick={() => setClientTypeFilter('Professionnel')}
+              >
+                Professionnels
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-300">Trier par:</span>
+            <select
+              value={sortField}
+              onChange={(e) => handleSortClick(e.target.value as SortField)}
+              className="bg-[#36393F] text-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
             >
-              Tous
-            </button>
+              <option value="lastName">Nom</option>
+              <option value="email">Email</option>
+              <option value="city">Ville</option>
+              <option value="createdAt">Date d'inscription</option>
+            </select>
             <button
-              className={`px-3 py-1 text-sm rounded-md ${clientTypeFilter === 'Particulier' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-              onClick={() => setClientTypeFilter('Particulier')}
+              onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+              className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
             >
-              Particuliers
-            </button>
-            <button
-              className={`px-3 py-1 text-sm rounded-md ${clientTypeFilter === 'Professionnel' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-              onClick={() => setClientTypeFilter('Professionnel')}
-            >
-              Professionnels
+              {sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
         </div>
       );
     } else if (userType === 'freelancer') {
       return (
-        <div className="mb-4 flex items-center space-x-2">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-300">Filtrer:</span>
-          <div className="flex space-x-1">
-            <button
-              className={`px-3 py-1 text-sm rounded-md ${!freelancerTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-              onClick={() => setFreelancerTypeFilter(null)}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <span className="text-gray-300">Filtrer:</span>
+            <div className="flex space-x-1">
+              <button
+                className={`px-3 py-1 text-sm rounded-md ${!freelancerTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+                onClick={() => setFreelancerTypeFilter(null)}
+              >
+                Tous
+              </button>
+              <button
+                className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer_admin' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+                onClick={() => setFreelancerTypeFilter('freelancer_admin')}
+              >
+                Admins
+              </button>
+              <button
+                className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+                onClick={() => setFreelancerTypeFilter('freelancer')}
+              >
+                Freelancers
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-300">Trier par:</span>
+            <select
+              value={sortField}
+              onChange={(e) => handleSortClick(e.target.value as SortField)}
+              className="bg-[#36393F] text-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
             >
-              Tous
-            </button>
+              <option value="lastName">Nom</option>
+              <option value="email">Email</option>
+              <option value="city">Ville</option>
+              <option value="createdAt">Date d'inscription</option>
+            </select>
             <button
-              className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer_admin' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-              onClick={() => setFreelancerTypeFilter('freelancer_admin')}
+              onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+              className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
             >
-              Admins
-            </button>
-            <button
-              className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-              onClick={() => setFreelancerTypeFilter('freelancer')}
-            >
-              Freelancers
+              {sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -544,15 +586,15 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     <div>
       {renderFilters()}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredUsers.map((userData) => (
-          <div key={userData._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
+        {sortUsers(filteredUsers).map((user) => (
+          <div key={user._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
                     <img 
-                      src={userData.profileImage || '/images/default-profile.png'} 
-                      alt={`${userData.firstName} ${userData.lastName}`}
+                      src={user.profileImage || '/images/default-profile.png'} 
+                      alt={`${user.firstName} ${user.lastName}`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/images/default-profile.png';
@@ -560,16 +602,16 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
                     />
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-white font-medium">{userData.firstName} {userData.lastName}</h3>
+                    <h3 className="text-white font-medium">{user.firstName} {user.lastName}</h3>
                     <div className="flex space-x-1 mt-1">
-                      {renderRoleTags(userData.role, userData)}
+                      {renderRoleTags(user.role, user)}
                     </div>
                   </div>
                 </div>
-                {userData.role !== 'fondateur' && (
+                {user.role !== 'fondateur' && (
                   <div className="relative flex justify-end">
                     <button 
-                      onClick={(e) => toggleDropdown(userData._id, e)}
+                      onClick={(e) => toggleDropdown(user._id, e)}
                       className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
                       aria-label="Plus d'options"
                     >
@@ -582,22 +624,22 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
               <div className="space-y-2 text-sm">
                 <div className="flex items-center text-gray-300">
                   <Mail className="w-3 h-3 text-gray-500 mr-2" />
-                  <span className="truncate">{userData.email}</span>
+                  <span className="truncate">{user.email}</span>
                 </div>
                 
                 <div className="flex items-center text-gray-300">
                   <Phone className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>{userData.phone || 'Non renseigné'}</span>
+                  <span>{user.phone || 'Non renseigné'}</span>
                 </div>
                 
                 <div className="flex items-center text-gray-300">
                   <MapPin className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>{userData.city || 'Non renseigné'}</span>
+                  <span>{user.city || 'Non renseigné'}</span>
                 </div>
                 
                 <div className="flex items-center text-gray-300">
                   <Calendar className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>Inscrit le {formatDate(userData.createdAt)}</span>
+                  <span>Inscrit le {formatDate(user.createdAt)}</span>
                 </div>
               </div>
             </div>

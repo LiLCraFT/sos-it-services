@@ -361,27 +361,48 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   // Afficher les filtres disponibles
   const renderFilters = () => {
     return (
-      <div className="mb-4 flex items-center space-x-2">
-        <Filter className="w-4 h-4 text-gray-400" />
-        <span className="text-gray-300">Filtrer:</span>
-        <div className="flex space-x-1">
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${!freelancerTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-            onClick={() => setFreelancerTypeFilter(null)}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Filter className="w-4 h-4 text-gray-400" />
+          <span className="text-gray-300">Filtrer:</span>
+          <div className="flex space-x-1">
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${!freelancerTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setFreelancerTypeFilter(null)}
+            >
+              Tous
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer_admin' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setFreelancerTypeFilter('freelancer_admin')}
+            >
+              Admins
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setFreelancerTypeFilter('freelancer')}
+            >
+              Freelancers
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-gray-300">Trier par:</span>
+          <select
+            value={sortField}
+            onChange={(e) => handleSortClick(e.target.value as SortField)}
+            className="bg-[#36393F] text-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
           >
-            Tous
-          </button>
+            <option value="lastName">Nom</option>
+            <option value="email">Email</option>
+            <option value="city">Ville</option>
+            <option value="createdAt">Date d'inscription</option>
+          </select>
           <button
-            className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer_admin' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-            onClick={() => setFreelancerTypeFilter('freelancer_admin')}
+            onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+            className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
           >
-            Admins
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
-            onClick={() => setFreelancerTypeFilter('freelancer')}
-          >
-            Freelancers
+            {sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -570,7 +591,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
     <div>
       {renderFilters()}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredFreelancers.map((freelancer) => (
+        {sortFreelancers(filteredFreelancers).map((freelancer) => (
           <div key={freelancer._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
