@@ -64,10 +64,15 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const roleFilter = url.searchParams.get('role');
     
-    const query = roleFilter ? { role: roleFilter } : {};
+    let query = {};
+    if (roleFilter) {
+      // Si le filtre contient des virgules, on cherche les utilisateurs avec n'importe lequel des rôles
+      const roles = roleFilter.split(',');
+      query = { role: { $in: roles } };
+    }
     
     // Ne retourner que les champs nécessaires
-    const users = await User.find(query).select('_id firstName lastName email role clientType');
+    const users = await User.find(query).select('_id firstName lastName email role clientType profileImage');
       
     return NextResponse.json({ users }, { status: 200 });
   } catch (error: any) {

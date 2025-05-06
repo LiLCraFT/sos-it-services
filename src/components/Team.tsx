@@ -83,7 +83,7 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
         <div className="p-4">
           <h3 className="text-lg font-semibold text-white">{firstName} {lastName}</h3>
           <p className="text-[#5865F2] mb-2">{role === 'fondateur' ? 'Fondateur' : 
-                                            role === 'freelancer' ? 'Freelancer' : 
+                                            role === 'freelancer' || role === 'freelancer_admin' ? 'Freelancer' : 
                                             role === 'admin' ? 'Administrateur' : 'Expert'}</p>
         </div>
       </CardContent>
@@ -109,7 +109,7 @@ const Team: React.FC = () => {
         console.log('Token trouvé:', token.substring(0, 20) + '...');
         
         // Récupérer tous les utilisateurs avec les rôles fondateur ou freelancer
-        const response = await fetch('http://localhost:3001/api/users?role=fondateur,freelancer', {
+        const response = await fetch('http://localhost:3001/api/users?role=fondateur,freelancer,freelancer_admin', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
