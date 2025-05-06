@@ -221,30 +221,37 @@ const Navbar: React.FC = () => {
                           <User className="w-5 h-5 mr-2" />
                           <span>Mon espace</span>
                         </RouterLink>
-                        <RouterLink
-                          to="/mon-espace?tab=tickets"
-                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Ticket className="w-5 h-5 mr-2" />
-                          <span>Mes tickets</span>
-                        </RouterLink>
-                        <RouterLink
-                          to="/mon-espace?tab=subscription"
-                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <CreditCard className="w-5 h-5 mr-2" />
-                          <span>Mon abonnement</span>
-                        </RouterLink>
-                        <RouterLink
-                          to="/mon-espace?tab=invoices"
-                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <FileText className="w-5 h-5 mr-2" />
-                          <span>Mes factures</span>
-                        </RouterLink>
+                        {(!user?.role || 
+                          (user?.role !== 'admin' && 
+                           user?.role !== 'fondateur' && 
+                           user?.role !== 'freelancer')) && (
+                          <>
+                            <RouterLink
+                              to="/mon-espace?tab=tickets"
+                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                              onClick={() => setIsUserMenuOpen(false)}
+                            >
+                              <Ticket className="w-5 h-5 mr-2" />
+                              <span>Mes tickets</span>
+                            </RouterLink>
+                            <RouterLink
+                              to="/mon-espace?tab=subscription"
+                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                              onClick={() => setIsUserMenuOpen(false)}
+                            >
+                              <CreditCard className="w-5 h-5 mr-2" />
+                              <span>Mon abonnement</span>
+                            </RouterLink>
+                            <RouterLink
+                              to="/mon-espace?tab=invoices"
+                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                              onClick={() => setIsUserMenuOpen(false)}
+                            >
+                              <FileText className="w-5 h-5 mr-2" />
+                              <span>Mes factures</span>
+                            </RouterLink>
+                          </>
+                        )}
                         <button
                           className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full text-left"
                           onClick={() => {
@@ -338,30 +345,37 @@ const Navbar: React.FC = () => {
                   <User className="h-5 w-5 mr-2" />
                   <span>Mon espace</span>
                 </RouterLink>
-                <RouterLink 
-                  to="/mon-espace?tab=tickets"
-                  className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Ticket className="h-5 w-5 mr-2" />
-                  <span>Mes tickets</span>
-                </RouterLink>
-                <RouterLink 
-                  to="/mon-espace?tab=subscription"
-                  className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <CreditCard className="h-5 w-5 mr-2" />
-                  <span>Mon abonnement</span>
-                </RouterLink>
-                <RouterLink 
-                  to="/mon-espace?tab=invoices"
-                  className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <FileText className="h-5 w-5 mr-2" />
-                  <span>Mes factures</span>
-                </RouterLink>
+                {(!user?.role || 
+                  (user?.role !== 'admin' && 
+                   user?.role !== 'fondateur' && 
+                   user?.role !== 'freelancer')) && (
+                  <>
+                    <RouterLink 
+                      to="/mon-espace?tab=tickets"
+                      className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Ticket className="h-5 w-5 mr-2" />
+                      <span>Mes tickets</span>
+                    </RouterLink>
+                    <RouterLink 
+                      to="/mon-espace?tab=subscription"
+                      className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <CreditCard className="h-5 w-5 mr-2" />
+                      <span>Mon abonnement</span>
+                    </RouterLink>
+                    <RouterLink 
+                      to="/mon-espace?tab=invoices"
+                      className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <FileText className="h-5 w-5 mr-2" />
+                      <span>Mes factures</span>
+                    </RouterLink>
+                  </>
+                )}
                 <div className="px-3 py-2 flex items-center">
                   <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium mr-2 ${
                     user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :

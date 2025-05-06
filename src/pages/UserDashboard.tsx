@@ -494,30 +494,37 @@ const UserDashboard = () => {
                 <User className="w-5 h-5" />
                 <span>Mon profil</span>
               </a>
-              <a 
-                href="#" 
-                className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'tickets' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
-                onClick={() => setActiveTab('tickets')}
-              >
-                <Ticket className="w-5 h-5" />
-                <span>Mes tickets</span>
-              </a>
-              <a 
-                href="#" 
-                className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'subscription' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
-                onClick={() => setActiveTab('subscription')}
-              >
-                <CreditCard className="w-5 h-5" />
-                <span>Mon abonnement</span>
-              </a>
-              <a 
-                href="#" 
-                className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'invoices' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
-                onClick={() => setActiveTab('invoices')}
-              >
-                <FileText className="w-5 h-5" />
-                <span>Mes factures</span>
-              </a>
+              {(!user?.role || 
+                (user?.role !== 'admin' && 
+                 user?.role !== 'fondateur' && 
+                 user?.role !== 'freelancer')) && (
+                <>
+                  <a 
+                    href="#" 
+                    className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'tickets' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
+                    onClick={() => setActiveTab('tickets')}
+                  >
+                    <Ticket className="w-5 h-5" />
+                    <span>Mes tickets</span>
+                  </a>
+                  <a 
+                    href="#" 
+                    className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'subscription' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
+                    onClick={() => setActiveTab('subscription')}
+                  >
+                    <CreditCard className="w-5 h-5" />
+                    <span>Mon abonnement</span>
+                  </a>
+                  <a 
+                    href="#" 
+                    className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'invoices' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
+                    onClick={() => setActiveTab('invoices')}
+                  >
+                    <FileText className="w-5 h-5" />
+                    <span>Mes factures</span>
+                  </a>
+                </>
+              )}
               <a href="#" className="flex items-center space-x-3 p-3 rounded-md text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]">
                 <Settings className="w-5 h-5" />
                 <span>Paramètres</span>
@@ -584,7 +591,10 @@ const UserDashboard = () => {
               </>
             )}
 
-            {activeTab === 'tickets' && (
+            {activeTab === 'tickets' && (!user?.role || 
+              (user?.role !== 'admin' && 
+               user?.role !== 'fondateur' && 
+               user?.role !== 'freelancer')) && (
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-semibold text-white">Mes tickets</h3>
@@ -628,7 +638,10 @@ const UserDashboard = () => {
               </div>
             )}
             
-            {activeTab === 'subscription' && (
+            {activeTab === 'subscription' && (!user?.role || 
+              (user?.role !== 'admin' && 
+               user?.role !== 'fondateur' && 
+               user?.role !== 'freelancer')) && (
               <>
                 <h3 className="text-xl font-semibold text-white mb-6">Mon abonnement</h3>
                 <div className="space-y-6">
@@ -678,7 +691,10 @@ const UserDashboard = () => {
               </>
             )}
             
-            {activeTab === 'invoices' && (
+            {activeTab === 'invoices' && (!user?.role || 
+              (user?.role !== 'admin' && 
+               user?.role !== 'fondateur' && 
+               user?.role !== 'freelancer')) && (
               <>
                 <h3 className="text-xl font-semibold text-white mb-6">Mes factures</h3>
                 <div className="space-y-6">
