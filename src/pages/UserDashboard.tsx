@@ -441,7 +441,7 @@ const UserDashboard = () => {
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
         {/* En-tête du profil */}
         <div className="bg-[#5865F2] p-6">
-          <h1 className="text-2xl font-bold text-white">Mon Espace</h1>
+          <h1 className="text-2xl font-bold text-white">Mon Profil</h1>
           <p className="text-[#E3E5E8]">Gérez vos informations et vos services</p>
         </div>
         
@@ -551,7 +551,7 @@ const UserDashboard = () => {
               )}
               <a href="#" className="flex items-center space-x-3 p-3 rounded-md text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]">
                 <Settings className="w-5 h-5" />
-                <span>Paramètres</span>
+                <span>Préférences</span>
               </a>
               <button 
                 onClick={logout}

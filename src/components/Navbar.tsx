@@ -242,7 +242,7 @@ const Navbar: React.FC = () => {
                           onClick={() => setIsUserMenuOpen(false)}
                         >
                           <User className="w-5 h-5 mr-2" />
-                          <span>Mon espace</span>
+                          <span>Mon profil</span>
                         </RouterLink>
                         {(!user?.role || 
                           (user?.role !== 'admin' && 
@@ -275,6 +275,14 @@ const Navbar: React.FC = () => {
                             </RouterLink>
                           </>
                         )}
+                        <RouterLink
+                          to="/mon-espace?tab=preferences"
+                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <Settings className="w-5 h-5 mr-2" />
+                          <span>Préférences</span>
+                        </RouterLink>
                         <button
                           className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full text-left"
                           onClick={() => {
@@ -366,7 +374,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsOpen(false)}
                 >
                   <User className="h-5 w-5 mr-2" />
-                  <span>Mon espace</span>
+                  <span>Mon profil</span>
                 </RouterLink>
                 {(!user?.role || 
                   (user?.role !== 'admin' && 
@@ -399,6 +407,14 @@ const Navbar: React.FC = () => {
                     </RouterLink>
                   </>
                 )}
+                <RouterLink 
+                  to="/mon-espace?tab=preferences"
+                  className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Settings className="h-5 w-5 mr-2" />
+                  <span>Préférences</span>
+                </RouterLink>
                 <div className="px-3 py-2 flex flex-col">
                   <span className="font-semibold text-white mb-1 truncate">{user?.firstName} {user?.lastName}</span>
                   <div className="flex flex-nowrap items-center gap-1 whitespace-nowrap overflow-x-auto">
