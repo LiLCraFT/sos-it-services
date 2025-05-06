@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
@@ -48,6 +48,10 @@ const UserDashboard = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
+  
+  // Simuler la présence d'un abonnement (à remplacer par une lecture depuis user.subscription dans un cas réel)
+  const [hasSubscription, setHasSubscription] = useState(true);
+  const [subscriptionName, setSubscriptionName] = useState("Premium");
   
   // Définir l'onglet actif en fonction du paramètre de l'URL
   const [activeTab, setActiveTab] = useState(
@@ -469,7 +473,7 @@ const UserDashboard = () => {
               </div>
               <div className="text-center">
                 <h2 className="font-semibold text-white">{user?.firstName} {user?.lastName}</h2>
-                <div className="flex items-center justify-center mt-1">
+                <div className="flex items-center justify-center mt-1 space-x-2">
                   <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
                     user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
                     user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
@@ -481,6 +485,14 @@ const UserDashboard = () => {
                      user?.role === 'freelancer' ? 'Freelancer' :
                      'Utilisateur'}
                   </span>
+                  
+                  {/* Tag d'abonnement - visible uniquement si l'utilisateur a un abonnement */}
+                  {hasSubscription && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
+                      <Crown className="w-3 h-3 mr-1" />
+                      {subscriptionName}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -655,7 +667,7 @@ const UserDashboard = () => {
                         Actif
                       </span>
                     </div>
-                    <p className="text-white pl-8 mt-2">Plan Premium - 29,99€/mois</p>
+                    <p className="text-white pl-8 mt-2">Plan {subscriptionName} - 29,99€/mois</p>
                     <p className="text-gray-400 pl-8 text-sm">Prochain renouvellement: 15/06/2023</p>
 
                     <div className="pl-8 mt-4">
