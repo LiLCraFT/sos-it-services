@@ -3,5 +3,5 @@
  * Les administrateurs et les fondateurs ont les droits d'administration
  */
 export function hasAdminRights(userRole: string): boolean {
-  return userRole === 'admin' || userRole === 'fondateur';
+  return userRole === 'admin' || userRole === 'fondateur' || userRole === 'freelancer_admin';
 } 

@@ -15,7 +15,7 @@ export interface IUser extends Document {
   phone: string;
   birthDate: Date;
   city: string;
-  role: 'user' | 'admin' | 'fondateur' | 'freelancer';
+  role: 'user' | 'admin' | 'fondateur' | 'freelancer' | 'freelancer_admin';
   profileImage: string;
   createdAt: Date;
   updatedAt: Date;
@@ -69,7 +69,7 @@ const UserSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['user', 'admin', 'fondateur', 'freelancer'],
+      enum: ['user', 'admin', 'fondateur', 'freelancer', 'freelancer_admin'],
       default: 'user',
     },
     profileImage: {

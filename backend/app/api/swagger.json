@@ -450,7 +450,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["user", "admin", "fondateur", "freelancer"]
+            "enum": ["user", "admin", "fondateur", "freelancer", "freelancer_admin"]
           },
           "profileImage": {
             "type": "string"
@@ -496,7 +496,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["user", "admin", "fondateur", "freelancer"]
+            "enum": ["user", "admin", "fondateur", "freelancer", "freelancer_admin"]
           },
           "profileImage": {
             "type": "string"
@@ -530,7 +530,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["user", "admin", "fondateur", "freelancer"]
+            "enum": ["user", "admin", "fondateur", "freelancer", "freelancer_admin"]
           },
           "profileImage": {
             "type": "string"
