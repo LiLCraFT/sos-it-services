@@ -7,6 +7,7 @@ import CreateTicketForm from '../components/CreateTicketForm';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import { SiVisa } from 'react-icons/si';
 import FreelancerList from '../components/FreelancerList';
+import UserList from '../components/UserList';
 
 // URL de l'image par défaut
 const DEFAULT_IMAGE = 'http://localhost:3001/api/default-avatar';
@@ -22,7 +23,7 @@ type AddressOption = {
 type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'birthDate';
 
 // Définition des onglets disponibles
-type TabId = 'profile' | 'freelancers' | 'tickets' | 'subscription' | 'invoices';
+type TabId = 'profile' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices';
 
 // Structure pour un onglet du dashboard
 type TabConfig = {
@@ -77,10 +78,16 @@ const UserDashboard = () => {
       // Accessible à tous
     },
     {
+      id: 'users',
+      label: 'Les utilisateurs',
+      icon: <Users className="w-5 h-5" />,
+      roles: ['fondateur', 'admin', 'freelancer_admin'], // Pour les fondateurs et admins
+    },
+    {
       id: 'freelancers',
       label: 'Les freelancers',
       icon: <Users className="w-5 h-5" />,
-      roles: ['fondateur'], // Uniquement pour les fondateurs
+      roles: ['fondateur', 'admin', 'freelancer_admin'], // Pour les fondateurs et admins
     },
     {
       id: 'tickets',
@@ -890,7 +897,7 @@ const UserDashboard = () => {
               </>
             )}
             
-            {activeTab === 'freelancers' && user?.role === 'fondateur' && (
+            {activeTab === 'freelancers' && (user?.role === 'fondateur' || user?.role === 'admin' || user?.role === 'freelancer_admin') && (
               <>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-semibold text-white">Les freelancers</h3>
@@ -917,6 +924,31 @@ const UserDashboard = () => {
                 
                 <FreelancerList viewMode={viewMode} />
               </>
+            )}
+
+            {activeTab === 'users' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold text-white">Liste des utilisateurs</h2>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setViewMode('cards')}
+                      className={`p-2 rounded-md ${viewMode === 'cards' ? 'bg-[#5865F2] text-white' : 'bg-[#2F3136] text-gray-400'}`}
+                      aria-label="Affichage en cartes"
+                    >
+                      <Grid className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('table')}
+                      className={`p-2 rounded-md ${viewMode === 'table' ? 'bg-[#5865F2] text-white' : 'bg-[#2F3136] text-gray-400'}`}
+                      aria-label="Affichage en tableau"
+                    >
+                      <List className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+                <UserList viewMode={viewMode} />
+              </div>
             )}
           </div>
         </div>
