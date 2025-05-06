@@ -95,7 +95,7 @@ const UserDashboard = () => {
       id: 'freelancers',
       label: 'Les freelancers',
       icon: <Users className="w-5 h-5" />,
-      roles: ['fondateur', 'admin'], // Uniquement pour les fondateurs et admins, pas pour freelancer_admin
+      roles: ['fondateur', 'admin', 'freelancer_admin'], // Ajout de freelancer_admin
     },
     {
       id: 'tickets',

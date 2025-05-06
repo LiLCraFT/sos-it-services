@@ -306,23 +306,25 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
         }}
       >
         <div className="py-1" role="menu" aria-orientation="vertical">
-          <button 
-            onClick={() => toggleAdminRole(activeFreelancerId, freelancer.role)}
-            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-            disabled={actionInProgress[activeFreelancerId]}
-          >
-            {freelancer.role === 'freelancer_admin' ? (
-              <>
-                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                <span>Retirer les droits d'admin</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                <span>Ajouter les droits d'admin</span>
-              </>
-            )}
-          </button>
+          {isFounder && (
+            <button 
+              onClick={() => toggleAdminRole(activeFreelancerId, freelancer.role)}
+              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+              disabled={actionInProgress[activeFreelancerId]}
+            >
+              {freelancer.role === 'freelancer_admin' ? (
+                <>
+                  <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                  <span>Retirer les droits d'admin</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                  <span>Ajouter les droits d'admin</span>
+                </>
+              )}
+            </button>
+          )}
 
           {isFounder && (
             <>

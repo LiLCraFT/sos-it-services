@@ -99,22 +99,47 @@ const Team: React.FC = () => {
   useEffect(() => {
     const fetchTeamMembers = async () => {
       try {
+        const token = localStorage.getItem('authToken');
+        
+        if (!token) {
+          console.error('Aucun token trouvé dans le localStorage');
+          throw new Error('Non authentifié');
+        }
+        
+        console.log('Token trouvé:', token.substring(0, 20) + '...');
+        
         // Récupérer tous les utilisateurs avec les rôles fondateur ou freelancer
-        const response = await fetch('http://localhost:3001/api/users?role=fondateur,freelancer');
+        const response = await fetch('http://localhost:3001/api/users?role=fondateur,freelancer', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         
         if (!response.ok) {
-          throw new Error(`Erreur ${response.status}`);
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Erreur de réponse:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          });
+          throw new Error(`Erreur ${response.status}: ${errorData.error || response.statusText}`);
         }
         
         const data = await response.json();
+        console.log('Données reçues:', data);
         
         if (Array.isArray(data)) {
           setTeamMembers(data);
+        } else if (data.users) {
+          setTeamMembers(data.users);
         } else {
+          console.warn('Format de données inattendu:', data);
           setTeamMembers([]);
         }
       } catch (err) {
-        setError(`Impossible de charger les experts`);
+        console.error('Erreur lors du chargement des membres:', err);
+        setError(`Impossible de charger les experts: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
         
         // Utiliser des données de test en cas d'échec de l'API
         const testData: TeamMember[] = [

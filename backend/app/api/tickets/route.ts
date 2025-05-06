@@ -33,19 +33,29 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
     }
 
+    // Récupérer l'utilisateur pour vérifier son rôle
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+
+    console.log('User role:', user.role);
+    console.log('User ID:', userId);
+
     let query = {};
     
-    // Si c'est un utilisateur normal, il peut seulement voir ses propres tickets
-    // ou ceux qui lui sont assignés comme targetUser
-    if (targetUserId) {
+    // Si l'utilisateur est admin, fondateur, freelancer_admin ou freelancer, il peut voir tous les tickets
+    if (user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin' || user.role === 'freelancer') {
+      query = {};
+      console.log('Admin/Fondateur/Freelancer query:', query);
+    } 
+    // Pour les autres utilisateurs
+    else if (targetUserId) {
       query = { targetUser: targetUserId };
+      console.log('Target user query:', query);
     } else {
-      query = { 
-        $or: [
-          { createdBy: userId },
-          { targetUser: userId },
-        ]
-      };
+      query = { createdBy: userId };
+      console.log('Default user query:', query);
     }
     
     const tickets = await Ticket.find(query)
@@ -53,9 +63,22 @@ export async function GET(req: NextRequest) {
       .populate('targetUser', 'firstName lastName email')
       .populate('assignedTo', 'firstName lastName email')
       .sort({ createdAt: -1 });
+    
+    console.log('Number of tickets found:', tickets.length);
+    if (tickets.length > 0) {
+      console.log('First ticket details:', {
+        id: tickets[0]._id,
+        createdBy: tickets[0].createdBy,
+        targetUser: tickets[0].targetUser,
+        assignedTo: tickets[0].assignedTo
+      });
+    } else {
+      console.log('No tickets found');
+    }
       
     return NextResponse.json({ tickets }, { status: 200 });
   } catch (error: any) {
+    console.error('Error in GET /api/tickets:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

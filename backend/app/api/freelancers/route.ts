@@ -26,7 +26,7 @@ const getUserFromToken = (req: NextRequest): { userId: string | null, role: stri
   }
 };
 
-// Get all freelancers (founder only)
+// Get all freelancers (founder and freelancer_admin only)
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
@@ -37,10 +37,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
     }
     
-    // Vérifier si l'utilisateur est fondateur
+    // Vérifier si l'utilisateur est fondateur ou freelancer_admin
     const user = await User.findById(userId);
-    if (!user || user.role !== 'fondateur') {
-      return NextResponse.json({ error: 'Accès restreint aux fondateurs' }, { status: 403 });
+    if (!user || (user.role !== 'fondateur' && user.role !== 'freelancer_admin')) {
+      return NextResponse.json({ error: 'Accès restreint aux fondateurs et freelancer_admin' }, { status: 403 });
     }
     
     // Récupérer tous les freelancers (y compris ceux qui ont le rôle freelancer_admin)
@@ -68,7 +68,7 @@ export async function PATCH(req: NextRequest) {
     // Vérifier si l'utilisateur est fondateur
     const user = await User.findById(userId);
     if (!user || user.role !== 'fondateur') {
-      return NextResponse.json({ error: 'Accès restreint aux fondateurs' }, { status: 403 });
+      return NextResponse.json({ error: 'Seul le fondateur peut modifier les rôles des freelancers' }, { status: 403 });
     }
     
     // Récupérer les données de la requête
