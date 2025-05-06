@@ -50,8 +50,7 @@ const UserDashboard = () => {
   const tabParam = queryParams.get('tab');
   
   // Simuler la présence d'un abonnement (à remplacer par une lecture depuis user.subscription dans un cas réel)
-  const [hasSubscription, setHasSubscription] = useState(true);
-  const [subscriptionName, setSubscriptionName] = useState("Premium");
+  const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("solo");
   
   // Définir l'onglet actif en fonction du paramètre de l'URL
   const [activeTab, setActiveTab] = useState(
@@ -427,6 +426,15 @@ const UserDashboard = () => {
     );
   };
 
+  const getSubscriptionName = () => {
+    switch(subscriptionType) {
+      case "solo": return "Plan Solo";
+      case "family": return "Plan Famille";
+      case "none": 
+      default: return "A la carte";
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl pt-24">
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
@@ -487,10 +495,13 @@ const UserDashboard = () => {
                   </span>
                   
                   {/* Tag d'abonnement - visible uniquement si l'utilisateur a un abonnement */}
-                  {hasSubscription && (
+                  {(!user?.role || 
+                    (user?.role !== 'admin' && 
+                     user?.role !== 'fondateur' && 
+                     user?.role !== 'freelancer')) && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
                       <Crown className="w-3 h-3 mr-1" />
-                      {subscriptionName}
+                      {getSubscriptionName()}
                     </span>
                   )}
                 </div>
@@ -667,8 +678,10 @@ const UserDashboard = () => {
                         Actif
                       </span>
                     </div>
-                    <p className="text-white pl-8 mt-2">Plan {subscriptionName} - 29,99€/mois</p>
-                    <p className="text-gray-400 pl-8 text-sm">Prochain renouvellement: 15/06/2023</p>
+                    <p className="text-white pl-8 mt-2">Plan {getSubscriptionName()} - {subscriptionType === "solo" ? "29,99€/mois" : subscriptionType === "family" ? "49,99€/mois" : "Paiement à l'usage"}</p>
+                    <p className="text-gray-400 pl-8 text-sm">
+                      {subscriptionType !== "none" ? "Prochain renouvellement: 15/06/2023" : "Pas d'abonnement en cours"}
+                    </p>
 
                     <div className="pl-8 mt-4">
                       <button className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none mr-2">

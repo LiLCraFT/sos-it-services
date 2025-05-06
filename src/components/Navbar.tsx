@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [hasSubscription, setHasSubscription] = useState(true);
-  const [subscriptionName, setSubscriptionName] = useState("Premium");
+  const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("solo");
   
   const whatsappNumber = "33695358625"; // Remplacez par votre numéro WhatsApp
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
@@ -106,6 +106,15 @@ const Navbar: React.FC = () => {
   const openLoginModal = () => {
     setIsRegisterModalOpen(false);
     setIsLoginModalOpen(true);
+  };
+
+  const getSubscriptionName = () => {
+    switch(subscriptionType) {
+      case "solo": return "Plan Solo";
+      case "family": return "Plan Famille";
+      case "none": 
+      default: return "A la carte";
+    }
   };
 
   return (
@@ -215,13 +224,13 @@ const Navbar: React.FC = () => {
                                  'Utilisateur'}
                               </span>
                               {/* Tag d'abonnement - visible uniquement pour les utilisateurs standards */}
-                              {hasSubscription && (!user?.role || 
+                              {(!user?.role || 
                                (user?.role !== 'admin' && 
                                 user?.role !== 'fondateur' && 
                                 user?.role !== 'freelancer')) && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
                                   <Crown className="w-3 h-3 mr-1" />
-                                  {subscriptionName}
+                                  {getSubscriptionName()}
                                 </span>
                               )}
                             </div>
@@ -405,13 +414,13 @@ const Navbar: React.FC = () => {
                        'Utilisateur'}
                     </span>
                     {/* Tag d'abonnement pour mobile - visible uniquement pour les utilisateurs standards */}
-                    {hasSubscription && (!user?.role || 
+                    {(!user?.role || 
                       (user?.role !== 'admin' && 
                        user?.role !== 'fondateur' && 
                        user?.role !== 'freelancer')) && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
                         <Crown className="w-3 h-3 mr-1" />
-                        {subscriptionName}
+                        {getSubscriptionName()}
                       </span>
                     )}
                   </div>
