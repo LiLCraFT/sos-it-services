@@ -935,7 +935,7 @@ const UserDashboard = () => {
                   </div>
                 </div>
                 
-                <FreelancerList viewMode={viewMode} />
+                <FreelancerList viewMode={viewMode} userType="freelancer" />
               </>
             )}
 
@@ -960,7 +960,7 @@ const UserDashboard = () => {
                     </button>
                   </div>
                 </div>
-                <UserList viewMode={viewMode} />
+                <UserList viewMode={viewMode} userType="regular" />
               </div>
             )}
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit } from 'lucide-react';
+import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type FreelancerData = {
@@ -18,12 +18,13 @@ type SortField = 'firstName' | 'lastName' | 'email' | 'city' | 'createdAt';
 
 interface FreelancerListProps {
   viewMode: 'cards' | 'table';
+  userType?: 'freelancer';
 }
 
 // URL de l'API backend
 const API_URL = 'http://localhost:3001';
 
-const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
+const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'freelancer' }) => {
   const { user } = useAuth();
   const [freelancers, setFreelancers] = useState<FreelancerData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,9 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
   const [activeFreelancerId, setActiveFreelancerId] = useState<string | null>(null);
   const isFounder = user?.role === 'fondateur';
+  
+  // État pour le filtre des freelancers
+  const [freelancerTypeFilter, setFreelancerTypeFilter] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFreelancers();
@@ -345,6 +349,45 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
     );
   };
 
+  // Filtrer les freelancers selon le filtre sélectionné
+  const getFilteredFreelancers = () => {
+    if (!freelancerTypeFilter) {
+      return freelancers;
+    }
+    
+    return freelancers.filter(freelancer => freelancer.role === freelancerTypeFilter);
+  };
+  
+  // Afficher les filtres disponibles
+  const renderFilters = () => {
+    return (
+      <div className="mb-4 flex items-center space-x-2">
+        <Filter className="w-4 h-4 text-gray-400" />
+        <span className="text-gray-300">Filtrer:</span>
+        <div className="flex space-x-1">
+          <button
+            className={`px-3 py-1 text-sm rounded-md ${!freelancerTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+            onClick={() => setFreelancerTypeFilter(null)}
+          >
+            Tous
+          </button>
+          <button
+            className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer_admin' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+            onClick={() => setFreelancerTypeFilter('freelancer_admin')}
+          >
+            Admins
+          </button>
+          <button
+            className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+            onClick={() => setFreelancerTypeFilter('freelancer')}
+          >
+            Freelancers
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -367,17 +410,22 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
     );
   }
 
-  if (freelancers.length === 0) {
+  const filteredFreelancers = getFilteredFreelancers();
+
+  if (filteredFreelancers.length === 0) {
     return (
-      <div className="p-4 bg-[#36393F] rounded-md text-center">
-        <p className="text-gray-300">Aucun freelancer trouvé.</p>
+      <div>
+        {renderFilters()}
+        <div className="p-4 bg-[#36393F] rounded-md text-center">
+          <p className="text-gray-300">Aucun freelancer trouvé.</p>
+        </div>
       </div>
     );
   }
 
   // Rendu en mode tableau
   const renderTableView = () => {
-    const sortedFreelancers = sortFreelancers(freelancers);
+    const sortedFreelancers = sortFreelancers(filteredFreelancers);
     
     // Helper pour afficher l'icône de tri
     const renderSortIcon = (field: SortField) => {
@@ -412,60 +460,122 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
     };
 
     return (
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-[#2F3136] rounded-md overflow-hidden">
-          <thead className="bg-[#202225]">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Photo
-              </th>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('lastName')}
-              >
+      <div>
+        {renderFilters()}
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-[#2F3136] rounded-md overflow-hidden">
+            <thead className="bg-[#202225]">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Photo
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                  onClick={() => handleSortClick('lastName')}
+                >
+                  <div className="flex items-center">
+                    <span>Nom</span>
+                    {renderSortIcon('lastName')}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                  onClick={() => handleSortClick('email')}
+                >
+                  <div className="flex items-center">
+                    <span>Email</span>
+                    {renderSortIcon('email')}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                  onClick={() => handleSortClick('city')}
+                >
+                  <div className="flex items-center">
+                    <span>Ville</span>
+                    {renderSortIcon('city')}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                  onClick={() => handleSortClick('createdAt')}
+                >
+                  <div className="flex items-center">
+                    <span>Inscrit le</span>
+                    {renderSortIcon('createdAt')}
+                  </div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Rôle
+                </th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#292b2f]">
+              {sortedFreelancers.map((freelancer) => (
+                <tr key={freelancer._id} className="hover:bg-[#36393F] transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-[#202225]">
+                      <img 
+                        src={freelancer.profileImage || '/images/default-profile.png'} 
+                        alt={`${freelancer.firstName} ${freelancer.lastName}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/images/default-profile.png';
+                        }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-white">
+                    {freelancer.firstName} {freelancer.lastName}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-300">
+                    <div className="flex items-center">
+                      <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="truncate max-w-[150px]">{freelancer.email}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-300">
+                    <div className="flex items-center">
+                      <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span>{freelancer.city}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-300">{formatDate(freelancer.createdAt)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {renderRoleTags(freelancer.role)}
+                  </td>
+                  <td className="px-2 py-3 whitespace-nowrap text-right">
+                    <div className="relative flex justify-end">
+                      <button 
+                        onClick={(e) => toggleDropdown(freelancer._id, e)}
+                        className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
+                        aria-label="Plus d'options"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  // Rendu en mode carte
+  const renderCardView = () => (
+    <div>
+      {renderFilters()}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredFreelancers.map((freelancer) => (
+          <div key={freelancer._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <span>Nom</span>
-                  {renderSortIcon('lastName')}
-                </div>
-              </th>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('email')}
-              >
-                <div className="flex items-center">
-                  <span>Email</span>
-                  {renderSortIcon('email')}
-                </div>
-              </th>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('city')}
-              >
-                <div className="flex items-center">
-                  <span>Ville</span>
-                  {renderSortIcon('city')}
-                </div>
-              </th>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('createdAt')}
-              >
-                <div className="flex items-center">
-                  <span>Inscrit le</span>
-                  {renderSortIcon('createdAt')}
-                </div>
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Rôle
-              </th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#292b2f]">
-            {sortedFreelancers.map((freelancer) => (
-              <tr key={freelancer._id} className="hover:bg-[#36393F] transition-colors">
-                <td className="px-4 py-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#202225]">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
                     <img 
                       src={freelancer.profileImage || '/images/default-profile.png'} 
                       alt={`${freelancer.firstName} ${freelancer.lastName}`}
@@ -475,120 +585,64 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
                       }}
                     />
                   </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-white">
-                  {freelancer.firstName} {freelancer.lastName}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-300">
-                  <div className="flex items-center">
-                    <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
-                    <span className="truncate max-w-[150px]">{freelancer.email}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-300">
-                  <div className="flex items-center">
-                    <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                    <span>{freelancer.city}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-300">{formatDate(freelancer.createdAt)}</td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {renderRoleTags(freelancer.role)}
-                </td>
-                <td className="px-2 py-3 whitespace-nowrap text-right">
-                  <div className="relative flex justify-end">
-                    <button 
-                      onClick={(e) => toggleDropdown(freelancer._id, e)}
-                      className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                      aria-label="Plus d'options"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
-
-  // Rendu en mode carte
-  const renderCardView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {freelancers.map((freelancer) => (
-        <div key={freelancer._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
-                  <img 
-                    src={freelancer.profileImage || '/images/default-profile.png'} 
-                    alt={`${freelancer.firstName} ${freelancer.lastName}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/default-profile.png';
-                    }}
-                  />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-white font-medium">{freelancer.firstName} {freelancer.lastName}</h3>
-                  <div className="flex space-x-1 mt-1">
-                    {freelancer.role === 'freelancer_admin' ? (
-                      <>
-                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
-                          Freelancer
+                  <div className="ml-3">
+                    <h3 className="text-white font-medium">{freelancer.firstName} {freelancer.lastName}</h3>
+                    <div className="flex space-x-1 mt-1">
+                      {freelancer.role === 'freelancer_admin' ? (
+                        <>
+                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
+                            Freelancer
+                          </span>
+                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                            Admin
+                          </span>
+                        </>
+                      ) : (
+                        <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                          freelancer.role === 'admin' ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-500'
+                        }`}>
+                          {freelancer.role === 'admin' ? 'Admin' : 'Freelancer'}
                         </span>
-                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
-                          Admin
-                        </span>
-                      </>
-                    ) : (
-                      <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
-                        freelancer.role === 'admin' ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-500'
-                      }`}>
-                        {freelancer.role === 'admin' ? 'Admin' : 'Freelancer'}
-                      </span>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="relative flex justify-end">
-                <button 
-                  onClick={(e) => toggleDropdown(freelancer._id, e)}
-                  className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                  aria-label="Plus d'options"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center text-gray-300">
-                <Mail className="w-3 h-3 text-gray-500 mr-2" />
-                <span className="truncate">{freelancer.email}</span>
+                <div className="relative flex justify-end">
+                  <button 
+                    onClick={(e) => toggleDropdown(freelancer._id, e)}
+                    className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
+                    aria-label="Plus d'options"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               
-              <div className="flex items-center text-gray-300">
-                <Phone className="w-3 h-3 text-gray-500 mr-2" />
-                <span>{freelancer.phone}</span>
-              </div>
-              
-              <div className="flex items-center text-gray-300">
-                <MapPin className="w-3 h-3 text-gray-500 mr-2" />
-                <span>{freelancer.city}</span>
-              </div>
-              
-              <div className="flex items-center text-gray-300">
-                <Calendar className="w-3 h-3 text-gray-500 mr-2" />
-                <span>Inscrit le {formatDate(freelancer.createdAt)}</span>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center text-gray-300">
+                  <Mail className="w-3 h-3 text-gray-500 mr-2" />
+                  <span className="truncate">{freelancer.email}</span>
+                </div>
+                
+                <div className="flex items-center text-gray-300">
+                  <Phone className="w-3 h-3 text-gray-500 mr-2" />
+                  <span>{freelancer.phone}</span>
+                </div>
+                
+                <div className="flex items-center text-gray-300">
+                  <MapPin className="w-3 h-3 text-gray-500 mr-2" />
+                  <span>{freelancer.city}</span>
+                </div>
+                
+                <div className="flex items-center text-gray-300">
+                  <Calendar className="w-3 h-3 text-gray-500 mr-2" />
+                  <span>Inscrit le {formatDate(freelancer.createdAt)}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit } from 'lucide-react';
+import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type UserData = {
@@ -19,12 +19,13 @@ type SortField = 'firstName' | 'lastName' | 'email' | 'city' | 'createdAt';
 
 interface UserListProps {
   viewMode: 'cards' | 'table';
+  userType?: 'regular' | 'freelancer';
 }
 
 // URL de l'API backend
 const API_URL = 'http://localhost:3001';
 
-const UserList: React.FC<UserListProps> = ({ viewMode }) => {
+const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) => {
   const { user } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +38,10 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
   const isFounder = user?.role === 'fondateur';
+  
+  // Nouveaux états pour les filtres
+  const [clientTypeFilter, setClientTypeFilter] = useState<string | null>(null);
+  const [freelancerTypeFilter, setFreelancerTypeFilter] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -240,6 +245,99 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
     }
   };
 
+  // Filtrer les utilisateurs selon le type demandé (regular ou freelancer)
+  const getFilteredUsers = () => {
+    let filtered = [...users];
+    
+    if (userType === 'regular') {
+      // Filtrer pour n'avoir que les utilisateurs normaux (non admin, non freelancers)
+      filtered = users.filter(user => 
+        user.role !== 'admin' && 
+        user.role !== 'fondateur' && 
+        user.role !== 'freelancer_admin' &&
+        user.role !== 'freelancer'
+      );
+      
+      // Appliquer le filtre par type de client si sélectionné
+      if (clientTypeFilter) {
+        filtered = filtered.filter(user => user.clientType === clientTypeFilter);
+      }
+    } else if (userType === 'freelancer') {
+      // Filtrer pour n'avoir que les freelancers
+      filtered = users.filter(user => 
+        user.role === 'freelancer' || user.role === 'freelancer_admin'
+      );
+      
+      // Appliquer le filtre par type de freelancer si sélectionné
+      if (freelancerTypeFilter) {
+        filtered = filtered.filter(user => user.role === freelancerTypeFilter);
+      }
+    }
+    
+    return filtered;
+  };
+
+  // Affiche les filtres disponibles selon le type d'utilisateurs
+  const renderFilters = () => {
+    if (userType === 'regular') {
+      return (
+        <div className="mb-4 flex items-center space-x-2">
+          <Filter className="w-4 h-4 text-gray-400" />
+          <span className="text-gray-300">Filtrer:</span>
+          <div className="flex space-x-1">
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${!clientTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setClientTypeFilter(null)}
+            >
+              Tous
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${clientTypeFilter === 'Particulier' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setClientTypeFilter('Particulier')}
+            >
+              Particuliers
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${clientTypeFilter === 'Professionnel' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setClientTypeFilter('Professionnel')}
+            >
+              Professionnels
+            </button>
+          </div>
+        </div>
+      );
+    } else if (userType === 'freelancer') {
+      return (
+        <div className="mb-4 flex items-center space-x-2">
+          <Filter className="w-4 h-4 text-gray-400" />
+          <span className="text-gray-300">Filtrer:</span>
+          <div className="flex space-x-1">
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${!freelancerTypeFilter ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setFreelancerTypeFilter(null)}
+            >
+              Tous
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer_admin' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setFreelancerTypeFilter('freelancer_admin')}
+            >
+              Admins
+            </button>
+            <button
+              className={`px-3 py-1 text-sm rounded-md ${freelancerTypeFilter === 'freelancer' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#4F545C]'}`}
+              onClick={() => setFreelancerTypeFilter('freelancer')}
+            >
+              Freelancers
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -262,18 +360,15 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
     );
   }
 
-  // Filtrer les utilisateurs pour exclure les admin, fondateurs, freelancers et freelancer_admin
-  const filteredUsers = users.filter(user => 
-    user.role !== 'admin' && 
-    user.role !== 'fondateur' && 
-    user.role !== 'freelancer_admin' &&
-    user.role !== 'freelancer'
-  );
+  const filteredUsers = getFilteredUsers();
 
   if (filteredUsers.length === 0) {
     return (
-      <div className="p-4 bg-[#36393F] rounded-md text-center">
-        <p className="text-gray-300">Aucun utilisateur trouvé.</p>
+      <div>
+        {renderFilters()}
+        <div className="p-4 bg-[#36393F] rounded-md text-center">
+          <p className="text-gray-300">Aucun utilisateur trouvé.</p>
+        </div>
       </div>
     );
   }
@@ -337,60 +432,124 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
     };
 
     return (
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-[#2F3136] rounded-md overflow-hidden">
-          <thead className="bg-[#202225]">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Photo
-              </th>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('lastName')}
-              >
+      <div>
+        {renderFilters()}
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-[#2F3136] rounded-md overflow-hidden">
+            <thead className="bg-[#202225]">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Photo
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                  onClick={() => handleSortClick('lastName')}
+                >
+                  <div className="flex items-center">
+                    <span>Nom</span>
+                    {renderSortIcon('lastName')}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                  onClick={() => handleSortClick('email')}
+                >
+                  <div className="flex items-center">
+                    <span>Email</span>
+                    {renderSortIcon('email')}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                  onClick={() => handleSortClick('city')}
+                >
+                  <div className="flex items-center">
+                    <span>Ville</span>
+                    {renderSortIcon('city')}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                  onClick={() => handleSortClick('createdAt')}
+                >
+                  <div className="flex items-center">
+                    <span>Inscrit le</span>
+                    {renderSortIcon('createdAt')}
+                  </div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Rôle
+                </th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#292b2f]">
+              {sortedUsers.map((userData) => (
+                <tr key={userData._id} className="hover:bg-[#36393F] transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-[#202225]">
+                      <img 
+                        src={userData.profileImage || '/images/default-profile.png'} 
+                        alt={`${userData.firstName} ${userData.lastName}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/images/default-profile.png';
+                        }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-white">
+                    {userData.firstName} {userData.lastName}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-300">
+                    <div className="flex items-center">
+                      <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="truncate max-w-[150px]">{userData.email}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-300">
+                    <div className="flex items-center">
+                      <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span>{userData.city}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-300">{formatDate(userData.createdAt)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {renderRoleTags(userData.role, userData)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-right">
+                    {userData.role !== 'fondateur' && (
+                      <div className="relative flex justify-end">
+                        <button 
+                          onClick={(e) => toggleDropdown(userData._id, e)}
+                          className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
+                          aria-label="Plus d'options"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  // Rendu en mode carte
+  const renderCardView = () => (
+    <div>
+      {renderFilters()}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredUsers.map((userData) => (
+          <div key={userData._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <span>Nom</span>
-                  {renderSortIcon('lastName')}
-                </div>
-              </th>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('email')}
-              >
-                <div className="flex items-center">
-                  <span>Email</span>
-                  {renderSortIcon('email')}
-                </div>
-              </th>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('city')}
-              >
-                <div className="flex items-center">
-                  <span>Ville</span>
-                  {renderSortIcon('city')}
-                </div>
-              </th>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('createdAt')}
-              >
-                <div className="flex items-center">
-                  <span>Inscrit le</span>
-                  {renderSortIcon('createdAt')}
-                </div>
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Rôle
-              </th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#292b2f]">
-            {sortedUsers.map((userData) => (
-              <tr key={userData._id} className="hover:bg-[#36393F] transition-colors">
-                <td className="px-4 py-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#202225]">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
                     <img 
                       src={userData.profileImage || '/images/default-profile.png'} 
                       alt={`${userData.firstName} ${userData.lastName}`}
@@ -400,109 +559,51 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
                       }}
                     />
                   </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-white">
-                  {userData.firstName} {userData.lastName}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-300">
-                  <div className="flex items-center">
-                    <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
-                    <span className="truncate max-w-[150px]">{userData.email}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-300">
-                  <div className="flex items-center">
-                    <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                    <span>{userData.city}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-300">{formatDate(userData.createdAt)}</td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {renderRoleTags(userData.role, userData)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right">
-                  {userData.role !== 'fondateur' && (
-                    <div className="relative flex justify-end">
-                      <button 
-                        onClick={(e) => toggleDropdown(userData._id, e)}
-                        className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                        aria-label="Plus d'options"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
+                  <div className="ml-3">
+                    <h3 className="text-white font-medium">{userData.firstName} {userData.lastName}</h3>
+                    <div className="flex space-x-1 mt-1">
+                      {renderRoleTags(userData.role, userData)}
                     </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
-
-  // Rendu en mode carte
-  const renderCardView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {filteredUsers.map((userData) => (
-        <div key={userData._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
-                  <img 
-                    src={userData.profileImage || '/images/default-profile.png'} 
-                    alt={`${userData.firstName} ${userData.lastName}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/default-profile.png';
-                    }}
-                  />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-white font-medium">{userData.firstName} {userData.lastName}</h3>
-                  <div className="flex space-x-1 mt-1">
-                    {renderRoleTags(userData.role, userData)}
                   </div>
                 </div>
+                {userData.role !== 'fondateur' && (
+                  <div className="relative flex justify-end">
+                    <button 
+                      onClick={(e) => toggleDropdown(userData._id, e)}
+                      className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
+                      aria-label="Plus d'options"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
-              {userData.role !== 'fondateur' && (
-                <div className="relative flex justify-end">
-                  <button 
-                    onClick={(e) => toggleDropdown(userData._id, e)}
-                    className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                    aria-label="Plus d'options"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center text-gray-300">
+                  <Mail className="w-3 h-3 text-gray-500 mr-2" />
+                  <span className="truncate">{userData.email}</span>
                 </div>
-              )}
-            </div>
-            
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center text-gray-300">
-                <Mail className="w-3 h-3 text-gray-500 mr-2" />
-                <span className="truncate">{userData.email}</span>
-              </div>
-              
-              <div className="flex items-center text-gray-300">
-                <Phone className="w-3 h-3 text-gray-500 mr-2" />
-                <span>{userData.phone || 'Non renseigné'}</span>
-              </div>
-              
-              <div className="flex items-center text-gray-300">
-                <MapPin className="w-3 h-3 text-gray-500 mr-2" />
-                <span>{userData.city || 'Non renseigné'}</span>
-              </div>
-              
-              <div className="flex items-center text-gray-300">
-                <Calendar className="w-3 h-3 text-gray-500 mr-2" />
-                <span>Inscrit le {formatDate(userData.createdAt)}</span>
+                
+                <div className="flex items-center text-gray-300">
+                  <Phone className="w-3 h-3 text-gray-500 mr-2" />
+                  <span>{userData.phone || 'Non renseigné'}</span>
+                </div>
+                
+                <div className="flex items-center text-gray-300">
+                  <MapPin className="w-3 h-3 text-gray-500 mr-2" />
+                  <span>{userData.city || 'Non renseigné'}</span>
+                </div>
+                
+                <div className="flex items-center text-gray-300">
+                  <Calendar className="w-3 h-3 text-gray-500 mr-2" />
+                  <span>Inscrit le {formatDate(userData.createdAt)}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 
