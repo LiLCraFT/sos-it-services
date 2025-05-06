@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle } from 'lucide-react';
+import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type UserData = {
@@ -33,6 +33,9 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
   const [sortField, setSortField] = useState<SortField>('lastName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [actionInProgress, setActionInProgress] = useState<Record<string, boolean>>({});
+  const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
+  const [activeUserId, setActiveUserId] = useState<string | null>(null);
+  const isFounder = user?.role === 'fondateur';
 
   useEffect(() => {
     fetchUsers();
@@ -80,10 +83,30 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
     }
   };
 
-  const toggleDropdown = (userId: string) => {
+  const toggleDropdown = (userId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    if (dropdownOpen[userId]) {
+      // Si déjà ouvert, fermer
+      closeDropdown(userId);
+      return;
+    }
+    
+    // Calculer la position du menu à partir de l'événement
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    
+    // Positionner le menu à droite du bouton
+    setMenuPosition({
+      top: buttonRect.bottom + window.scrollY,
+      left: Math.max(10, buttonRect.left + window.scrollX - 220) // Décalage pour aligner le menu à gauche
+    });
+    
+    setActiveUserId(userId);
+    
+    // Mettre à jour l'état d'ouverture du dropdown
     setDropdownOpen(prev => ({
       ...prev,
-      [userId]: !prev[userId]
+      [userId]: true
     }));
   };
 
@@ -92,6 +115,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
       ...prev,
       [userId]: false
     }));
+    setActiveUserId(null);
   };
 
   const handleSortClick = (field: SortField) => {
@@ -366,78 +390,14 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-right">
                   {userData.role !== 'fondateur' && (
-                    <div className="relative">
+                    <div className="relative flex justify-end">
                       <button 
-                        onClick={() => toggleDropdown(userData._id)}
+                        onClick={(e) => toggleDropdown(userData._id, e)}
                         className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
                         aria-label="Plus d'options"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
-                      
-                      {dropdownOpen[userData._id] && (
-                        <div 
-                          ref={el => dropdownRefs.current[userData._id] = el}
-                          className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
-                        >
-                          <div className="py-1" role="menu" aria-orientation="vertical">
-                            {userData.role !== 'admin' && (
-                              <button 
-                                onClick={() => changeUserRole(userData._id, 'admin')}
-                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                                disabled={actionInProgress[userData._id]}
-                              >
-                                <Shield className="w-4 h-4 mr-2 text-orange-400 flex-shrink-0" />
-                                <span>Définir comme Admin</span>
-                              </button>
-                            )}
-                            
-                            {userData.role !== 'freelancer' && userData.role !== 'freelancer_admin' && (
-                              <button 
-                                onClick={() => changeUserRole(userData._id, 'freelancer')}
-                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                                disabled={actionInProgress[userData._id]}
-                              >
-                                <User className="w-4 h-4 mr-2 text-yellow-500 flex-shrink-0" />
-                                <span>Définir comme Freelancer</span>
-                              </button>
-                            )}
-                            
-                            {userData.role === 'freelancer' && (
-                              <button 
-                                onClick={() => changeUserRole(userData._id, 'freelancer_admin')}
-                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                                disabled={actionInProgress[userData._id]}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                                <span>Ajouter droits d'admin</span>
-                              </button>
-                            )}
-                            
-                            {userData.role === 'freelancer_admin' && (
-                              <button 
-                                onClick={() => changeUserRole(userData._id, 'freelancer')}
-                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                                disabled={actionInProgress[userData._id]}
-                              >
-                                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                                <span>Retirer droits d'admin</span>
-                              </button>
-                            )}
-                            
-                            {userData.role !== 'user' && (
-                              <button 
-                                onClick={() => changeUserRole(userData._id, 'user')}
-                                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                                disabled={actionInProgress[userData._id]}
-                              >
-                                <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-                                <span>Définir comme Utilisateur</span>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                 </td>
@@ -475,78 +435,14 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
                 </div>
               </div>
               {userData.role !== 'fondateur' && (
-                <div className="relative">
+                <div className="relative flex justify-end">
                   <button 
-                    onClick={() => toggleDropdown(userData._id)}
+                    onClick={(e) => toggleDropdown(userData._id, e)}
                     className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
                     aria-label="Plus d'options"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </button>
-                  
-                  {dropdownOpen[userData._id] && (
-                    <div 
-                      ref={el => dropdownRefs.current[userData._id] = el}
-                      className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
-                    >
-                      <div className="py-1" role="menu" aria-orientation="vertical">
-                        {userData.role !== 'admin' && (
-                          <button 
-                            onClick={() => changeUserRole(userData._id, 'admin')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                            disabled={actionInProgress[userData._id]}
-                          >
-                            <Shield className="w-4 h-4 mr-2 text-orange-400 flex-shrink-0" />
-                            <span>Définir comme Admin</span>
-                          </button>
-                        )}
-                        
-                        {userData.role !== 'freelancer' && userData.role !== 'freelancer_admin' && (
-                          <button 
-                            onClick={() => changeUserRole(userData._id, 'freelancer')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                            disabled={actionInProgress[userData._id]}
-                          >
-                            <User className="w-4 h-4 mr-2 text-yellow-500 flex-shrink-0" />
-                            <span>Définir comme Freelancer</span>
-                          </button>
-                        )}
-                        
-                        {userData.role === 'freelancer' && (
-                          <button 
-                            onClick={() => changeUserRole(userData._id, 'freelancer_admin')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                            disabled={actionInProgress[userData._id]}
-                          >
-                            <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                            <span>Ajouter droits d'admin</span>
-                          </button>
-                        )}
-                        
-                        {userData.role === 'freelancer_admin' && (
-                          <button 
-                            onClick={() => changeUserRole(userData._id, 'freelancer')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                            disabled={actionInProgress[userData._id]}
-                          >
-                            <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                            <span>Retirer droits d'admin</span>
-                          </button>
-                        )}
-                        
-                        {userData.role !== 'user' && (
-                          <button 
-                            onClick={() => changeUserRole(userData._id, 'user')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                            disabled={actionInProgress[userData._id]}
-                          >
-                            <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-                            <span>Définir comme Utilisateur</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -578,9 +474,89 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
     </div>
   );
 
+  // Rendu du menu popup (à rendre une seule fois en dehors du tableau)
+  const renderDropdownMenu = () => {
+    if (!activeUserId || !menuPosition) return null;
+    
+    const userData = users.find(u => u._id === activeUserId);
+    if (!userData) return null;
+    
+    // Ne pas afficher le menu pour les fondateurs
+    if (userData.role === 'fondateur') return null;
+    
+    return (
+      <div 
+        ref={el => dropdownRefs.current[activeUserId] = el}
+        className="fixed z-50 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225]"
+        style={{
+          top: `${menuPosition.top}px`,
+          left: `${menuPosition.left}px`
+        }}
+      >
+        <div className="py-1" role="menu" aria-orientation="vertical">
+          {userData.role !== 'admin' && (
+            <button 
+              onClick={() => changeUserRole(activeUserId, 'admin')}
+              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+              disabled={actionInProgress[activeUserId]}
+            >
+              <Shield className="w-4 h-4 mr-2 text-orange-400 flex-shrink-0" />
+              <span>Définir comme Admin</span>
+            </button>
+          )}
+          
+          {userData.role !== 'freelancer' && userData.role !== 'freelancer_admin' && (
+            <button 
+              onClick={() => changeUserRole(activeUserId, 'freelancer')}
+              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+              disabled={actionInProgress[activeUserId]}
+            >
+              <User className="w-4 h-4 mr-2 text-yellow-500 flex-shrink-0" />
+              <span>Définir comme Freelancer</span>
+            </button>
+          )}
+          
+          {userData.role === 'freelancer' && (
+            <button 
+              onClick={() => changeUserRole(activeUserId, 'freelancer_admin')}
+              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+              disabled={actionInProgress[activeUserId]}
+            >
+              <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+              <span>Ajouter droits d'admin</span>
+            </button>
+          )}
+          
+          {userData.role === 'freelancer_admin' && (
+            <button 
+              onClick={() => changeUserRole(activeUserId, 'freelancer')}
+              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+              disabled={actionInProgress[activeUserId]}
+            >
+              <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+              <span>Retirer droits d'admin</span>
+            </button>
+          )}
+          
+          {userData.role !== 'user' && (
+            <button 
+              onClick={() => changeUserRole(activeUserId, 'user')}
+              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+              disabled={actionInProgress[activeUserId]}
+            >
+              <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+              <span>Définir comme Utilisateur</span>
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div>
+    <div onClick={() => activeUserId && closeDropdown(activeUserId)}>
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
+      {renderDropdownMenu()}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle } from 'lucide-react';
+import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type FreelancerData = {
@@ -33,6 +33,9 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
   const [sortField, setSortField] = useState<SortField>('lastName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [actionInProgress, setActionInProgress] = useState<Record<string, boolean>>({});
+  const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
+  const [activeFreelancerId, setActiveFreelancerId] = useState<string | null>(null);
+  const isFounder = user?.role === 'fondateur';
 
   useEffect(() => {
     fetchFreelancers();
@@ -50,6 +53,48 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
+  useEffect(() => {
+    // Fonction pour positionner les menus déroulants
+    const positionDropdowns = () => {
+      for (const id in dropdownRefs.current) {
+        if (dropdownRefs.current[id] && dropdownOpen[id]) {
+          const button = document.getElementById(`dropdown-button-${id}`) || document.getElementById(`dropdown-button-card-${id}`);
+          const dropdown = dropdownRefs.current[id];
+          
+          if (button && dropdown) {
+            const buttonRect = button.getBoundingClientRect();
+            const dropdownRect = dropdown.getBoundingClientRect();
+            
+            // Positionner le menu à gauche du bouton mais visible dans la fenêtre
+            const viewportWidth = window.innerWidth;
+            const spaceOnRight = viewportWidth - buttonRect.right;
+            
+            if (spaceOnRight >= dropdownRect.width) {
+              // Assez d'espace à droite
+              dropdown.style.left = `${buttonRect.right}px`;
+              dropdown.style.top = `${buttonRect.top}px`;
+            } else {
+              // Pas assez d'espace à droite, afficher à gauche
+              dropdown.style.left = `${Math.max(0, buttonRect.left - dropdownRect.width)}px`;
+              dropdown.style.top = `${buttonRect.top}px`;
+            }
+          }
+        }
+      }
+    };
+
+    // Exécuter le positionnement après le rendu
+    if (Object.keys(dropdownOpen).some(id => dropdownOpen[id])) {
+      setTimeout(positionDropdowns, 0);
+    }
+
+    // Ajouter un gestionnaire pour repositionner lors du redimensionnement
+    window.addEventListener('resize', positionDropdowns);
+    return () => {
+      window.removeEventListener('resize', positionDropdowns);
     };
   }, [dropdownOpen]);
 
@@ -80,10 +125,30 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
     }
   };
 
-  const toggleDropdown = (freelancerId: string) => {
+  const toggleDropdown = (freelancerId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    if (dropdownOpen[freelancerId]) {
+      // Si déjà ouvert, fermer
+      closeDropdown(freelancerId);
+      return;
+    }
+    
+    // Calculer la position du menu à partir de l'événement
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    
+    // Positionner le menu à droite du bouton
+    setMenuPosition({
+      top: buttonRect.bottom + window.scrollY,
+      left: Math.max(10, buttonRect.left + window.scrollX - 220) // Décalage pour aligner le menu à gauche
+    });
+    
+    setActiveFreelancerId(freelancerId);
+    
+    // Mettre à jour l'état d'ouverture du dropdown
     setDropdownOpen(prev => ({
       ...prev,
-      [freelancerId]: !prev[freelancerId]
+      [freelancerId]: true
     }));
   };
 
@@ -92,6 +157,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
       ...prev,
       [freelancerId]: false
     }));
+    setActiveFreelancerId(null);
   };
 
   const handleSortClick = (field: SortField) => {
@@ -177,6 +243,106 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
     } finally {
       setActionInProgress({ ...actionInProgress, [freelancerId]: false });
     }
+  };
+
+  const deleteFreelancer = async (freelancerId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce freelancer ? Cette action est irréversible.')) {
+      return;
+    }
+    
+    try {
+      setActionInProgress({ ...actionInProgress, [freelancerId]: true });
+      
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch(`${API_URL}/api/freelancers?id=${freelancerId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de la suppression du freelancer');
+      }
+      
+      // Mettre à jour la liste locale des freelancers
+      setFreelancers(prevFreelancers => 
+        prevFreelancers.filter(f => f._id !== freelancerId)
+      );
+      
+      alert('Freelancer supprimé avec succès');
+      closeDropdown(freelancerId);
+    } catch (err: any) {
+      alert(err.message || 'Une erreur est survenue');
+    } finally {
+      setActionInProgress({ ...actionInProgress, [freelancerId]: false });
+    }
+  };
+  
+  const editFreelancer = (freelancerId: string) => {
+    // Rediriger vers la page d'édition du freelancer
+    window.location.href = `/edit-freelancer/${freelancerId}`;
+  };
+
+  // Rendu du menu popup (à rendre une seule fois en dehors du tableau)
+  const renderDropdownMenu = () => {
+    if (!activeFreelancerId || !menuPosition) return null;
+    
+    const freelancer = freelancers.find(f => f._id === activeFreelancerId);
+    if (!freelancer) return null;
+    
+    return (
+      <div 
+        ref={el => dropdownRefs.current[activeFreelancerId] = el}
+        className="fixed z-50 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225]"
+        style={{
+          top: `${menuPosition.top}px`,
+          left: `${menuPosition.left}px`
+        }}
+      >
+        <div className="py-1" role="menu" aria-orientation="vertical">
+          <button 
+            onClick={() => toggleAdminRole(activeFreelancerId, freelancer.role)}
+            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+            disabled={actionInProgress[activeFreelancerId]}
+          >
+            {freelancer.role === 'freelancer_admin' ? (
+              <>
+                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                <span>Retirer les droits d'admin</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                <span>Ajouter les droits d'admin</span>
+              </>
+            )}
+          </button>
+
+          {isFounder && (
+            <>
+              <button 
+                onClick={() => editFreelancer(activeFreelancerId)}
+                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+                disabled={actionInProgress[activeFreelancerId]}
+              >
+                <Edit className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                <span>Modifier</span>
+              </button>
+              <button 
+                onClick={() => deleteFreelancer(activeFreelancerId)}
+                className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+                disabled={actionInProgress[activeFreelancerId]}
+              >
+                <Trash className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                <span>Supprimer</span>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -329,42 +495,15 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
                 <td className="px-4 py-3 whitespace-nowrap">
                   {renderRoleTags(freelancer.role)}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right">
-                  <div className="relative">
+                <td className="px-2 py-3 whitespace-nowrap text-right">
+                  <div className="relative flex justify-end">
                     <button 
-                      onClick={() => toggleDropdown(freelancer._id)}
+                      onClick={(e) => toggleDropdown(freelancer._id, e)}
                       className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
                       aria-label="Plus d'options"
                     >
                       <MoreVertical className="w-4 h-4" />
                     </button>
-                    
-                    {dropdownOpen[freelancer._id] && (
-                      <div 
-                        ref={el => dropdownRefs.current[freelancer._id] = el}
-                        className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
-                      >
-                        <div className="py-1" role="menu" aria-orientation="vertical">
-                          <button 
-                            onClick={() => toggleAdminRole(freelancer._id, freelancer.role)}
-                            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                            disabled={actionInProgress[freelancer._id]}
-                          >
-                            {freelancer.role === 'freelancer_admin' ? (
-                              <>
-                                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                                <span>Retirer les droits d'admin</span>
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                                <span>Ajouter les droits d'admin</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </td>
               </tr>
@@ -415,41 +554,14 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
                   </div>
                 </div>
               </div>
-              <div className="relative">
+              <div className="relative flex justify-end">
                 <button 
-                  onClick={() => toggleDropdown(freelancer._id)}
+                  onClick={(e) => toggleDropdown(freelancer._id, e)}
                   className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
                   aria-label="Plus d'options"
                 >
                   <MoreVertical className="w-4 h-4" />
                 </button>
-                
-                {dropdownOpen[freelancer._id] && (
-                  <div 
-                    ref={el => dropdownRefs.current[freelancer._id] = el}
-                    className="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225] z-10"
-                  >
-                    <div className="py-1" role="menu" aria-orientation="vertical">
-                      <button 
-                        onClick={() => toggleAdminRole(freelancer._id, freelancer.role)}
-                        className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-                        disabled={actionInProgress[freelancer._id]}
-                      >
-                        {freelancer.role === 'freelancer_admin' ? (
-                          <>
-                            <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                            <span>Retirer les droits d'admin</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                            <span>Ajouter les droits d'admin</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
             
@@ -481,8 +593,9 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
   );
 
   return (
-    <div>
+    <div onClick={() => activeFreelancerId && closeDropdown(activeFreelancerId)}>
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
+      {renderDropdownMenu()}
     </div>
   );
 };

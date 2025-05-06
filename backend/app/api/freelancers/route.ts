@@ -108,4 +108,48 @@ export async function PATCH(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+}
+
+// Supprimer un freelancer (fondateur uniquement)
+export async function DELETE(req: NextRequest) {
+  try {
+    await dbConnect();
+    
+    const { userId } = getUserFromToken(req);
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+    }
+    
+    // Vérifier si l'utilisateur est fondateur
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'fondateur') {
+      return NextResponse.json({ error: 'Accès restreint aux fondateurs' }, { status: 403 });
+    }
+    
+    // Récupérer l'ID du freelancer à supprimer depuis les paramètres de requête
+    const url = new URL(req.url);
+    const freelancerId = url.searchParams.get('id');
+    
+    if (!freelancerId) {
+      return NextResponse.json({ error: 'ID du freelancer requis' }, { status: 400 });
+    }
+    
+    // Vérifier que l'utilisateur à supprimer existe et est un freelancer ou un freelancer_admin
+    const freelancer = await User.findById(freelancerId);
+    if (!freelancer) {
+      return NextResponse.json({ error: 'Freelancer non trouvé' }, { status: 404 });
+    }
+    
+    if (freelancer.role !== 'freelancer' && freelancer.role !== 'freelancer_admin') {
+      return NextResponse.json({ error: 'L\'utilisateur n\'est pas un freelancer' }, { status: 400 });
+    }
+    
+    // Supprimer le freelancer
+    await User.findByIdAndDelete(freelancerId);
+    
+    return NextResponse.json({ message: 'Freelancer supprimé avec succès' }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 } 
