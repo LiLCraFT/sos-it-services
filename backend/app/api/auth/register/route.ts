@@ -25,6 +25,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_developmen
  *               - phone
  *               - birthDate
  *               - city
+ *               - clientType
  *             properties:
  *               email:
  *                 type: string
@@ -43,6 +44,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_developmen
  *                 format: date
  *               city:
  *                 type: string
+ *               clientType:
+ *                 type: string
+ *                 enum: [Particulier, Professionnel, Freelancer]
  *     responses:
  *       201:
  *         description: Utilisateur créé avec succès
@@ -74,17 +78,34 @@ export async function POST(req: NextRequest) {
       address, 
       phone, 
       birthDate, 
-      city 
+      city,
+      clientType
     } = await req.json();
     
     console.log('Registration data received:', { 
-      email, firstName, lastName, address, phone, birthDate, city 
+      email, firstName, lastName, address, phone, birthDate, city, clientType 
     });
     
     // Vérification des données requises
-    if (!email || !password || !firstName || !lastName || !address || !phone || !birthDate || !city) {
+    if (!email || !password || !firstName || !lastName || !address || !phone || !city || !clientType) {
       return NextResponse.json(
         { error: 'Tous les champs sont requis' },
+        { status: 400 }
+      );
+    }
+    
+    // Vérification de la date de naissance pour les non-professionnels
+    if (clientType !== 'Professionnel' && !birthDate) {
+      return NextResponse.json(
+        { error: 'La date de naissance est requise pour ce type de compte' },
+        { status: 400 }
+      );
+    }
+    
+    // Vérification du type de client
+    if (!['Particulier', 'Professionnel', 'Freelancer'].includes(clientType)) {
+      return NextResponse.json(
+        { error: 'Type de client invalide' },
         { status: 400 }
       );
     }
@@ -108,6 +129,7 @@ export async function POST(req: NextRequest) {
       phone,
       birthDate,
       city,
+      clientType,
       role: 'user', // Par défaut, tous les nouveaux utilisateurs ont le rôle 'user'
     };
     
@@ -139,6 +161,7 @@ export async function POST(req: NextRequest) {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
+      clientType: user.clientType,
     };
     
     return NextResponse.json(

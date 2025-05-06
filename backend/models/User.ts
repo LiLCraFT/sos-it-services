@@ -15,6 +15,7 @@ export interface IUser extends Document {
   phone: string;
   birthDate: Date;
   city: string;
+  clientType: 'Particulier' | 'Professionnel' | 'Freelancer';
   role: 'user' | 'admin' | 'fondateur' | 'freelancer' | 'freelancer_admin';
   profileImage: string;
   createdAt: Date;
@@ -60,12 +61,20 @@ const UserSchema = new Schema<IUser>(
     },
     birthDate: {
       type: Date,
-      required: [true, 'Date de naissance est requise'],
+      required: function(this: IUser) {
+        return this.clientType !== 'Professionnel';
+      },
     },
     city: {
       type: String,
       required: [true, 'Ville est requise'],
       trim: true,
+    },
+    clientType: {
+      type: String,
+      enum: ['Particulier', 'Professionnel', 'Freelancer'],
+      default: 'Particulier',
+      required: [true, 'Type de client est requis'],
     },
     role: {
       type: String,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './ui/Button';
-import { Mail, Lock, User, Phone, MapPin, Calendar, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, Phone, MapPin, Calendar, AlertCircle, Briefcase, Building } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,8 +11,10 @@ interface RegisterFormProps {
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) => {
   const [formData, setFormData] = useState({
+    clientType: 'Particulier',
     firstName: '',
     lastName: '',
+    companyName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -26,7 +28,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -47,22 +49,26 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     setIsLoading(true);
 
     try {
+      // Préparer les données selon le type de client
+      const userData = {
+        clientType: formData.clientType,
+        firstName: formData.clientType === 'Professionnel' ? formData.companyName : formData.firstName,
+        lastName: formData.clientType === 'Professionnel' ? '' : formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        address: formData.address,
+        phone: formData.phone,
+        birthDate: formData.clientType === 'Professionnel' ? null : formData.birthDate,
+        city: formData.city,
+      };
+
       // Appel à l'API pour créer un compte
       const response = await fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-          address: formData.address,
-          phone: formData.phone,
-          birthDate: formData.birthDate,
-          city: formData.city,
-        }),
+        body: JSON.stringify(userData),
       });
 
       const data = await response.json();
@@ -95,195 +101,258 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         </div>
       )}
       
-      <div className="grid grid-cols-2 gap-4">
+      {/* GROUPE 1: Information personnelles/entreprise */}
+      <div className="space-y-4 border border-[#40444B] rounded-md p-4">
+        <h3 className="text-md font-medium text-gray-200 mb-2">Informations personnelles</h3>
+        
         <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
-            Prénom
+          <label htmlFor="clientType" className="block text-sm font-medium text-gray-300 mb-1">
+            Type d'utilisateur
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <User className="h-5 w-5 text-gray-400" />
+              <Briefcase className="h-5 w-5 text-gray-400" />
             </div>
-            <input
-              id="firstName"
-              name="firstName"
-              type="text"
-              value={formData.firstName}
+            <select
+              id="clientType"
+              name="clientType"
+              value={formData.clientType}
               onChange={handleChange}
               required
               className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-              placeholder="Prénom"
+            >
+              <option value="Particulier">Particulier</option>
+              <option value="Professionnel">Professionnel</option>
+              <option value="Freelancer">Freelancer</option>
+            </select>
+          </div>
+        </div>
+      
+        {formData.clientType === 'Professionnel' ? (
+          <div>
+            <label htmlFor="companyName" className="block text-sm font-medium text-gray-300 mb-1">
+              Nom de l'entreprise
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Building className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="companyName"
+                name="companyName"
+                type="text"
+                value={formData.companyName}
+                onChange={handleChange}
+                required
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                placeholder="Nom de votre entreprise"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
+                Prénom
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                  placeholder="Prénom"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
+                Nom
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                  placeholder="Nom"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+            Email
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Mail className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              placeholder="votre@email.com"
             />
           </div>
         </div>
         
-        <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
-            Nom
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <User className="h-5 w-5 text-gray-400" />
+        {formData.clientType !== 'Professionnel' && (
+          <div>
+            <label htmlFor="birthDate" className="block text-sm font-medium text-gray-300 mb-1">
+              Date de naissance
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Calendar className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="birthDate"
+                name="birthDate"
+                type="date"
+                value={formData.birthDate}
+                onChange={handleChange}
+                required={formData.clientType !== 'Professionnel'}
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              />
             </div>
-            <input
-              id="lastName"
-              name="lastName"
-              type="text"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-              placeholder="Nom"
-            />
           </div>
-        </div>
+        )}
       </div>
       
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
-          Email
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-            placeholder="votre@email.com"
-          />
-        </div>
-      </div>
-      
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
-          Mot de passe
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-            placeholder="••••••••"
-          />
-        </div>
-      </div>
-      
-      <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
-          Confirmer le mot de passe
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-            placeholder="••••••••"
-          />
-        </div>
-      </div>
-      
-      <div>
-        <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-1">
-          Adresse
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <MapPin className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            id="address"
-            name="address"
-            type="text"
-            value={formData.address}
-            onChange={handleChange}
-            required
-            className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-            placeholder="Votre adresse"
-          />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
+      {/* GROUPE 2: Informations d'adresse */}
+      <div className="space-y-4 border border-[#40444B] rounded-md p-4">
+        <h3 className="text-md font-medium text-gray-200 mb-2">Coordonnées</h3>
+        
         <div>
-          <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1">
-            Ville
+          <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-1">
+            Adresse
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <MapPin className="h-5 w-5 text-gray-400" />
             </div>
             <input
-              id="city"
-              name="city"
+              id="address"
+              name="address"
               type="text"
-              value={formData.city}
+              value={formData.address}
               onChange={handleChange}
               required
               className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-              placeholder="Votre ville"
+              placeholder="Votre adresse"
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1">
+              Ville
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MapPin className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="city"
+                name="city"
+                type="text"
+                value={formData.city}
+                onChange={handleChange}
+                required
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                placeholder="Votre ville"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
+              Téléphone
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Phone className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                placeholder="06XXXXXXXX"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* GROUPE 3: Mots de passe */}
+      <div className="space-y-4 border border-[#40444B] rounded-md p-4">
+        <h3 className="text-md font-medium text-gray-200 mb-2">Sécurité</h3>
+        
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+            Mot de passe
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Lock className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              placeholder="••••••••"
             />
           </div>
         </div>
         
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
-            Téléphone
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
+            Confirmer le mot de passe
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Phone className="h-5 w-5 text-gray-400" />
+              <Lock className="h-5 w-5 text-gray-400" />
             </div>
             <input
-              id="phone"
-              name="phone"
-              type="tel"
-              value={formData.phone}
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
               onChange={handleChange}
               required
               className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-              placeholder="06XXXXXXXX"
+              placeholder="••••••••"
             />
           </div>
-        </div>
-      </div>
-      
-      <div>
-        <label htmlFor="birthDate" className="block text-sm font-medium text-gray-300 mb-1">
-          Date de naissance
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Calendar className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            id="birthDate"
-            name="birthDate"
-            type="date"
-            value={formData.birthDate}
-            onChange={handleChange}
-            required
-            className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-          />
         </div>
       </div>
       
