@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
@@ -50,12 +50,20 @@ const UserDashboard = () => {
   const tabParam = queryParams.get('tab');
   
   // Définir l'onglet actif en fonction du paramètre de l'URL
-  const [activeTab, setActiveTab] = useState(tabParam === 'tickets' ? 'tickets' : 'profile');
+  const [activeTab, setActiveTab] = useState(
+    tabParam === 'tickets' ? 'tickets' : 
+    tabParam === 'subscription' ? 'subscription' : 
+    tabParam === 'invoices' ? 'invoices' : 'profile'
+  );
   
   // Mettre à jour l'onglet actif si le paramètre d'URL change
   useEffect(() => {
     if (tabParam === 'tickets') {
       setActiveTab('tickets');
+    } else if (tabParam === 'subscription') {
+      setActiveTab('subscription');
+    } else if (tabParam === 'invoices') {
+      setActiveTab('invoices');
     }
   }, [tabParam]);
 
@@ -494,6 +502,22 @@ const UserDashboard = () => {
                 <Ticket className="w-5 h-5" />
                 <span>Mes tickets</span>
               </a>
+              <a 
+                href="#" 
+                className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'subscription' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
+                onClick={() => setActiveTab('subscription')}
+              >
+                <CreditCard className="w-5 h-5" />
+                <span>Mon abonnement</span>
+              </a>
+              <a 
+                href="#" 
+                className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'invoices' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
+                onClick={() => setActiveTab('invoices')}
+              >
+                <FileText className="w-5 h-5" />
+                <span>Mes factures</span>
+              </a>
               <a href="#" className="flex items-center space-x-3 p-3 rounded-md text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]">
                 <Settings className="w-5 h-5" />
                 <span>Paramètres</span>
@@ -602,6 +626,124 @@ const UserDashboard = () => {
                   <TicketList viewMode={viewMode} />
                 )}
               </div>
+            )}
+            
+            {activeTab === 'subscription' && (
+              <>
+                <h3 className="text-xl font-semibold text-white mb-6">Mon abonnement</h3>
+                <div className="space-y-6">
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <CreditCard className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Statut de l'abonnement</h4>
+                    </div>
+                    <div className="pl-8 flex items-center">
+                      <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/20 text-green-400">
+                        Actif
+                      </span>
+                    </div>
+                    <p className="text-white pl-8 mt-2">Plan Premium - 29,99€/mois</p>
+                    <p className="text-gray-400 pl-8 text-sm">Prochain renouvellement: 15/06/2023</p>
+
+                    <div className="pl-8 mt-4">
+                      <button className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none mr-2">
+                        Gérer mon abonnement
+                      </button>
+                      <button className="px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none">
+                        Annuler mon abonnement
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <CreditCard className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Méthode de paiement</h4>
+                    </div>
+                    <div className="pl-8 flex items-center">
+                      <div className="bg-white p-1 rounded mr-2">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="h-5" />
+                      </div>
+                      <p className="text-white">Visa se terminant par 4242</p>
+                    </div>
+                    <p className="text-gray-400 pl-8 text-sm">Expire le 12/25</p>
+                    
+                    <div className="pl-8 mt-4">
+                      <button className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none">
+                        Modifier le mode de paiement
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {activeTab === 'invoices' && (
+              <>
+                <h3 className="text-xl font-semibold text-white mb-6">Mes factures</h3>
+                <div className="space-y-6">
+                  <div className="overflow-hidden rounded-md">
+                    <table className="min-w-full">
+                      <thead className="bg-[#36393F]">
+                        <tr>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-300">N° Facture</th>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-300">Date</th>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-300">Montant</th>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-300">Statut</th>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-300">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#36393F]">
+                        <tr className="bg-[#2F3136]">
+                          <td className="py-3 px-4 text-sm text-white">F-2023-0001</td>
+                          <td className="py-3 px-4 text-sm text-white">15/05/2023</td>
+                          <td className="py-3 px-4 text-sm text-white">29,99€</td>
+                          <td className="py-3 px-4 text-sm">
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/20 text-green-400">
+                              Payé
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-white">
+                            <button className="px-3 py-1 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none text-xs">
+                              Télécharger
+                            </button>
+                          </td>
+                        </tr>
+                        <tr className="bg-[#2F3136]">
+                          <td className="py-3 px-4 text-sm text-white">F-2023-0002</td>
+                          <td className="py-3 px-4 text-sm text-white">15/04/2023</td>
+                          <td className="py-3 px-4 text-sm text-white">29,99€</td>
+                          <td className="py-3 px-4 text-sm">
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/20 text-green-400">
+                              Payé
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-white">
+                            <button className="px-3 py-1 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none text-xs">
+                              Télécharger
+                            </button>
+                          </td>
+                        </tr>
+                        <tr className="bg-[#2F3136]">
+                          <td className="py-3 px-4 text-sm text-white">F-2023-0003</td>
+                          <td className="py-3 px-4 text-sm text-white">15/03/2023</td>
+                          <td className="py-3 px-4 text-sm text-white">29,99€</td>
+                          <td className="py-3 px-4 text-sm">
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/20 text-green-400">
+                              Payé
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-white">
+                            <button className="px-3 py-1 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none text-xs">
+                              Télécharger
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
