@@ -44,25 +44,30 @@ export async function GET(req: NextRequest) {
     await dbConnect();
     
     const { userId, role } = getUserFromToken(req);
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
-    }
-    
-    // Vérifier si l'utilisateur a les droits d'admin ou est un freelancer/fondateur
-    const user = await User.findById(userId);
-    if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
-    }
-    
-    // Seulement les admin, fondateurs et freelancers peuvent filtrer les utilisateurs
-    if (!hasAdminRights(user.role) && user.role !== 'freelancer') {
-      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
-    }
-    
-    // Récupérer le filtre de rôle depuis la requête
     const url = new URL(req.url);
     const roleFilter = url.searchParams.get('role');
+    
+    // Si on demande spécifiquement les membres de l'équipe (fondateur, freelancer, freelancer_admin)
+    // on autorise l'accès public
+    const isTeamRequest = roleFilter === 'fondateur,freelancer,freelancer_admin';
+    
+    if (!isTeamRequest) {
+      // Pour les autres requêtes, on vérifie l'authentification
+      if (!userId) {
+        return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+      }
+      
+      // Vérifier si l'utilisateur a les droits d'admin ou est un freelancer/fondateur
+      const user = await User.findById(userId);
+      if (!user) {
+        return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+      }
+      
+      // Seulement les admin, fondateurs et freelancers peuvent filtrer les utilisateurs
+      if (!hasAdminRights(user.role) && user.role !== 'freelancer') {
+        return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
+      }
+    }
     
     let query = {};
     if (roleFilter) {

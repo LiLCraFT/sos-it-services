@@ -101,17 +101,10 @@ const Team: React.FC = () => {
       try {
         const token = localStorage.getItem('authToken');
         
-        if (!token) {
-          console.error('Aucun token trouvé dans le localStorage');
-          throw new Error('Non authentifié');
-        }
-        
-        console.log('Token trouvé:', token.substring(0, 20) + '...');
-        
         // Récupérer tous les utilisateurs avec les rôles fondateur ou freelancer
         const response = await fetch('http://localhost:3001/api/users?role=fondateur,freelancer,freelancer_admin', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': token ? `Bearer ${token}` : '',
             'Content-Type': 'application/json'
           }
         });
@@ -140,35 +133,7 @@ const Team: React.FC = () => {
       } catch (err) {
         console.error('Erreur lors du chargement des membres:', err);
         setError(`Impossible de charger les experts: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
-        
-        // Utiliser des données de test en cas d'échec de l'API
-        const testData: TeamMember[] = [
-          {
-            _id: '1',
-            firstName: 'Pierre',
-            lastName: 'Dubois',
-            role: 'fondateur',
-            profileImage: '',
-            email: 'fondateur@example.com',
-            social: {
-              linkedin: 'https://linkedin.com',
-              twitter: 'https://twitter.com'
-            }
-          },
-          {
-            _id: '2',
-            firstName: 'Sophie',
-            lastName: 'Martin',
-            role: 'freelancer',
-            profileImage: '',
-            email: 'freelancer@example.com',
-            social: {
-              linkedin: 'https://linkedin.com',
-              github: 'https://github.com'
-            }
-          }
-        ];
-        setTeamMembers(testData);
+        setTeamMembers([]);
       } finally {
         setLoading(false);
       }
