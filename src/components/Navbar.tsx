@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut, Ticket, CreditCard, FileText, Crown } from 'lucide-react';
+import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut, Ticket, CreditCard, FileText, Crown, Users } from 'lucide-react';
 import { Link } from './ui/Link';
 import { Modal } from './ui/Modal';
 import LoginForm from './LoginForm';
@@ -212,27 +212,46 @@ const Navbar: React.FC = () => {
                           <div className="flex flex-col mt-1">
                             <span className="font-semibold text-white mb-1">{user?.firstName} {user?.lastName}</span>
                             <div className="flex flex-nowrap items-center gap-1 whitespace-nowrap overflow-x-auto">
-                              <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
-                                user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
-                                user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
-                                user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
-                                'bg-[#5865F2]/20 text-[#5865F2]'
-                              }`}>
-                                {user?.role === 'admin' ? 'Admin' :
-                                 user?.role === 'fondateur' ? 'Fondateur' :
-                                 user?.role === 'freelancer' ? 'Freelancer' :
-                                 'Utilisateur'}
-                              </span>
-                              {/* Tag d'abonnement - visible uniquement pour les utilisateurs standards */}
-                              {(!user?.role || 
-                               (user?.role !== 'admin' && 
-                                user?.role !== 'fondateur' && 
-                                user?.role !== 'freelancer')) && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
-                                  <Crown className="w-3 h-3 mr-1" />
-                                  {getSubscriptionName()}
+                              {user?.role === 'fondateur' ? (
+                                <>
+                                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/20 text-red-400">
+                                    Fondateur
+                                  </span>
+                                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                                    Admin
+                                  </span>
+                                </>
+                              ) : user?.role === 'freelancer_admin' ? (
+                                <>
+                                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
+                                    Freelancer
+                                  </span>
+                                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                                    Admin
+                                  </span>
+                                </>
+                              ) : (
+                                <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                                  user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
+                                  user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
+                                  'bg-[#5865F2]/20 text-[#5865F2]'
+                                }`}>
+                                  {user?.role === 'admin' ? 'Admin' :
+                                   user?.role === 'freelancer' ? 'Freelancer' :
+                                   'Utilisateur'}
                                 </span>
                               )}
+                              {/* Tag d'abonnement - visible uniquement pour les utilisateurs standards */}
+                              {(!user?.role || 
+                                (user?.role !== 'admin' && 
+                                 user?.role !== 'fondateur' && 
+                                 user?.role !== 'freelancer' &&
+                                 user?.role !== 'freelancer_admin')) && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
+                                    <Crown className="w-3 h-3 mr-1" />
+                                    {getSubscriptionName()}
+                                  </span>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -244,10 +263,21 @@ const Navbar: React.FC = () => {
                           <User className="w-5 h-5 mr-2" />
                           <span>Mon profil</span>
                         </RouterLink>
+                        {user?.role === 'fondateur' && (
+                          <RouterLink
+                            to="/mon-espace?tab=freelancers"
+                            className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Users className="w-5 h-5 mr-2" />
+                            <span>Les freelancers</span>
+                          </RouterLink>
+                        )}
                         {(!user?.role || 
                           (user?.role !== 'admin' && 
                            user?.role !== 'fondateur' && 
-                           user?.role !== 'freelancer')) && (
+                           user?.role !== 'freelancer' &&
+                           user?.role !== 'freelancer_admin')) && (
                           <>
                             <RouterLink
                               to="/mon-espace?tab=tickets"
@@ -376,10 +406,20 @@ const Navbar: React.FC = () => {
                   <User className="h-5 w-5 mr-2" />
                   <span>Mon profil</span>
                 </RouterLink>
-                {(!user?.role || 
-                  (user?.role !== 'admin' && 
-                   user?.role !== 'fondateur' && 
-                   user?.role !== 'freelancer')) && (
+                {user?.role === 'fondateur' && (
+                  <RouterLink
+                    to="/mon-espace?tab=freelancers"
+                    className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Users className="h-5 w-5 mr-2" />
+                    <span>Les freelancers</span>
+                  </RouterLink>
+                )}
+                {(user?.role !== 'admin' && 
+                  (user?.role !== 'fondateur' && 
+                   user?.role !== 'freelancer' &&
+                   user?.role !== 'freelancer_admin')) && (
                   <>
                     <RouterLink 
                       to="/mon-espace?tab=tickets"
@@ -418,27 +458,46 @@ const Navbar: React.FC = () => {
                 <div className="px-3 py-2 flex flex-col">
                   <span className="font-semibold text-white mb-1 truncate">{user?.firstName} {user?.lastName}</span>
                   <div className="flex flex-nowrap items-center gap-1 whitespace-nowrap overflow-x-auto">
-                    <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
-                      user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
-                      user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
-                      user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
-                      'bg-[#5865F2]/20 text-[#5865F2]'
-                    }`}>
-                      {user?.role === 'admin' ? 'Admin' :
-                       user?.role === 'fondateur' ? 'Fondateur' :
-                       user?.role === 'freelancer' ? 'Freelancer' :
-                       'Utilisateur'}
-                    </span>
+                    {user?.role === 'fondateur' ? (
+                      <>
+                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/20 text-red-400">
+                          Fondateur
+                        </span>
+                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                          Admin
+                        </span>
+                      </>
+                    ) : user?.role === 'freelancer_admin' ? (
+                      <>
+                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
+                          Freelancer
+                        </span>
+                        <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                          Admin
+                        </span>
+                      </>
+                    ) : (
+                      <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                        user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
+                        user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
+                        'bg-[#5865F2]/20 text-[#5865F2]'
+                      }`}>
+                        {user?.role === 'admin' ? 'Admin' :
+                         user?.role === 'freelancer' ? 'Freelancer' :
+                         'Utilisateur'}
+                      </span>
+                    )}
                     {/* Tag d'abonnement pour mobile - visible uniquement pour les utilisateurs standards */}
                     {(!user?.role || 
                       (user?.role !== 'admin' && 
                        user?.role !== 'fondateur' && 
-                       user?.role !== 'freelancer')) && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
-                        <Crown className="w-3 h-3 mr-1" />
-                        {getSubscriptionName()}
-                      </span>
-                    )}
+                       user?.role !== 'freelancer' &&
+                       user?.role !== 'freelancer_admin')) && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
+                          <Crown className="w-3 h-3 mr-1" />
+                          {getSubscriptionName()}
+                        </span>
+                      )}
                   </div>
                 </div>
               </>

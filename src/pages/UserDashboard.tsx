@@ -21,6 +21,20 @@ type AddressOption = {
 
 type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'birthDate';
 
+// Définition des onglets disponibles
+type TabId = 'profile' | 'freelancers' | 'tickets' | 'subscription' | 'invoices';
+
+// Structure pour un onglet du dashboard
+type TabConfig = {
+  id: TabId;
+  label: string;
+  icon: React.ReactNode;
+  // Rôles autorisés à voir cet onglet. Si vide ou non défini, l'onglet est accessible à tous
+  roles?: string[];
+  // Rôles exclus de l'accès à cet onglet
+  excludeRoles?: string[];
+};
+
 const UserDashboard = () => {
   const { user, isAuthenticated, logout, updateUser } = useAuth();
   const [uploading, setUploading] = useState(false);
@@ -53,27 +67,80 @@ const UserDashboard = () => {
   
   // Simuler la présence d'un abonnement (à remplacer par une lecture depuis user.subscription dans un cas réel)
   const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("solo");
+
+  // Configuration des onglets du dashboard
+  const tabConfigs: TabConfig[] = [
+    {
+      id: 'profile',
+      label: 'Mon profil',
+      icon: <User className="w-5 h-5" />,
+      // Accessible à tous
+    },
+    {
+      id: 'freelancers',
+      label: 'Les freelancers',
+      icon: <Users className="w-5 h-5" />,
+      roles: ['fondateur'], // Uniquement pour les fondateurs
+    },
+    {
+      id: 'tickets',
+      label: 'Mes tickets',
+      icon: <Ticket className="w-5 h-5" />,
+      excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'], // Pour tous sauf ces rôles
+    },
+    {
+      id: 'subscription',
+      label: 'Mon abonnement',
+      icon: <CreditCard className="w-5 h-5" />,
+      excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'], // Pour tous sauf ces rôles
+    },
+    {
+      id: 'invoices',
+      label: 'Mes factures',
+      icon: <FileText className="w-5 h-5" />,
+      excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'], // Pour tous sauf ces rôles
+    }
+  ];
+  
+  // Fonction helper pour vérifier si un utilisateur a accès à un onglet
+  const canAccessTab = (tab: TabConfig, userRole?: string): boolean => {
+    if (!userRole) return !tab.roles && !tab.excludeRoles;
+    
+    if (tab.roles && tab.roles.length > 0) {
+      return tab.roles.includes(userRole);
+    }
+    
+    if (tab.excludeRoles && tab.excludeRoles.length > 0) {
+      return !tab.excludeRoles.includes(userRole);
+    }
+    
+    return true;
+  };
+  
+  // Filtrer les onglets accessibles à l'utilisateur actuel
+  const accessibleTabs = tabConfigs.filter(tab => canAccessTab(tab, user?.role));
   
   // Définir l'onglet actif en fonction du paramètre de l'URL
-  const [activeTab, setActiveTab] = useState(
-    tabParam === 'tickets' ? 'tickets' : 
-    tabParam === 'subscription' ? 'subscription' : 
-    tabParam === 'invoices' ? 'invoices' : 
-    tabParam === 'freelancers' ? 'freelancers' : 'profile'
-  );
+  const getInitialTab = (): TabId => {
+    // Vérifier si le tab de l'URL est valide et accessible
+    if (tabParam) {
+      const tabConfig = accessibleTabs.find(tab => tab.id === tabParam);
+      if (tabConfig) return tabConfig.id;
+    }
+    
+    // Par défaut, utiliser le premier onglet accessible
+    return accessibleTabs.length > 0 ? accessibleTabs[0].id : 'profile';
+  };
+  
+  const [activeTab, setActiveTab] = useState<TabId>(getInitialTab());
   
   // Mettre à jour l'onglet actif si le paramètre d'URL change
   useEffect(() => {
-    if (tabParam === 'tickets') {
-      setActiveTab('tickets');
-    } else if (tabParam === 'subscription') {
-      setActiveTab('subscription');
-    } else if (tabParam === 'invoices') {
-      setActiveTab('invoices');
-    } else if (tabParam === 'freelancers') {
-      setActiveTab('freelancers');
+    const newTab = getInitialTab();
+    if (newTab !== activeTab) {
+      setActiveTab(newTab);
     }
-  }, [tabParam]);
+  }, [tabParam, user?.role]);
 
   // Mettre à jour les données du formulaire quand l'utilisateur change
   useEffect(() => {
@@ -487,7 +554,16 @@ const UserDashboard = () => {
               <div className="text-center">
                 <h2 className="font-semibold text-white">{user?.firstName} {user?.lastName}</h2>
                 <div className="flex items-center justify-center mt-1 space-x-2">
-                  {user?.role === 'freelancer_admin' ? (
+                  {user?.role === 'fondateur' ? (
+                    <>
+                      <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/20 text-red-400">
+                        Fondateur
+                      </span>
+                      <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                        Admin
+                      </span>
+                    </>
+                  ) : user?.role === 'freelancer_admin' ? (
                     <>
                       <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
                         Freelancer
@@ -499,12 +575,10 @@ const UserDashboard = () => {
                   ) : (
                     <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
                       user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
-                      user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
                       user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
                       'bg-[#5865F2]/20 text-[#5865F2]'
                     }`}>
                       {user?.role === 'admin' ? 'Admin' :
-                       user?.role === 'fondateur' ? 'Fondateur' :
                        user?.role === 'freelancer' ? 'Freelancer' :
                        'Utilisateur'}
                     </span>
@@ -526,56 +600,24 @@ const UserDashboard = () => {
             </div>
             
             <nav className="space-y-1">
-              <a 
-                href="#" 
-                className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'profile' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
-                onClick={() => setActiveTab('profile')}
-              >
-                <User className="w-5 h-5" />
-                <span>Mon profil</span>
-              </a>
-              {user?.role === 'fondateur' && (
+              {/* Générer les liens de navigation dynamiquement */}
+              {accessibleTabs.map(tab => (
                 <a 
+                  key={tab.id}
                   href="#" 
-                  className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'freelancers' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
-                  onClick={() => setActiveTab('freelancers')}
+                  className={`flex items-center space-x-3 p-3 rounded-md ${
+                    activeTab === tab.id 
+                      ? 'bg-[#5865F2]/10 text-[#5865F2]' 
+                      : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'
+                  } font-medium`}
+                  onClick={() => setActiveTab(tab.id)}
                 >
-                  <Users className="w-5 h-5" />
-                  <span>Les freelancers</span>
+                  {tab.icon}
+                  <span>{tab.label}</span>
                 </a>
-              )}
-              {(!user?.role || 
-                (user?.role !== 'admin' && 
-                 user?.role !== 'fondateur' && 
-                 user?.role !== 'freelancer' &&
-                 user?.role !== 'freelancer_admin')) && (
-                <>
-                  <a 
-                    href="#" 
-                    className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'tickets' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
-                    onClick={() => setActiveTab('tickets')}
-                  >
-                    <Ticket className="w-5 h-5" />
-                    <span>Mes tickets</span>
-                  </a>
-                  <a 
-                    href="#" 
-                    className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'subscription' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
-                    onClick={() => setActiveTab('subscription')}
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    <span>Mon abonnement</span>
-                  </a>
-                  <a 
-                    href="#" 
-                    className={`flex items-center space-x-3 p-3 rounded-md ${activeTab === 'invoices' ? 'bg-[#5865F2]/10 text-[#5865F2]' : 'text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]'} font-medium`}
-                    onClick={() => setActiveTab('invoices')}
-                  >
-                    <FileText className="w-5 h-5" />
-                    <span>Mes factures</span>
-                  </a>
-                </>
-              )}
+              ))}
+              
+              {/* Liens toujours présents */}
               <a href="#" className="flex items-center space-x-3 p-3 rounded-md text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]">
                 <Settings className="w-5 h-5" />
                 <span>Préférences</span>
@@ -625,7 +667,16 @@ const UserDashboard = () => {
                       <h4 className="font-medium text-gray-300">Rôle</h4>
                     </div>
                     <div className="pl-8 flex items-center space-x-2">
-                      {user?.role === 'freelancer_admin' ? (
+                      {user?.role === 'fondateur' ? (
+                        <>
+                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/20 text-red-400">
+                            Fondateur
+                          </span>
+                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                            Admin
+                          </span>
+                        </>
+                      ) : user?.role === 'freelancer_admin' ? (
                         <>
                           <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
                             Freelancer
@@ -637,12 +688,10 @@ const UserDashboard = () => {
                       ) : (
                         <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
                           user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
-                          user?.role === 'fondateur' ? 'bg-red-500/20 text-red-400' :
                           user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
                           'bg-[#5865F2]/20 text-[#5865F2]'
                         }`}>
                           {user?.role === 'admin' ? 'Admin' :
-                           user?.role === 'fondateur' ? 'Fondateur' :
                            user?.role === 'freelancer' ? 'Freelancer' :
                            'Utilisateur'}
                         </span>
