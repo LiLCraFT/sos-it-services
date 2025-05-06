@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
@@ -23,7 +23,7 @@ type AddressOption = {
 type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'birthDate';
 
 // Définition des onglets disponibles
-type TabId = 'profile' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices';
+type TabId = 'profile' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices' | 'preferences';
 
 // Structure pour un onglet du dashboard
 type TabConfig = {
@@ -106,6 +106,12 @@ const UserDashboard = () => {
       label: 'Mes factures',
       icon: <FileText className="w-5 h-5" />,
       excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'], // Pour tous sauf ces rôles
+    },
+    {
+      id: 'preferences',
+      label: 'Préférences',
+      icon: <Settings className="w-5 h-5" />,
+      // Accessible à tous
     }
   ];
   
@@ -519,7 +525,10 @@ const UserDashboard = () => {
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
         {/* En-tête du profil */}
         <div className="bg-[#5865F2] p-6">
-          <h1 className="text-2xl font-bold text-white">Mon Profil</h1>
+          <div className="flex items-center">
+            <User className="w-6 h-6 text-white mr-2" />
+            <h1 className="text-2xl font-bold text-white">Mon Profil</h1>
+          </div>
           <p className="text-[#E3E5E8]">Gérez vos informations et vos services</p>
         </div>
         
@@ -624,11 +633,7 @@ const UserDashboard = () => {
                 </a>
               ))}
               
-              {/* Liens toujours présents */}
-              <a href="#" className="flex items-center space-x-3 p-3 rounded-md text-gray-300 hover:bg-[#5865F2]/10 hover:text-[#5865F2]">
-                <Settings className="w-5 h-5" />
-                <span>Préférences</span>
-              </a>
+              {/* Lien de déconnexion toujours présent */}
               <button 
                 onClick={logout}
                 className="flex items-center space-x-3 p-3 rounded-md text-gray-300 hover:bg-red-500/10 hover:text-red-500 w-full text-left"
@@ -949,6 +954,137 @@ const UserDashboard = () => {
                 </div>
                 <UserList viewMode={viewMode} />
               </div>
+            )}
+
+            {activeTab === 'preferences' && (
+              <>
+                <h3 className="text-xl font-semibold text-white mb-6">Préférences</h3>
+                <div className="space-y-6">
+                  {/* Apparence */}
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Monitor className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Apparence</h4>
+                    </div>
+                    <div className="pl-8 space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <span className="text-white min-w-[120px]">Thème</span>
+                        <div className="flex space-x-2">
+                          <button className="flex items-center space-x-2 bg-[#2F3136] px-3 py-2 rounded-md border border-[#5865F2] text-white">
+                            <Moon className="w-4 h-4" />
+                            <span>Sombre</span>
+                          </button>
+                          <button className="flex items-center space-x-2 bg-[#2F3136] px-3 py-2 rounded-md text-gray-400 hover:bg-[#202225] transition-colors">
+                            <Sun className="w-4 h-4" />
+                            <span>Clair</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <span className="text-white min-w-[120px]">Tickets par page</span>
+                        <select className="bg-[#2F3136] text-white block rounded-md border-0 py-1.5 px-3 shadow-sm ring-1 ring-inset ring-[#202225] focus:ring-2 focus:ring-[#5865F2] focus:outline-none">
+                          <option value="10">10</option>
+                          <option value="25">25</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notifications */}
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Bell className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Notifications</h4>
+                    </div>
+                    <div className="pl-8 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white">Email de confirmation pour les tickets</span>
+                        <label className="inline-flex items-center cursor-pointer">
+                          <input type="checkbox" value="" className="sr-only peer" checked />
+                          <div className="relative w-11 h-6 bg-[#2F3136] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5865F2]"></div>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-white">Email de mise à jour du statut</span>
+                        <label className="inline-flex items-center cursor-pointer">
+                          <input type="checkbox" value="" className="sr-only peer" checked />
+                          <div className="relative w-11 h-6 bg-[#2F3136] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5865F2]"></div>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-white">Notifications push</span>
+                        <label className="inline-flex items-center cursor-pointer">
+                          <input type="checkbox" value="" className="sr-only peer" />
+                          <div className="relative w-11 h-6 bg-[#2F3136] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5865F2]"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Langue et Région */}
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Globe className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Langue et Région</h4>
+                    </div>
+                    <div className="pl-8 space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <span className="text-white min-w-[120px]">Langue</span>
+                        <select className="bg-[#2F3136] text-white block rounded-md border-0 py-1.5 px-3 shadow-sm ring-1 ring-inset ring-[#202225] focus:ring-2 focus:ring-[#5865F2] focus:outline-none">
+                          <option value="fr">Français</option>
+                          <option value="en">English</option>
+                          <option value="es">Español</option>
+                          <option value="de">Deutsch</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <span className="text-white min-w-[120px]">Format de date</span>
+                        <select className="bg-[#2F3136] text-white block rounded-md border-0 py-1.5 px-3 shadow-sm ring-1 ring-inset ring-[#202225] focus:ring-2 focus:ring-[#5865F2] focus:outline-none">
+                          <option value="dd/mm/yyyy">JJ/MM/AAAA</option>
+                          <option value="mm/dd/yyyy">MM/JJ/AAAA</option>
+                          <option value="yyyy-mm-dd">AAAA-MM-JJ</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sécurité */}
+                  <div className="p-4 bg-[#36393F] rounded-md">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Lock className="w-5 h-5 text-gray-400" />
+                      <h4 className="font-medium text-gray-300">Sécurité</h4>
+                    </div>
+                    <div className="pl-8 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white">Authentification à deux facteurs</span>
+                        <button className="px-3 py-1 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none">
+                          Configurer
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-white">Changer le mot de passe</span>
+                        <button className="px-3 py-1 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none">
+                          Modifier
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-white">Sessions actives</span>
+                        <button className="px-3 py-1 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none">
+                          Gérer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none">
+                      Enregistrer les modifications
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
