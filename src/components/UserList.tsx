@@ -208,6 +208,37 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
     }
   };
 
+  const deleteUser = async (userId: string) => {
+    try {
+      setActionInProgress({ ...actionInProgress, [userId]: true });
+      
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch(`${API_URL}/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de la suppression de l\'utilisateur');
+      }
+      
+      // Mettre à jour la liste locale des utilisateurs
+      setUsers(prevUsers => 
+        prevUsers.filter(u => u._id !== userId)
+      );
+      
+      alert(`Utilisateur supprimé avec succès`);
+      closeDropdown(userId);
+    } catch (err: any) {
+      alert(err.message || 'Une erreur est survenue');
+    } finally {
+      setActionInProgress({ ...actionInProgress, [userId]: false });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -494,60 +525,23 @@ const UserList: React.FC<UserListProps> = ({ viewMode }) => {
         }}
       >
         <div className="py-1" role="menu" aria-orientation="vertical">
-          {userData.role !== 'admin' && (
-            <button 
-              onClick={() => changeUserRole(activeUserId, 'admin')}
-              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-              disabled={actionInProgress[activeUserId]}
-            >
-              <Shield className="w-4 h-4 mr-2 text-orange-400 flex-shrink-0" />
-              <span>Définir comme Admin</span>
-            </button>
-          )}
+          <button 
+            onClick={() => alert('Édition non implémentée')} // À implémenter
+            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+            disabled={actionInProgress[activeUserId]}
+          >
+            <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+            <span>Modifier l'utilisateur</span>
+          </button>
           
-          {userData.role !== 'freelancer' && userData.role !== 'freelancer_admin' && (
-            <button 
-              onClick={() => changeUserRole(activeUserId, 'freelancer')}
-              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-              disabled={actionInProgress[activeUserId]}
-            >
-              <User className="w-4 h-4 mr-2 text-yellow-500 flex-shrink-0" />
-              <span>Définir comme Freelancer</span>
-            </button>
-          )}
-          
-          {userData.role === 'freelancer' && (
-            <button 
-              onClick={() => changeUserRole(activeUserId, 'freelancer_admin')}
-              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-              disabled={actionInProgress[activeUserId]}
-            >
-              <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-              <span>Ajouter droits d'admin</span>
-            </button>
-          )}
-          
-          {userData.role === 'freelancer_admin' && (
-            <button 
-              onClick={() => changeUserRole(activeUserId, 'freelancer')}
-              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-              disabled={actionInProgress[activeUserId]}
-            >
-              <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-              <span>Retirer droits d'admin</span>
-            </button>
-          )}
-          
-          {userData.role !== 'user' && (
-            <button 
-              onClick={() => changeUserRole(activeUserId, 'user')}
-              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
-              disabled={actionInProgress[activeUserId]}
-            >
-              <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-              <span>Définir comme Utilisateur</span>
-            </button>
-          )}
+          <button 
+            onClick={() => deleteUser(activeUserId)}
+            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors text-red-400"
+            disabled={actionInProgress[activeUserId]}
+          >
+            <Trash className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+            <span>Supprimer l'utilisateur</span>
+          </button>
         </div>
       </div>
     );
