@@ -1,10 +1,11 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { SiVisa } from 'react-icons/si';
 
 // URL de l'image par défaut
 const DEFAULT_IMAGE = 'http://localhost:3001/api/default-avatar';
@@ -668,19 +669,31 @@ const UserDashboard = () => {
               <>
                 <h3 className="text-xl font-semibold text-white mb-6">Mon abonnement</h3>
                 <div className="space-y-6">
-                  <div className="p-4 bg-[#36393F] rounded-md">
+                  <div className="p-4 bg-[#36393F] rounded-md relative">
                     <div className="flex items-center space-x-3 mb-2">
                       <CreditCard className="w-5 h-5 text-gray-400" />
                       <h4 className="font-medium text-gray-300">Statut de l'abonnement</h4>
                     </div>
+                    {subscriptionType !== "none" && (
+                      <div className="absolute top-4 right-4 text-right">
+                        <div className="text-white font-medium">
+                          {subscriptionType === "solo" ? "29,99€/mois" : "49,99€/mois"}
+                        </div>
+                        <div className="text-green-400 text-sm flex items-center justify-end mt-1">
+                          <Percent className="w-3 h-3 mr-1" />
+                          <span>Après crédit d'impôts: </span>
+                          <span className="font-bold ml-1">{subscriptionType === "solo" ? "14,99€/mois" : "24,99€/mois"}</span>
+                        </div>
+                      </div>
+                    )}
                     <div className="pl-8 flex items-center">
                       <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/20 text-green-400">
                         Actif
                       </span>
                     </div>
-                    <p className="text-white pl-8 mt-2">Plan {getSubscriptionName()} - {subscriptionType === "solo" ? "29,99€/mois" : subscriptionType === "family" ? "49,99€/mois" : "Paiement à l'usage"}</p>
+                    <p className="text-white pl-8 mt-2">{getSubscriptionName()}</p>
                     <p className="text-gray-400 pl-8 text-sm">
-                      {subscriptionType !== "none" ? "Prochain renouvellement: 15/06/2023" : "Pas d'abonnement en cours"}
+                      {subscriptionType !== "none" ? "Abonnement sans engagement" : "Pas d'abonnement en cours"}
                     </p>
 
                     <div className="pl-8 mt-4">
@@ -688,7 +701,7 @@ const UserDashboard = () => {
                         Gérer mon abonnement
                       </button>
                       <button className="px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none">
-                        Annuler mon abonnement
+                        Résilier mon abonnement
                       </button>
                     </div>
                   </div>
@@ -699,10 +712,10 @@ const UserDashboard = () => {
                       <h4 className="font-medium text-gray-300">Méthode de paiement</h4>
                     </div>
                     <div className="pl-8 flex items-center">
-                      <div className="bg-white p-1 rounded mr-2">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="h-5" />
+                      <div className="bg-white p-2 rounded mr-2 flex items-center justify-center">
+                        <SiVisa className="text-[#1434CB] w-10 h-6" />
                       </div>
-                      <p className="text-white">Visa se terminant par 4242</p>
+                      <p className="text-white">Carte se terminant par 4242</p>
                     </div>
                     <p className="text-gray-400 pl-8 text-sm">Expire le 12/25</p>
                     
