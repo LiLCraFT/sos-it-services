@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
+import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock, Star } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Tooltip from './Tooltip';
+import FreelancerDetailsModal from './FreelancerDetailsModal';
 
 type FreelancerData = {
   _id: string;
@@ -16,6 +17,7 @@ type FreelancerData = {
   isEmailVerified: boolean;
   isAdminVerified: boolean;
   emailVerificationToken?: string | null;
+  rating?: number;
 };
 
 type SortField = 'firstName' | 'lastName' | 'email' | 'city' | 'createdAt';
@@ -46,6 +48,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   
   // État pour le filtre des freelancers
   const [freelancerTypeFilter, setFreelancerTypeFilter] = useState<string | null>(null);
+  const [selectedFreelancer, setSelectedFreelancer] = useState<FreelancerData | null>(null);
 
   useEffect(() => {
     fetchFreelancers();
@@ -421,7 +424,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   };
 
   // Affichage du statut de compte (CheckCircle, XCircle, Clock)
-  const renderAccountStatus = (freelancer: FreelancerData) => (
+  const renderStatus = (freelancer: FreelancerData) => (
     <div className="flex items-center justify-center space-x-2">
       {freelancer.isEmailVerified ? (
         <Tooltip text="Compte activé">
@@ -690,7 +693,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                     {renderRoleTags(freelancer.role)}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {renderAccountStatus(freelancer)}
+                    {renderStatus(freelancer)}
                   </td>
                 </tr>
               ))}
@@ -713,28 +716,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
             onContextMenu={(e) => handleContextMenu(e, freelancer._id)}
           >
             <div className="absolute top-3 right-3 flex space-x-2">
-              {freelancer.isEmailVerified ? (
-                <Tooltip text="Compte activé">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                </Tooltip>
-              ) : freelancer.emailVerificationToken ? (
-                <Tooltip text="En attente d'activation">
-                  <Clock className="w-5 h-5 text-yellow-400" />
-                </Tooltip>
-              ) : (
-                <Tooltip text="Compte désactivé">
-                  <XCircle className="w-5 h-5 text-red-500" />
-                </Tooltip>
-              )}
-              {freelancer.isAdminVerified ? (
-                <Tooltip text="Freelancer validé par l'admin">
-                  <CheckCircle className="w-5 h-5 text-yellow-400" />
-                </Tooltip>
-              ) : (
-                <Tooltip text="En attente de validation admin">
-                  <Clock className="w-5 h-5 text-yellow-400" />
-                </Tooltip>
-              )}
+              {renderStatus(freelancer)}
             </div>
             
             <div className="p-4">
@@ -806,6 +788,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   const contextMenuElement = contextMenu && (() => {
     const freelancer = freelancers.find(f => f._id === contextMenu.userId);
     if (!freelancer) return null;
+    const isAdmin = freelancer.role === 'freelancer_admin';
     return (
       <div
         ref={contextMenuRef}
@@ -820,11 +803,20 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       >
         <button
           className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-          onClick={() => { editFreelancer(freelancer._id); closeContextMenu(); }}
+          onClick={() => { setSelectedFreelancer(freelancer); closeContextMenu(); }}
         >
-          <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-          Éditer
+          <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+          Voir freelancer
         </button>
+        {!isAdmin && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+            onClick={() => { editFreelancer(freelancer._id); closeContextMenu(); }}
+          >
+            <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+            Éditer
+          </button>
+        )}
         {!freelancer.isEmailVerified && (
           <button
             className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
@@ -843,23 +835,26 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
             Désactiver compte
           </button>
         )}
-        {!freelancer.isAdminVerified && (
-          <button
-            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-            onClick={() => { toggleUserVerification(freelancer._id, undefined, true); closeContextMenu(); }}
-          >
-            <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-            Activer admin
-          </button>
-        )}
-        {freelancer.isAdminVerified && (
-          <button
-            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-            onClick={() => { toggleUserVerification(freelancer._id, undefined, false); closeContextMenu(); }}
-          >
-            <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-            Désactiver admin
-          </button>
+        {isFounder && (
+          <>
+            {!isAdmin ? (
+              <button
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                onClick={() => { toggleAdminRole(freelancer._id, freelancer.role); closeContextMenu(); }}
+              >
+                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                Ajouter comme admin
+              </button>
+            ) : (
+              <button
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                onClick={() => { toggleAdminRole(freelancer._id, freelancer.role); closeContextMenu(); }}
+              >
+                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                Supprimer comme admin
+              </button>
+            )}
+          </>
         )}
         <button
           className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
@@ -877,6 +872,11 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
       {contextMenuElement}
       {renderDropdownMenu()}
+      <FreelancerDetailsModal
+        isOpen={!!selectedFreelancer}
+        onClose={() => setSelectedFreelancer(null)}
+        freelancer={selectedFreelancer}
+      />
     </div>
   );
 };

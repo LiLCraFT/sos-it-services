@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import UserDetailsModal from './UserDetailsModal';
 
 type UserData = {
   _id: string;
@@ -61,6 +62,8 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
 
   // Ajout d'une ref pour le menu contextuel
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -643,6 +646,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
             const user = users.find(u => u._id === contextMenu.userId);
             if (!user) return null;
             const isFreelancer = user.clientType === 'Freelancer';
+            const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
             return (
               <div
                 ref={contextMenuRef}
@@ -654,10 +658,10 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
               >
                 <button
                   className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-                  onClick={() => { alert('Édition non implémentée'); closeContextMenu(); }}
+                  onClick={() => { setSelectedUser(user); closeContextMenu(); }}
                 >
-                  <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-                  Éditer
+                  <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+                  Voir utilisateur
                 </button>
                 {/* Email verification logic */}
                 {!user.isEmailVerified && (
@@ -795,6 +799,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
         const user = users.find(u => u._id === contextMenu.userId);
         if (!user) return null;
         const isFreelancer = user.clientType === 'Freelancer';
+        const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
         return (
           <div
             ref={contextMenuRef}
@@ -806,10 +811,10 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
           >
             <button
               className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-              onClick={() => { alert('Édition non implémentée'); closeContextMenu(); }}
+              onClick={() => { setSelectedUser(user); closeContextMenu(); }}
             >
-              <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-              Éditer
+              <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+              Voir utilisateur
             </button>
             {/* Email verification logic */}
             {!user.isEmailVerified && (
@@ -936,6 +941,11 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     <div onClick={() => activeUserId && closeDropdown(activeUserId)}>
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
       {renderDropdownMenu()}
+      <UserDetailsModal
+        isOpen={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        user={selectedUser}
+      />
     </div>
   );
 };
