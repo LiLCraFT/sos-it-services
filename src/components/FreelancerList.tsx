@@ -490,13 +490,14 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
         throw new Error('Freelancer non trouvé');
       }
 
-      const response = await fetch(`${API_URL}/api/freelancers/${freelancerId}`, {
-        method: 'PATCH',
+      const response = await fetch(`${API_URL}/api/admin/toggle-user-verification`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
+          userId: freelancerId,
           isEmailVerified: isEmailVerified !== undefined ? isEmailVerified : freelancer.isEmailVerified,
           isAdminVerified: isAdminVerified !== undefined ? isAdminVerified : freelancer.isAdminVerified
         })
