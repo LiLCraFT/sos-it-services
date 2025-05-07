@@ -172,8 +172,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Ticket non trouvé' }, { status: 404 });
     }
     
+    // Get the user for audit
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+    
     // Check if user has permission to delete
-    if (ticket.createdBy.toString() !== userId) {
+    if (ticket.createdBy.toString() !== userId && user.role !== 'admin' && user.role !== 'fondateur') {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
     }
     
