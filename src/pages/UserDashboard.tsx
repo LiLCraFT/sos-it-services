@@ -1,5 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import TicketList from '../components/TicketList';
@@ -38,6 +38,8 @@ type TabConfig = {
 
 const UserDashboard = () => {
   const { user, isAuthenticated, logout, updateUser } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [uploading, setUploading] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
@@ -63,7 +65,6 @@ const UserDashboard = () => {
   const [imageError, setImageError] = useState(false);
   
   // Récupérer le paramètre tab de l'URL
-  const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
   
@@ -197,6 +198,13 @@ const UserDashboard = () => {
     }
   }, [user?.profileImage]); // Dépendance à user.profileImage pour réinitialiser en cas de changement
 
+  // Forcer le rechargement de l'image quand l'utilisateur change
+  useEffect(() => {
+    if (user) {
+      setImageError(false);
+    }
+  }, [user]);
+
   // Formater la date de naissance
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return '';
@@ -222,33 +230,43 @@ const UserDashboard = () => {
 
   // Fonction pour construire l'URL de l'image
   const getImageUrl = (path: string | null | undefined): string => {
-    if (!path) return DEFAULT_IMAGE;
+    console.log('Image path:', path); // Log pour déboguer
+
+    if (!path) {
+      console.log('No path provided, using default image');
+      return DEFAULT_IMAGE;
+    }
     
     if (path.startsWith('http')) {
-      return path;
+      console.log('Using direct URL:', path);
+      return `${path}?v=${Date.now()}`;
     }
     
     // Si le chemin commence par /images/ ou /uploads/, c'est une image du backend
     if (path.startsWith('/images/')) {
-      // Pour les chemins /images/, on enlève le /images/ initial
       const cleanPath = path.substring(8); // Enlève '/images/'
-      return `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      console.log('Constructed URL for /images/ path:', url);
+      return url;
     }
     
     if (path.startsWith('/uploads/')) {
-      // Pour les chemins /uploads/, on garde le chemin complet
       const cleanPath = path.substring(1); // Enlève juste le premier /
-      return `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      console.log('Constructed URL for /uploads/ path:', url);
+      return url;
     }
     
     // Pour les autres chemins
     if (path.startsWith('/')) {
-      // Pour les chemins qui commencent par /
       const cleanPath = path.substring(1);
-      return `http://localhost:3001/api/public/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/public/${cleanPath}?v=${Date.now()}`;
+      console.log('Constructed URL for root path:', url);
+      return url;
     } else {
-      // Pour les autres chemins
-      return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}&v=${Date.now()}`;
+      const url = `http://localhost:3001/api/static?path=${encodeURIComponent(path)}&v=${Date.now()}`;
+      console.log('Constructed URL for other path:', url);
+      return url;
     }
   };
 
@@ -284,6 +302,8 @@ const UserDashboard = () => {
       }
       
       const data = await response.json();
+      console.log('Upload response:', data); // Log pour déboguer
+      
       if (data.profileImage) {
         setProfileImage(data.profileImage);
         updateUser({ ...user, profileImage: data.profileImage });
@@ -553,6 +573,24 @@ const UserDashboard = () => {
     }
   };
 
+  // Rediriger vers la page d'accueil si non authentifié
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Gérer la déconnexion
+  const handleLogout = () => {
+    logout();
+    navigate('/', { replace: true });
+  };
+
+  // Si non authentifié, ne pas afficher le dashboard
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
@@ -576,8 +614,18 @@ const UserDashboard = () => {
                     src={getImageUrl(user?.profileImage)}
                     alt={`${user?.firstName} ${user?.lastName}`}
                     className="w-full h-full object-cover"
-                    onError={() => setImageError(true)}
+                    onError={(e) => {
+                      console.log('Image load error:', e);
+                      setImageError(true);
+                      const img = e.target as HTMLImageElement;
+                      img.src = DEFAULT_IMAGE;
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully');
+                      setImageError(false);
+                    }}
                     crossOrigin="anonymous"
+                    key={`${user?.profileImage}-${Date.now()}`}
                   />
                 </div>
                 <label 
@@ -663,7 +711,7 @@ const UserDashboard = () => {
               
               {/* Lien de déconnexion toujours présent */}
               <button 
-                onClick={logout}
+                onClick={handleLogout}
                 className="flex items-center space-x-3 p-3 rounded-md text-gray-300 hover:bg-red-500/10 hover:text-red-500 w-full text-left"
               >
                 <LogOut className="w-5 h-5" />
