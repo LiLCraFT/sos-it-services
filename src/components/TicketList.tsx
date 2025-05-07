@@ -485,7 +485,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     if (activeTab === 'tous') {
       return tickets.filter(ticket => 
         ticket.status === 'libre' || 
-        (ticket.assignedTo && ticket.assignedTo._id === user._id)
+        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
+        (ticket.createdBy && ticket.createdBy._id === user._id)
       );
     }
     if (activeTab === 'libre') {
@@ -493,8 +494,10 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     }
     return tickets.filter(ticket => 
       ticket.status === activeTab && 
-      ticket.assignedTo && 
-      ticket.assignedTo._id === user._id
+      (
+        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
+        (ticket.createdBy && ticket.createdBy._id === user._id)
+      )
     );
   };
 
