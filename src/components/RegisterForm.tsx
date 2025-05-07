@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { Mail, Lock, User, Phone, MapPin, Calendar, AlertCircle, Briefcase, Building } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,8 +26,36 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  // Validation en temps réel des emails
+  useEffect(() => {
+    if (formData.email && formData.confirmEmail) {
+      if (formData.email !== formData.confirmEmail) {
+        setEmailError('Les adresses email ne correspondent pas');
+      } else {
+        setEmailError('');
+      }
+    } else {
+      setEmailError('');
+    }
+  }, [formData.email, formData.confirmEmail]);
+
+  // Validation en temps réel des mots de passe
+  useEffect(() => {
+    if (formData.password && formData.confirmPassword) {
+      if (formData.password !== formData.confirmPassword) {
+        setPasswordError('Les mots de passe ne correspondent pas');
+      } else {
+        setPasswordError('');
+      }
+    } else {
+      setPasswordError('');
+    }
+  }, [formData.password, formData.confirmPassword]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -41,15 +69,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     e.preventDefault();
     setError('');
 
-    // Vérification des emails
-    if (formData.email !== formData.confirmEmail) {
-      setError('Les adresses email ne correspondent pas');
-      return;
-    }
-
-    // Vérification des mots de passe
-    if (formData.password !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+    // Vérification finale avant soumission
+    if (emailError || passwordError) {
+      setError('Veuillez corriger les erreurs avant de continuer');
       return;
     }
 
@@ -100,6 +122,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -131,10 +157,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               value={formData.email}
               onChange={handleChange}
               required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              className={`bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border ${emailError ? 'border-red-500' : 'border-[#40444B]'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent`}
               placeholder="votre@email.com"
             />
           </div>
+          {emailError && (
+            <p className="mt-1 text-sm text-red-500">{emailError}</p>
+          )}
         </div>
         
         <div>
@@ -151,8 +180,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               type="email"
               value={formData.confirmEmail}
               onChange={handleChange}
+              onPaste={handlePaste}
               required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              className={`bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border ${emailError ? 'border-red-500' : 'border-[#40444B]'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent`}
               placeholder="Confirmez votre email"
             />
           </div>
@@ -374,10 +404,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               value={formData.password}
               onChange={handleChange}
               required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              className={`bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border ${passwordError ? 'border-red-500' : 'border-[#40444B]'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent`}
               placeholder="••••••••"
             />
           </div>
+          {passwordError && (
+            <p className="mt-1 text-sm text-red-500">{passwordError}</p>
+          )}
         </div>
         
         <div>
@@ -394,8 +427,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
+              onPaste={handlePaste}
               required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              className={`bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border ${passwordError ? 'border-red-500' : 'border-[#40444B]'} rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent`}
               placeholder="••••••••"
             />
           </div>
