@@ -26,6 +26,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
+  const [imageError, setImageError] = useState(false);
   const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
 
   const formatDate = (dateString: string) => {
@@ -34,6 +35,21 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Fonction pour construire l'URL de l'image
+  const getImageUrl = (path: string | null | undefined): string => {
+    if (!path || imageError) return '/images/default-profile.png';
+    
+    if (path.startsWith('http')) {
+      return path;
+    }
+    
+    if (path.startsWith('/')) {
+      return `http://localhost:3001${path}`;
+    }
+    
+    return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
   };
 
   // Helper pour afficher les tags de rôle
@@ -121,13 +137,16 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
       <div className="space-y-6">
         {/* Photo de profil et nom */}
         <div className="flex items-center space-x-4">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-[#202225]">
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-[#202225]">
             <img
-              src={user.profileImage || '/images/default-profile.png'}
-              alt={`${user.firstName} ${user.lastName}`}
+              src={user?.profileImage ? `http://localhost:3001${user.profileImage}` : '/images/default-profile.png'}
+              alt={`${user?.firstName} ${user?.lastName}`}
               className="w-full h-full object-cover"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = '/images/default-profile.png';
+                const target = e.target as HTMLImageElement;
+                if (target.src !== '/images/default-profile.png') {
+                  target.src = '/images/default-profile.png';
+                }
               }}
             />
           </div>

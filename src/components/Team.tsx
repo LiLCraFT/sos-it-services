@@ -100,9 +100,9 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
   };
 
   return (
-    <Card className="h-full">
+    <Card className="h-full cursor-pointer">
       <CardContent className="p-0">
-        <div className="w-full aspect-square bg-gray-800">
+        <div className="w-full aspect-square bg-gray-800 relative">
           <img 
             key={imageUrl}
             src={imageUrl}
@@ -112,21 +112,27 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
             onLoad={handleImageLoad}
             crossOrigin="anonymous"
           />
+          {social.linkedin && (
+            <a 
+              href={social.linkedin} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="absolute bottom-4 right-4 bg-[#0077B5] p-2 rounded-full hover:bg-[#005582] transition-colors z-10"
+              style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+            >
+              <Linkedin size={24} className="text-white" />
+            </a>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#36393F] to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end">
             <div className="p-4 w-full">
               <div className="flex justify-center space-x-3">
                 {social.twitter && (
-                  <a href={social.twitter} className="text-white hover:text-[#5865F2] transition-colors">
+                  <a href={social.twitter} target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#5865F2] transition-colors">
                     <Twitter size={20} />
                   </a>
                 )}
-                {social.linkedin && (
-                  <a href={social.linkedin} className="text-white hover:text-[#5865F2] transition-colors">
-                    <Linkedin size={20} />
-                  </a>
-                )}
                 {social.github && (
-                  <a href={social.github} className="text-white hover:text-[#5865F2] transition-colors">
+                  <a href={social.github} target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#5865F2] transition-colors">
                     <Github size={20} />
                   </a>
                 )}

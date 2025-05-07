@@ -49,6 +49,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   // État pour le filtre des freelancers
   const [freelancerTypeFilter, setFreelancerTypeFilter] = useState<string | null>(null);
   const [selectedFreelancer, setSelectedFreelancer] = useState<FreelancerData | null>(null);
+  const [imageError, setImageError] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchFreelancers();
@@ -547,6 +548,21 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
     }
   };
 
+  // Fonction pour construire l'URL de l'image
+  const getImageUrl = (path: string | null | undefined, freelancerId: string): string => {
+    if (!path || imageError[freelancerId]) return '/images/default-profile.png';
+    
+    if (path.startsWith('http')) {
+      return path;
+    }
+    
+    if (path.startsWith('/')) {
+      return `http://localhost:3001${path}`;
+    }
+    
+    return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -680,12 +696,10 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                   <td className="px-4 py-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-[#202225]">
                       <img 
-                        src={freelancer.profileImage || '/images/default-profile.png'} 
+                        src={getImageUrl(freelancer.profileImage, freelancer._id)} 
                         alt={`${freelancer.firstName} ${freelancer.lastName}`}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/default-profile.png';
-                        }}
+                        onError={() => setImageError(prev => ({ ...prev, [freelancer._id]: true }))}
                       />
                     </div>
                   </td>
@@ -740,12 +754,10 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                 <div className="flex items-center">
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
                     <img 
-                      src={freelancer.profileImage || '/images/default-profile.png'} 
+                      src={getImageUrl(freelancer.profileImage, freelancer._id)} 
                       alt={`${freelancer.firstName} ${freelancer.lastName}`}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/images/default-profile.png';
-                      }}
+                      onError={() => setImageError(prev => ({ ...prev, [freelancer._id]: true }))}
                     />
                   </div>
                   <div className="ml-3">

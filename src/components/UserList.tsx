@@ -64,6 +64,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [imageError, setImageError] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchUsers();
@@ -471,6 +472,21 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     setSelectedUser(users.find(user => user._id === userId) || null);
   };
 
+  // Fonction pour construire l'URL de l'image
+  const getImageUrl = (path: string | null | undefined, userId: string): string => {
+    if (!path || imageError[userId]) return '/images/default-profile.png';
+    
+    if (path.startsWith('http')) {
+      return path;
+    }
+    
+    if (path.startsWith('/')) {
+      return `http://localhost:3001${path}`;
+    }
+    
+    return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -726,28 +742,42 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
             key={user._id}
             className="bg-[#36393F] rounded-lg p-4 hover:bg-[#40444b] transition-colors cursor-pointer relative"
             onClick={() => handleCardClick(user._id)}
+            onContextMenu={(e) => handleContextMenu(e, user._id)}
           >
+            <div className="absolute top-3 right-3">
+              {renderStatus(user)}
+            </div>
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
                 <img
-                  src={user.profileImage || '/images/default-profile.png'}
+                  src={getImageUrl(user.profileImage, user._id)}
                   alt={`${user.firstName} ${user.lastName}`}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/images/default-profile.png';
-                  }}
+                  onError={() => setImageError(prev => ({ ...prev, [user._id]: true }))}
                 />
               </div>
               <div>
                 <h3 className="text-white font-medium">
                   {user.firstName} {user.lastName}
                 </h3>
-                <p className="text-gray-400 text-sm">{user.email}</p>
+                <div className="mt-1">
+                  {renderRoleTags(user.role, user)}
+                </div>
               </div>
             </div>
             <div className="mt-4 space-y-2">
-              {renderStatus(user)}
-              {renderRoleTags(user.role, user)}
+              <div className="flex items-center space-x-2">
+                <Mail className="w-3 h-3 text-gray-500" />
+                <span className="text-gray-300 text-sm truncate">{user.email}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-3 h-3 text-gray-500" />
+                <span className="text-gray-300 text-sm">{user.city || 'Non renseignée'}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-3 h-3 text-gray-500" />
+                <span className="text-gray-300 text-sm">Inscrit le {formatDate(user.createdAt)}</span>
+              </div>
             </div>
           </div>
         ))}

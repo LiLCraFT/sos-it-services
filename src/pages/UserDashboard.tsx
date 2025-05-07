@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
 import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
@@ -10,7 +10,7 @@ import FreelancerList from '../components/FreelancerList';
 import UserList from '../components/UserList';
 
 // URL de l'image par défaut
-const DEFAULT_IMAGE = 'http://localhost:3001/api/default-avatar';
+const DEFAULT_IMAGE = '/images/default-profile.png';
 
 type AddressOption = {
   value: {
@@ -39,7 +39,7 @@ type TabConfig = {
 const UserDashboard = () => {
   const { user, isAuthenticated, logout, updateUser } = useAuth();
   const [uploading, setUploading] = useState(false);
-  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
     // Récupérer le mode d'affichage depuis le localStorage ou utiliser 'cards' par défaut
@@ -60,6 +60,7 @@ const UserDashboard = () => {
   const [addressOption, setAddressOption] = useState<AddressOption | null>(null);
   const [postalCode, setPostalCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   // Récupérer le paramètre tab de l'URL
   const location = useLocation();
@@ -188,30 +189,13 @@ const UserDashboard = () => {
     localStorage.setItem('ticketViewMode', viewMode);
   }, [viewMode]);
   
-  // Rediriger vers la page d'accueil si l'utilisateur n'est pas connecté
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Fonction pour construire l'URL de l'image
-  const getImageUrl = (path: string | undefined) => {
-    if (!path) return DEFAULT_IMAGE;
-    
-    // Si l'URL commence par http, c'est déjà une URL complète
-    if (path.startsWith('http')) {
-      return path;
+  // Initialiser l'image de profil une seule fois au chargement
+  useEffect(() => {
+    if (user?.profileImage) {
+      setProfileImage(user.profileImage);
+      setImageError(false);
     }
-    
-    // Essayer plusieurs formats d'URL
-    if (path.startsWith('/')) {
-      // Pour les chemins qui commencent par /
-      const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-      return `http://localhost:3001/api/public/${cleanPath}`;
-    } else {
-      // Pour les autres chemins
-      return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
-    }
-  };
+  }, [user?.profileImage]); // Dépendance à user.profileImage pour réinitialiser en cas de changement
 
   // Formater la date de naissance
   const formatDate = (dateString: string | undefined) => {
@@ -236,6 +220,38 @@ const UserDashboard = () => {
     }
   };
 
+  // Fonction pour construire l'URL de l'image
+  const getImageUrl = (path: string | null | undefined): string => {
+    if (!path) return DEFAULT_IMAGE;
+    
+    if (path.startsWith('http')) {
+      return path;
+    }
+    
+    // Si le chemin commence par /images/ ou /uploads/, c'est une image du backend
+    if (path.startsWith('/images/')) {
+      // Pour les chemins /images/, on enlève le /images/ initial
+      const cleanPath = path.substring(8); // Enlève '/images/'
+      return `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+    }
+    
+    if (path.startsWith('/uploads/')) {
+      // Pour les chemins /uploads/, on garde le chemin complet
+      const cleanPath = path.substring(1); // Enlève juste le premier /
+      return `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+    }
+    
+    // Pour les autres chemins
+    if (path.startsWith('/')) {
+      // Pour les chemins qui commencent par /
+      const cleanPath = path.substring(1);
+      return `http://localhost:3001/api/public/${cleanPath}?v=${Date.now()}`;
+    } else {
+      // Pour les autres chemins
+      return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}&v=${Date.now()}`;
+    }
+  };
+
   // Gérer le téléchargement d'image de profil
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -243,7 +259,6 @@ const UserDashboard = () => {
 
     const file = files[0];
     
-    // Vérifier si le fichier est une image
     if (!file.type.startsWith('image/')) {
       alert('Veuillez sélectionner une image');
       return;
@@ -251,6 +266,7 @@ const UserDashboard = () => {
 
     try {
       setUploading(true);
+      setImageError(false);
       
       const formData = new FormData();
       formData.append('image', file);
@@ -258,6 +274,9 @@ const UserDashboard = () => {
       const response = await fetch(`http://localhost:3001/api/users/${user._id}/profile-image`, {
         method: 'POST',
         body: formData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
       });
       
       if (!response.ok) {
@@ -265,14 +284,14 @@ const UserDashboard = () => {
       }
       
       const data = await response.json();
-      
-      setProfileImage(data.profileImage);
-      
-      // Mettre à jour les informations utilisateur dans le contexte d'authentification
-      updateUser({ profileImage: data.profileImage });
+      if (data.profileImage) {
+        setProfileImage(data.profileImage);
+        updateUser({ ...user, profileImage: data.profileImage });
+      }
       
     } catch (error) {
-      alert(`Erreur lors du téléchargement de l'image`);
+      console.error('Erreur lors du téléchargement de l\'image:', error);
+      alert('Erreur lors du téléchargement de l\'image');
     } finally {
       setUploading(false);
     }
@@ -552,19 +571,14 @@ const UserDashboard = () => {
           <div className="bg-[#36393F] p-4 md:p-6">
             <div className="flex flex-col items-center mb-6">
               <div className="relative mb-4 group">
-                <div className="bg-[#5865F2] rounded-full w-24 h-24 flex items-center justify-center overflow-hidden">
-                  {profileImage || user?.profileImage ? (
-                    <img 
-                      src={getImageUrl(profileImage || user?.profileImage)} 
-                      alt={`${user?.firstName} ${user?.lastName}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = DEFAULT_IMAGE;
-                      }}
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-white" />
-                  )}
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-[#202225]">
+                  <img
+                    src={getImageUrl(user?.profileImage)}
+                    alt={`${user?.firstName} ${user?.lastName}`}
+                    className="w-full h-full object-cover"
+                    onError={() => setImageError(true)}
+                    crossOrigin="anonymous"
+                  />
                 </div>
                 <label 
                   htmlFor="profile-image-upload" 

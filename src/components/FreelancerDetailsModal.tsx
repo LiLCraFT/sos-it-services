@@ -30,6 +30,7 @@ const FreelancerDetailsModal: React.FC<FreelancerDetailsModalProps> = ({ isOpen,
   const [isEditing, setIsEditing] = useState(false);
   const [editedFreelancer, setEditedFreelancer] = useState(freelancer);
   const isAdmin = freelancer.role === 'freelancer_admin' || freelancer.role === 'admin' || freelancer.role === 'fondateur';
+  const [imageError, setImageError] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -37,6 +38,21 @@ const FreelancerDetailsModal: React.FC<FreelancerDetailsModalProps> = ({ isOpen,
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Fonction pour construire l'URL de l'image
+  const getImageUrl = (path: string | null | undefined): string => {
+    if (!path || imageError) return '/images/default-profile.png';
+    
+    if (path.startsWith('http')) {
+      return path;
+    }
+    
+    if (path.startsWith('/')) {
+      return `http://localhost:3001${path}`;
+    }
+    
+    return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
   };
 
   // Helper pour afficher les tags de rôle
@@ -103,14 +119,12 @@ const FreelancerDetailsModal: React.FC<FreelancerDetailsModalProps> = ({ isOpen,
       <div className="space-y-6">
         {/* Photo de profil et nom */}
         <div className="flex items-center space-x-4">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-[#202225]">
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-[#202225]">
             <img
-              src={freelancer.profileImage || '/images/default-profile.png'}
+              src={getImageUrl(freelancer.profileImage)}
               alt={`${freelancer.firstName} ${freelancer.lastName}`}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/images/default-profile.png';
-              }}
+              onError={() => setImageError(true)}
             />
           </div>
           <div>
