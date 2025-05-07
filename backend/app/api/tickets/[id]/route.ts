@@ -88,13 +88,22 @@ export async function PUT(
     let canModify = 
       ticket.createdBy.toString() === userId || 
       user.role === 'admin' || 
+      user.role === 'fondateur' ||
       (ticket.assignedTo && ticket.assignedTo.toString() === userId);
 
     // Exception : un ticket "libre" peut être pris par n'importe quel utilisateur (auto-assignation pour diagnostic)
     if (
       ticket.status === 'libre' &&
       data.status === 'diagnostic' &&
-      data.assignedTo === userId
+      (user.role === 'freelancer' || user.role === 'fondateur')
+    ) {
+      canModify = true;
+    }
+
+    // Exception : un ticket en diagnostic peut être modifié par le freelancer assigné ou un fondateur
+    if (
+      ticket.status === 'diagnostic' &&
+      (user.role === 'fondateur' || (user.role === 'freelancer' && ticket.assignedTo && ticket.assignedTo.toString() === userId))
     ) {
       canModify = true;
     }
