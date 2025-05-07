@@ -207,24 +207,12 @@ const FreelancerDetailsModal: React.FC<FreelancerDetailsModalProps> = ({ isOpen,
             <div>
               <p className="text-sm text-gray-400">Statut du compte</p>
               <p className="text-white">
-                {freelancer.isEmailVerified ? (
-                  <span className="text-green-400">Compte activé</span>
+                {!freelancer.isEmailVerified ? (
+                  <span className="text-red-400">En attente de validation email</span>
+                ) : !freelancer.isAdminVerified ? (
+                  <span className="text-yellow-400">En attente de validation admin</span>
                 ) : (
-                  <span className="text-red-400">Compte désactivé</span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <Shield className="w-5 h-5 text-gray-400" />
-            <div>
-              <p className="text-sm text-gray-400">Validation admin</p>
-              <p className="text-white">
-                {freelancer.isAdminVerified ? (
-                  <span className="text-green-400">Validé</span>
-                ) : (
-                  <span className="text-yellow-400">En attente</span>
+                  <span className="text-green-400">Compte validé</span>
                 )}
               </p>
             </div>

@@ -35,10 +35,12 @@ export async function POST(req: NextRequest) {
     // Mettre à jour les statuts de vérification
     if (typeof isEmailVerified === 'boolean') {
       user.isEmailVerified = isEmailVerified;
-      if (!isEmailVerified) {
-        user.emailVerificationToken = undefined;
-        user.emailVerificationTokenExpires = undefined;
+      if (isEmailVerified) {
+        // Si le compte est activé, on supprime le token de vérification
+        user.emailVerificationToken = null;
+        user.emailVerificationTokenExpires = null;
       }
+      // Si le compte est désactivé, on ne touche pas au token
     }
     
     if (typeof isAdminVerified === 'boolean') {

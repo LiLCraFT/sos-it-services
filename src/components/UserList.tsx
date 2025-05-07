@@ -281,10 +281,11 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
 
   const toggleUserVerification = async (userId: string, isEmailVerified?: boolean, isAdminVerified?: boolean) => {
     try {
-      const response = await fetch('/api/admin/toggle-user-verification', {
+      const response = await fetch(`${API_URL}/api/admin/toggle-user-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
           userId,
@@ -304,6 +305,9 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
             ...user,
             isEmailVerified: isEmailVerified !== undefined ? isEmailVerified : user.isEmailVerified,
             isAdminVerified: isAdminVerified !== undefined ? isAdminVerified : user.isAdminVerified,
+            // Si le compte est activé, on supprime le token de vérification
+            // Si le compte est désactivé, on garde le token null
+            emailVerificationToken: isEmailVerified ? null : user.emailVerificationToken
           };
         }
         return user;
@@ -463,6 +467,10 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   // Fonction pour fermer le menu contextuel
   const closeContextMenu = () => setContextMenu(null);
 
+  const handleCardClick = (userId: string) => {
+    setSelectedUser(users.find(user => user._id === userId) || null);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -544,42 +552,34 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     }
   };
 
-  const renderVerificationStatus = (user: UserData & { emailVerificationToken?: string | null }) => {
-    // Statut compte :
-    // - Sablier si en attente d'activation (isEmailVerified === false && emailVerificationToken !== null)
-    // - CheckCircle si activé
-    // - XCircle si désactivé (isEmailVerified === false && emailVerificationToken === null)
-    return (
-      <div className="flex items-center justify-center space-x-2">
-        {/* Statut compte */}
-        {user.isEmailVerified ? (
-          <Tooltip text="Compte activé">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-          </Tooltip>
-        ) : user.emailVerificationToken ? (
-          <Tooltip text="En attente d'activation">
-            <Clock className="w-4 h-4 text-yellow-400" />
+  const renderStatus = (user: UserData) => (
+    <div className="flex items-center justify-center space-x-2">
+      {user.isEmailVerified ? (
+        <Tooltip text="Compte activé">
+          <CheckCircle className="w-4 h-4 text-green-500" />
+        </Tooltip>
+      ) : user.emailVerificationToken ? (
+        <Tooltip text="En attente d'activation">
+          <Clock className="w-4 h-4 text-yellow-400" />
+        </Tooltip>
+      ) : (
+        <Tooltip text="Compte désactivé">
+          <XCircle className="w-4 h-4 text-red-500" />
+        </Tooltip>
+      )}
+      {user.role === 'freelancer' && (
+        user.isAdminVerified ? (
+          <Tooltip text="Freelancer validé par l'admin">
+            <CheckCircle className="w-4 h-4 text-yellow-400" />
           </Tooltip>
         ) : (
-          <Tooltip text="Compte désactivé">
-            <XCircle className="w-4 h-4 text-red-500" />
+          <Tooltip text="En attente de validation admin">
+            <Clock className="w-4 h-4 text-yellow-400" />
           </Tooltip>
-        )}
-        {/* Statut admin pour freelancer */}
-        {user.clientType === 'Freelancer' && (
-          user.isAdminVerified ? (
-            <Tooltip text="Freelancer validé par l'admin">
-              <CheckCircle className="w-4 h-4 text-yellow-400" />
-            </Tooltip>
-          ) : (
-            <Tooltip text="En attente de validation admin">
-              <Clock className="w-4 h-4 text-yellow-400" />
-            </Tooltip>
-          )
-        )}
-      </div>
-    );
-  };
+        )
+      )}
+    </div>
+  );
 
   // Rendu en mode tableau
   const renderTableView = () => {
@@ -608,7 +608,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
                   Rôle
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[10%]">
-                  Statut compte
+                  Statut
                 </th>
               </tr>
             </thead>
@@ -635,7 +635,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
                     {renderRoleTags(userData.role, userData)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300 text-center">
-                    {renderVerificationStatus(userData)}
+                    {renderStatus(userData)}
                   </td>
                 </tr>
               ))}
@@ -722,74 +722,32 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
       {renderFilters()}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortUsers(filteredUsers).map((user) => (
-          <div key={user._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm relative cursor-pointer hover:shadow-lg hover:bg-[#40444b] transition-all duration-150"
-            onContextMenu={(e) => handleContextMenu(e, user._id)}>
-            {/* Icônes de statut en haut à droite */}
-            <div className="absolute top-3 right-3 flex space-x-2">
-              {user.isEmailVerified ? (
-                <Tooltip text="Compte activé">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                </Tooltip>
-              ) : user.emailVerificationToken ? (
-                <Tooltip text="En attente d'activation">
-                  <Clock className="w-5 h-5 text-yellow-400" />
-                </Tooltip>
-              ) : (
-                <Tooltip text="Compte désactivé">
-                  <XCircle className="w-5 h-5 text-red-500" />
-                </Tooltip>
-              )}
-              {user.clientType === 'Freelancer' && (
-                user.isAdminVerified ? (
-                  <Tooltip text="Freelancer validé par l'admin">
-                    <CheckCircle className="w-5 h-5 text-yellow-400" />
-                  </Tooltip>
-                ) : (
-                  <Tooltip text="En attente de validation admin">
-                    <Clock className="w-5 h-5 text-yellow-400" />
-                  </Tooltip>
-                )
-              )}
+          <div
+            key={user._id}
+            className="bg-[#36393F] rounded-lg p-4 hover:bg-[#40444b] transition-colors cursor-pointer relative"
+            onClick={() => handleCardClick(user._id)}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
+                <img
+                  src={user.profileImage || '/images/default-profile.png'}
+                  alt={`${user.firstName} ${user.lastName}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/default-profile.png';
+                  }}
+                />
+              </div>
+              <div>
+                <h3 className="text-white font-medium">
+                  {user.firstName} {user.lastName}
+                </h3>
+                <p className="text-gray-400 text-sm">{user.email}</p>
+              </div>
             </div>
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
-                    <img 
-                      src={user.profileImage || '/images/default-profile.png'} 
-                      alt={`${user.firstName} ${user.lastName}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/images/default-profile.png';
-                      }}
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-white font-medium">{user.firstName} {user.lastName}</h3>
-                    <div className="flex space-x-1 mt-1">
-                      {renderRoleTags(user.role, user)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center text-gray-300">
-                  <Mail className="w-3 h-3 text-gray-500 mr-2" />
-                  <span className="truncate">{user.email}</span>
-                </div>
-                <div className="flex items-center text-gray-300">
-                  <Phone className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>{user.phone || 'Non renseigné'}</span>
-                </div>
-                <div className="flex items-center text-gray-300">
-                  <MapPin className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>{user.city || 'Non renseigné'}</span>
-                </div>
-                <div className="flex items-center text-gray-300">
-                  <Calendar className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>Inscrit le {formatDate(user.createdAt)}</span>
-                </div>
-              </div>
+            <div className="mt-4 space-y-2">
+              {renderStatus(user)}
+              {renderRoleTags(user.role, user)}
             </div>
           </div>
         ))}
