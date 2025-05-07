@@ -85,11 +85,20 @@ export async function PUT(
     
     // Check if user has permission to update
     // On permet aussi aux administrateurs et aux techniciens assignés de modifier
-    const canModify = 
+    let canModify = 
       ticket.createdBy.toString() === userId || 
       user.role === 'admin' || 
       (ticket.assignedTo && ticket.assignedTo.toString() === userId);
-    
+
+    // Exception : un ticket "libre" peut être pris par n'importe quel utilisateur (auto-assignation pour diagnostic)
+    if (
+      ticket.status === 'libre' &&
+      data.status === 'diagnostic' &&
+      data.assignedTo === userId
+    ) {
+      canModify = true;
+    }
+
     if (!canModify) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
     }

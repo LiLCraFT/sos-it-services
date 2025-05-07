@@ -16,7 +16,7 @@ interface Ticket {
   _id: string;
   title: string;
   description: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  status: 'diagnostic' | 'online' | 'onsite' | 'failed' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   category: string;
   subcategory: string;
@@ -166,10 +166,14 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Retourner une classe CSS basée sur le statut
   const getStatusClass = (status: string) => {
     switch (status) {
-      case 'open':
+      case 'diagnostic':
         return 'bg-blue-100 text-blue-800';
-      case 'in_progress':
-        return 'bg-yellow-100 text-yellow-800';
+      case 'online':
+        return 'bg-cyan-100 text-cyan-800';
+      case 'onsite':
+        return 'bg-purple-100 text-purple-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
       case 'resolved':
         return 'bg-green-100 text-green-800';
       case 'closed':
@@ -194,10 +198,14 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Traduire le statut
   const translateStatus = (status: string) => {
     switch (status) {
-      case 'open':
-        return 'Ouvert';
-      case 'in_progress':
-        return 'En cours';
+      case 'diagnostic':
+        return 'Diagnostic';
+      case 'online':
+        return 'En ligne';
+      case 'onsite':
+        return 'À domicile';
+      case 'failed':
+        return 'Échec';
       case 'resolved':
         return 'Résolu';
       case 'closed':

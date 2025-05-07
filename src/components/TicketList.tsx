@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown } from 'lucide-react';
+import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown, Trash2, Hand } from 'lucide-react';
+import { Modal } from './ui/Modal';
 
 interface Attachment {
   filename: string;
@@ -14,7 +15,7 @@ interface Ticket {
   _id: string;
   title: string;
   description: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  status: 'libre' | 'diagnostic' | 'online' | 'onsite' | 'failed' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   category: string;
   subcategory: string;
@@ -48,6 +49,16 @@ interface TicketListProps {
 type SortField = 'status' | 'title' | 'category' | 'priority' | 'createdAt' | 'createdBy';
 type SortDirection = 'asc' | 'desc';
 
+const TICKET_STATUSES = [
+  'libre',
+  'diagnostic',
+  'online',
+  'onsite',
+  'failed',
+  'resolved',
+  'closed',
+];
+
 const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const { user, isAuthenticated } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -58,6 +69,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const dropdownRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; ticketId: string | null } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [modalTicket, setModalTicket] = useState<Ticket | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('tous');
 
   const fetchTickets = async () => {
     try {
@@ -124,7 +140,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     }));
   };
 
-  const updateTicketStatus = async (ticketId: string, status: 'closed' | 'resolved') => {
+  const updateTicketStatus = async (ticketId: string, status: 'diagnostic' | 'online' | 'onsite' | 'failed' | 'resolved' | 'closed') => {
     try {
       setUpdateLoading(prev => ({ ...prev, [ticketId]: true }));
       const token = localStorage.getItem('authToken');
@@ -133,6 +149,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         setError('Non authentifié');
         return;
       }
+      
+      console.log('Updating ticket status:', { ticketId, status }); // Debug log
       
       const response = await fetch(`http://localhost:3001/api/tickets/${ticketId}`, {
         method: 'PUT',
@@ -144,16 +162,52 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
       });
       
       if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour du ticket');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la mise à jour du ticket');
       }
       
-      // Mettre à jour l'état local du ticket
+      const data = await response.json();
+      console.log('Update response:', data); // Debug log
+      
+      // Mettre à jour l'état local du ticket avec les données complètes du serveur
       setTickets(prevTickets => 
         prevTickets.map(ticket => 
-          ticket._id === ticketId ? { ...ticket, status } : ticket
+          ticket._id === ticketId ? data.ticket : ticket
         )
       );
       
+      // Mettre à jour l'onglet actif pour afficher le nouvel état
+      setActiveTab(status);
+      
+      closeDropdown(ticketId);
+      closeContextMenu();
+    } catch (err) {
+      console.error('Error updating ticket:', err); // Debug log
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setUpdateLoading(prev => ({ ...prev, [ticketId]: false }));
+    }
+  };
+
+  const deleteTicket = async (ticketId: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce ticket ? Cette action est irréversible.')) return;
+    try {
+      setUpdateLoading(prev => ({ ...prev, [ticketId]: true }));
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Non authentifié');
+        return;
+      }
+      const response = await fetch(`http://localhost:3001/api/tickets/${ticketId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Erreur lors de la suppression du ticket');
+      }
+      setTickets(prevTickets => prevTickets.filter(ticket => ticket._id !== ticketId));
       closeDropdown(ticketId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
@@ -181,10 +235,14 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Retourner une classe CSS basée sur le statut
   const getStatusClass = (status: string) => {
     switch (status) {
-      case 'open':
+      case 'diagnostic':
         return 'bg-blue-100 text-blue-800';
-      case 'in_progress':
-        return 'bg-yellow-100 text-yellow-800';
+      case 'online':
+        return 'bg-cyan-100 text-cyan-800';
+      case 'onsite':
+        return 'bg-purple-100 text-purple-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
       case 'resolved':
         return 'bg-green-100 text-green-800';
       case 'closed':
@@ -209,16 +267,20 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Traduire le statut
   const translateStatus = (status: string) => {
     switch (status) {
-      case 'open':
-        return 'Ouvert';
-      case 'in_progress':
-        return 'En cours';
+      case 'diagnostic':
+        return 'Diagnostic';
+      case 'online':
+        return 'En ligne';
+      case 'onsite':
+        return 'À domicile';
+      case 'failed':
+        return 'Échec';
       case 'resolved':
         return 'Résolu';
       case 'closed':
         return 'Fermé';
       default:
-        return status;
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
@@ -316,6 +378,142 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     };
   }, [dropdownOpen]);
 
+  const handleContextMenu = (e: React.MouseEvent, ticketId: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, ticketId });
+  };
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contextMenu && contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+        closeContextMenu();
+      }
+    };
+    if (contextMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [contextMenu]);
+
+  // Barre d'onglets pour filtrer par statut
+  const renderTabs = () => (
+    <div className="flex space-x-2 mb-6 items-end">
+      <button
+        className={`px-4 py-2 rounded-t-md text-sm font-bold transition-colors shadow-md border-2 ${activeTab === 'tous' ? 'bg-[#7289DA] text-white border-[#5865F2]' : 'bg-[#36393F] text-gray-200 border-[#23272A] hover:bg-[#444]'}`}
+        onClick={() => { setActiveTab('tous'); closeContextMenu(); }}
+      >
+        Tous
+      </button>
+      <button
+        className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'libre' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
+        onClick={() => { setActiveTab('libre'); closeContextMenu(); }}
+      >
+        {translateStatus('libre')}
+      </button>
+      <button
+        className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'diagnostic' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
+        onClick={() => { setActiveTab('diagnostic'); closeContextMenu(); }}
+      >
+        {translateStatus('diagnostic')}
+      </button>
+      {/* Groupe En ligne / À domicile */}
+      <div className="flex rounded-t-md overflow-hidden border border-[#36393F] bg-[#23272A]">
+        <button
+          className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'online' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
+          onClick={() => { setActiveTab('online'); closeContextMenu(); }}
+        >
+          {translateStatus('online')}
+        </button>
+        <button
+          className={`px-4 py-2 text-sm font-medium transition-colors border-l border-[#36393F] ${activeTab === 'onsite' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
+          onClick={() => { setActiveTab('onsite'); closeContextMenu(); }}
+        >
+          {translateStatus('onsite')}
+        </button>
+      </div>
+      {/* Groupe Échec / Résolu */}
+      <div className="flex rounded-t-md overflow-hidden border border-[#36393F] bg-[#23272A] ml-2">
+        <button
+          className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'failed' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
+          onClick={() => { setActiveTab('failed'); closeContextMenu(); }}
+        >
+          {translateStatus('failed')}
+        </button>
+        <button
+          className={`px-4 py-2 text-sm font-medium transition-colors border-l border-[#36393F] ${activeTab === 'resolved' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
+          onClick={() => { setActiveTab('resolved'); closeContextMenu(); }}
+        >
+          {translateStatus('resolved')}
+        </button>
+      </div>
+      <button
+        className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'closed' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
+        onClick={() => { setActiveTab('closed'); closeContextMenu(); }}
+      >
+        {translateStatus('closed')}
+      </button>
+    </div>
+  );
+
+  // Filtrage des tickets selon l'onglet actif et l'assignation
+  const getFilteredTickets = () => {
+    if (!user) return [];
+
+    // Pour l'onglet "tous", on montre tous les tickets assignés à l'utilisateur
+    if (activeTab === 'tous') {
+      return tickets.filter(ticket => 
+        ticket.status === 'libre' || 
+        (ticket.assignedTo && ticket.assignedTo._id === user._id)
+      );
+    }
+
+    // Pour l'onglet "libre", on montre tous les tickets libres
+    if (activeTab === 'libre') {
+      return tickets.filter(ticket => ticket.status === 'libre');
+    }
+
+    // Pour tous les autres états, on ne montre que les tickets assignés à l'utilisateur
+    return tickets.filter(ticket => 
+      ticket.status === activeTab && 
+      ticket.assignedTo && 
+      ticket.assignedTo._id === user._id
+    );
+  };
+
+  // Ajout de la fonction pour faire le diagnostic
+  const doDiagnostic = async (ticket: Ticket) => {
+    try {
+      setUpdateLoading(prev => ({ ...prev, [ticket._id]: true }));
+      const token = localStorage.getItem('authToken');
+      if (!token || !user) {
+        setError('Non authentifié');
+        return;
+      }
+      const response = await fetch(`http://localhost:3001/api/tickets/${ticket._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'diagnostic', assignedTo: user._id })
+      });
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'assignation du ticket');
+      }
+      // Mettre à jour l'état local du ticket
+      setTickets(prevTickets => prevTickets.map(t => t._id === ticket._id ? { ...t, status: 'diagnostic', assignedTo: { ...user } } : t));
+      // Mettre à jour l'onglet actif pour afficher le nouvel état
+      setActiveTab('diagnostic');
+      closeContextMenu();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setUpdateLoading(prev => ({ ...prev, [ticket._id]: false }));
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
   }
@@ -337,7 +535,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
 
   // Rendu en mode tableau
   const renderTableView = () => {
-    const sortedTickets = sortTickets(tickets);
+    const sortedTickets = sortTickets(getFilteredTickets());
     
     // Helper pour afficher l'icône de tri
     const renderSortIcon = (field: SortField) => {
@@ -352,10 +550,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         <table className="min-w-full bg-[#2F3136] rounded-md overflow-hidden">
           <thead className="bg-[#202225]">
             <tr>
-              <th 
-                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                onClick={() => handleSortClick('status')}
-              >
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]" onClick={() => handleSortClick('status')}>
                 <div className="flex items-center">
                   <span>Statut</span>
                   {renderSortIcon('status')}
@@ -397,12 +592,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   {renderSortIcon('createdAt')}
                 </div>
               </th>
-              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#202225]">
             {sortedTickets.map((ticket) => (
-              <tr key={ticket._id} className="hover:bg-[#36393F] transition-colors">
+              <tr key={ticket._id} className="hover:bg-[#36393F] transition-colors cursor-pointer" onContextMenu={e => handleContextMenu(e, ticket._id)}>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(ticket.status)}`}>
                     {translateStatus(ticket.status)}
@@ -426,13 +620,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                 <td className="px-4 py-3 text-sm text-gray-300">{formatDate(ticket.createdAt)}</td>
                 <td className="px-4 py-3 text-right text-sm whitespace-nowrap">
                   <div className="flex justify-end">
-                    <a
-                      href={`/tickets/${ticket._id}`}
-                      className="text-blue-500 hover:text-blue-400 mr-3"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                    
                     {user && ticket.createdBy._id === user._id && ticket.status !== 'closed' && (
                       <div className="relative">
                         <button 
@@ -478,6 +665,27 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                                 <X className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
                                 <span className="truncate">Clôturer le ticket</span>
                               </button>
+                              {(user && (user.role === 'admin' || user.role === 'fondateur')) && (
+                                <button
+                                  onClick={() => deleteTicket(ticket._id)}
+                                  disabled={updateLoading[ticket._id]}
+                                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                                  role="menuitem"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                                  <span className="truncate">Supprimer le ticket</span>
+                                </button>
+                              )}
+                              {ticket.status === 'libre' && (
+                                <button
+                                  className="flex items-center w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-[#36393F]"
+                                  onClick={() => doDiagnostic(ticket)}
+                                  disabled={updateLoading[ticket._id]}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2 text-blue-400 flex-shrink-0" />
+                                  Faire le diagnostic
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}
@@ -496,8 +704,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Rendu en mode carte (vue actuelle)
   const renderCardView = () => (
     <div className="space-y-4">
-      {tickets.map((ticket) => (
-        <div key={ticket._id} className="bg-[#36393F] rounded-md p-4 shadow-sm">
+      {getFilteredTickets().map((ticket) => (
+        <div key={ticket._id} className="bg-[#36393F] rounded-md p-4 shadow-sm hover:bg-[#444] transition-colors cursor-pointer relative" onContextMenu={e => handleContextMenu(e, ticket._id)}>
           <div className="flex justify-between items-start mb-1">
             <div className="flex items-center">
               {getPriorityIcon(ticket.priority)}
@@ -554,6 +762,27 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                           <X className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
                           <span className="truncate">Clôturer le ticket</span>
                         </button>
+                        {(user && (user.role === 'admin' || user.role === 'fondateur')) && (
+                          <button
+                            onClick={() => deleteTicket(ticket._id)}
+                            disabled={updateLoading[ticket._id]}
+                            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
+                            role="menuitem"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                            <span className="truncate">Supprimer le ticket</span>
+                          </button>
+                        )}
+                        {ticket.status === 'libre' && (
+                          <button
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-[#36393F]"
+                            onClick={() => doDiagnostic(ticket)}
+                            disabled={updateLoading[ticket._id]}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2 text-blue-400 flex-shrink-0" />
+                            Faire le diagnostic
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -634,10 +863,159 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     </div>
   );
 
+  const contextMenuElement = contextMenu && (() => {
+    const ticket = tickets.find(t => t._id === contextMenu.ticketId);
+    if (!ticket) return null;
+    return (
+      <div
+        ref={contextMenuRef}
+        className="fixed z-[9999] bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
+        style={{ top: contextMenu.y, left: contextMenu.x }}
+        tabIndex={0}
+        onBlur={closeContextMenu}
+        onContextMenu={e => e.preventDefault()}
+      >
+        <a
+          href="#"
+          className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+          onClick={e => { e.preventDefault(); setModalTicket(ticket); setShowTicketModal(true); closeContextMenu(); }}
+        >
+          <ExternalLink className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+          Voir le ticket
+        </a>
+        {ticket.status === 'libre' && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-[#36393F]"
+            onClick={() => doDiagnostic(ticket)}
+            disabled={updateLoading[ticket._id]}
+          >
+            <CheckCircle className="w-4 h-4 mr-2 text-blue-400 flex-shrink-0" />
+            Faire le diagnostic
+          </button>
+        )}
+        {ticket.status === 'diagnostic' && (
+          <>
+            <button
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-cyan-400 hover:bg-[#36393F]"
+              onClick={() => updateTicketStatus(ticket._id, 'online')}
+              disabled={updateLoading[ticket._id]}
+            >
+              <MessageCircle className="w-4 h-4 mr-2 text-cyan-400 flex-shrink-0" />
+              Dépannage en ligne
+            </button>
+            <button
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-[#36393F]"
+              onClick={() => updateTicketStatus(ticket._id, 'onsite')}
+              disabled={updateLoading[ticket._id]}
+            >
+              <User className="w-4 h-4 mr-2 text-purple-400 flex-shrink-0" />
+              Dépannage à domicile
+            </button>
+          </>
+        )}
+        {(ticket.status === 'online' || ticket.status === 'onsite') && (
+          <>
+            <button
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+              onClick={() => updateTicketStatus(ticket._id, 'failed')}
+              disabled={updateLoading[ticket._id]}
+            >
+              <X className="w-4 h-4 mr-2 text-red-400 flex-shrink-0" />
+              Marquer comme échec
+            </button>
+            <button
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-[#36393F]"
+              onClick={() => updateTicketStatus(ticket._id, 'resolved')}
+              disabled={updateLoading[ticket._id]}
+            >
+              <CheckCircle className="w-4 h-4 mr-2 text-green-400 flex-shrink-0" />
+              Marquer comme résolu
+            </button>
+          </>
+        )}
+        {(user && (user.role === 'admin' || user.role === 'fondateur')) && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+            onClick={() => { deleteTicket(ticket._id); closeContextMenu(); }}
+          >
+            <Trash2 className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+            Supprimer le ticket
+          </button>
+        )}
+      </div>
+    );
+  })();
+
+  // Composant modale pour afficher les détails d'un ticket
+  const TicketDetailsModal: React.FC<{ ticket: Ticket | null; isOpen: boolean; onClose: () => void }> = ({ ticket, isOpen, onClose }) => {
+    if (!ticket) return null;
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} title={`Détails du ticket`} maxWidth="lg">
+        <div className="space-y-6">
+          <div className="flex flex-wrap gap-4 items-center">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(ticket.status)}`}>{translateStatus(ticket.status)}</span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-200">Priorité : {translatePriority(ticket.priority)}</span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-200">Catégorie : {ticket.category}</span>
+            {ticket.subcategory && ticket.subcategory !== 'Non spécifié' && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-200">Sous-catégorie : {ticket.subcategory}</span>
+            )}
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-gray-300 mb-1">Description</h4>
+            <p className="text-white whitespace-pre-line">{ticket.description}</p>
+          </div>
+          <div className="flex flex-wrap gap-6">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-300 mb-1">Créé par</h4>
+              <p className="text-white">{ticket.createdBy.firstName} {ticket.createdBy.lastName}</p>
+            </div>
+            {ticket.assignedTo && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-300 mb-1">Assigné à</h4>
+                <p className="text-white">{ticket.assignedTo.firstName} {ticket.assignedTo.lastName}</p>
+              </div>
+            )}
+            {ticket.targetUser && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-300 mb-1">Pour</h4>
+                <p className="text-white">{ticket.targetUser.firstName} {ticket.targetUser.lastName}</p>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-6">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-300 mb-1">Créé le</h4>
+              <p className="text-white">{formatDate(ticket.createdAt)}</p>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-300 mb-1">Dernière mise à jour</h4>
+              <p className="text-white">{formatDate(ticket.updatedAt)}</p>
+            </div>
+          </div>
+          {ticket.attachments && ticket.attachments.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-300 mb-2">Pièces jointes</h4>
+              <div className="flex flex-wrap gap-3">
+                {ticket.attachments.map((attachment, idx) => (
+                  <a key={idx} href={`http://localhost:3001${attachment.path}`} target="_blank" rel="noopener noreferrer" className="flex items-center bg-[#202225] p-2 rounded hover:bg-[#2D3035] transition-colors">
+                    {getAttachmentIcon(attachment.mimetype)}
+                    <span className="ml-2 text-white text-sm truncate max-w-[120px]">{attachment.originalname}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+    );
+  };
+
   return (
     <div>
-      {/* Affichage conditionnel selon le mode */}
+      {renderTabs()}
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
+      {contextMenuElement}
+      <TicketDetailsModal ticket={modalTicket} isOpen={showTicketModal} onClose={() => setShowTicketModal(false)} />
     </div>
   );
 };

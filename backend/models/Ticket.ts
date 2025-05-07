@@ -14,7 +14,7 @@ interface AuditEvent {
 export interface ITicket extends Document {
   title: string;
   description: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  status: 'libre' | 'diagnostic' | 'online' | 'onsite' | 'failed' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   category: string;
   subcategory: string;
@@ -47,8 +47,8 @@ const TicketSchema = new Schema<ITicket>(
     },
     status: {
       type: String,
-      enum: ['open', 'in_progress', 'resolved', 'closed'],
-      default: 'open',
+      enum: ['libre', 'diagnostic', 'online', 'onsite', 'failed', 'resolved', 'closed'],
+      default: 'libre',
     },
     priority: {
       type: String,
