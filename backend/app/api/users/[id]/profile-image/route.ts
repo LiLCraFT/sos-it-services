@@ -82,8 +82,11 @@ export async function POST(
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
+    // Obtenir le chemin de base du projet (sans le dossier backend en double)
+    const basePath = process.cwd().replace(/\\backend$/, '');
+    
     // Create uploads directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'profiles');
+    const uploadDir = path.join(basePath, 'backend', 'public', 'uploads', 'profiles');
     await mkdir(uploadDir, { recursive: true });
     console.log('Dossier d\'upload:', uploadDir);
     

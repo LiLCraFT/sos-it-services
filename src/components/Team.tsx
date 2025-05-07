@@ -3,7 +3,7 @@ import { Card, CardContent } from './ui/Card';
 import { Github, Linkedin, Twitter, User, Users, Award, BadgeCheck } from 'lucide-react';
 
 // URL de l'image par défaut
-const DEFAULT_IMAGE = 'http://localhost:3001/api/default-avatar';
+const DEFAULT_IMAGE = 'http://localhost:3001/api/default-image';
 
 interface TeamMember {
   _id: string;
@@ -22,42 +22,96 @@ interface TeamMember {
 const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImage, social = {} }) => {
   // Fonction pour construire l'URL de l'image
   const getImageUrl = (path: string) => {
-    if (!path) return DEFAULT_IMAGE;
+    console.log('getImageUrl appelé avec path:', path);
+    
+    if (!path) {
+      console.log('Pas de chemin fourni, retourne image par défaut');
+      return `${DEFAULT_IMAGE}?v=${Date.now()}`;
+    }
     
     // Si l'URL commence par http, c'est déjà une URL complète
     if (path.startsWith('http')) {
-      return path;
+      console.log('URL complète détectée:', path);
+      return `${path}?v=${Date.now()}`;
     }
     
-    // Essayer plusieurs formats d'URL
+    // Si le chemin commence par /images/ ou /uploads/, c'est une image du backend
+    if (path.startsWith('/images/')) {
+      // Pour les chemins /images/, on enlève le /images/ initial
+      const cleanPath = path.substring(8); // Enlève '/images/'
+      const url = `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      console.log('Image du backend détectée (images), URL construite:', url);
+      return url;
+    }
+    
+    if (path.startsWith('/uploads/')) {
+      // Pour les chemins /uploads/, on garde le chemin complet
+      const cleanPath = path.substring(1); // Enlève juste le premier /
+      const url = `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      console.log('Image du backend détectée (uploads), URL construite:', url);
+      return url;
+    }
+    
+    // Pour les autres chemins
     if (path.startsWith('/')) {
       // Pour les chemins qui commencent par /
-      const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-      return `http://localhost:3001/api/public/${cleanPath}`;
+      const cleanPath = path.substring(1);
+      const url = `http://localhost:3001/api/public/${cleanPath}?v=${Date.now()}`;
+      console.log('Chemin avec / détecté, URL construite:', url);
+      return url;
     } else {
       // Pour les autres chemins
-      return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
+      const url = `http://localhost:3001/api/static?path=${encodeURIComponent(path)}&v=${Date.now()}`;
+      console.log('Autre chemin détecté, URL construite:', url);
+      return url;
     }
+  };
+
+  // État pour gérer l'erreur de chargement de l'image
+  const [imageError, setImageError] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>(() => {
+    const url = getImageUrl(profileImage);
+    console.log('URL initiale de l\'image:', url);
+    return url;
+  });
+
+  // Mettre à jour l'URL de l'image si profileImage change
+  useEffect(() => {
+    if (profileImage) {
+      const newUrl = getImageUrl(profileImage);
+      console.log('Mise à jour de l\'URL de l\'image:', newUrl);
+      setImageUrl(newUrl);
+      setImageError(false);
+    }
+  }, [profileImage]);
+
+  // Gestionnaire d'erreur d'image
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.error('Erreur de chargement de l\'image:', e);
+    console.log('URL qui a échoué:', imageUrl);
+    setImageError(true);
+    setImageUrl(`${DEFAULT_IMAGE}?v=${Date.now()}`);
+  };
+
+  // Gestionnaire de succès de chargement d'image
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.log('Image chargée avec succès:', e);
+    console.log('URL de l\'image chargée:', imageUrl);
   };
 
   return (
     <Card className="h-full">
       <CardContent className="p-0">
-        <div className="relative overflow-hidden aspect-square bg-gray-800">
-          {profileImage ? (
-            <img 
-              src={getImageUrl(profileImage)} 
-              alt={`${firstName} ${lastName}`} 
-              className="w-full h-full object-cover object-center"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = DEFAULT_IMAGE;
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <User size={60} className="text-gray-400" />
-            </div>
-          )}
+        <div className="w-full aspect-square bg-gray-800">
+          <img 
+            key={imageUrl}
+            src={imageUrl}
+            alt={`${firstName} ${lastName}`} 
+            className="w-full h-full object-cover"
+            onError={handleImageError}
+            onLoad={handleImageLoad}
+            crossOrigin="anonymous"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-[#36393F] to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end">
             <div className="p-4 w-full">
               <div className="flex justify-center space-x-3">
@@ -120,16 +174,31 @@ const Team: React.FC = () => {
         }
         
         const data = await response.json();
-        console.log('Données reçues:', data);
+        console.log('Données brutes reçues:', data);
         
+        let members: TeamMember[] = [];
         if (Array.isArray(data)) {
-          setTeamMembers(data);
+          console.log('Données reçues sous forme de tableau');
+          members = data;
         } else if (data.users) {
-          setTeamMembers(data.users);
+          console.log('Données reçues sous forme d\'objet avec users');
+          members = data.users;
         } else {
           console.warn('Format de données inattendu:', data);
-          setTeamMembers([]);
+          members = [];
         }
+
+        // Log détaillé de chaque membre
+        members.forEach((member, index) => {
+          console.log(`Membre ${index + 1}:`, {
+            id: member._id,
+            nom: `${member.firstName} ${member.lastName}`,
+            role: member.role,
+            profileImage: member.profileImage
+          });
+        });
+
+        setTeamMembers(members);
       } catch (err) {
         console.error('Erreur lors du chargement des membres:', err);
         setError(`Impossible de charger les experts: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
@@ -177,9 +246,10 @@ const Team: React.FC = () => {
         
         {teamMembers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {teamMembers.map((member) => (
-              <TeamCard key={member._id} {...member} />
-            ))}
+            {teamMembers.map((member) => {
+              console.log('Rendu du membre:', member);
+              return <TeamCard key={member._id} {...member} />;
+            })}
           </div>
         ) : (
           <div className="text-center text-gray-300">
