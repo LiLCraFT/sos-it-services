@@ -26,20 +26,20 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
     
     if (!path) {
       console.log('Pas de chemin fourni, retourne image par défaut');
-      return `${DEFAULT_IMAGE}?v=${Date.now()}`;
+      return DEFAULT_IMAGE;
     }
     
     // Si l'URL commence par http, c'est déjà une URL complète
     if (path.startsWith('http')) {
       console.log('URL complète détectée:', path);
-      return `${path}?v=${Date.now()}`;
+      return path;
     }
     
     // Si le chemin commence par /images/ ou /uploads/, c'est une image du backend
     if (path.startsWith('/images/')) {
       // Pour les chemins /images/, on enlève le /images/ initial
       const cleanPath = path.substring(8); // Enlève '/images/'
-      const url = `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/images/${cleanPath}`;
       console.log('Image du backend détectée (images), URL construite:', url);
       return url;
     }
@@ -47,7 +47,7 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
     if (path.startsWith('/uploads/')) {
       // Pour les chemins /uploads/, on garde le chemin complet
       const cleanPath = path.substring(1); // Enlève juste le premier /
-      const url = `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/images/${cleanPath}`;
       console.log('Image du backend détectée (uploads), URL construite:', url);
       return url;
     }
@@ -56,12 +56,12 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
     if (path.startsWith('/')) {
       // Pour les chemins qui commencent par /
       const cleanPath = path.substring(1);
-      const url = `http://localhost:3001/api/public/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/public/${cleanPath}`;
       console.log('Chemin avec / détecté, URL construite:', url);
       return url;
     } else {
       // Pour les autres chemins
-      const url = `http://localhost:3001/api/static?path=${encodeURIComponent(path)}&v=${Date.now()}`;
+      const url = `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
       console.log('Autre chemin détecté, URL construite:', url);
       return url;
     }

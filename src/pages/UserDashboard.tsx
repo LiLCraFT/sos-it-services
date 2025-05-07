@@ -239,20 +239,20 @@ const UserDashboard = () => {
     
     if (path.startsWith('http')) {
       console.log('Using direct URL:', path);
-      return `${path}?v=${Date.now()}`;
+      return path;
     }
     
     // Si le chemin commence par /images/ ou /uploads/, c'est une image du backend
     if (path.startsWith('/images/')) {
       const cleanPath = path.substring(8); // Enlève '/images/'
-      const url = `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/images/${cleanPath}`;
       console.log('Constructed URL for /images/ path:', url);
       return url;
     }
     
     if (path.startsWith('/uploads/')) {
       const cleanPath = path.substring(1); // Enlève juste le premier /
-      const url = `http://localhost:3001/api/images/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/images/${cleanPath}`;
       console.log('Constructed URL for /uploads/ path:', url);
       return url;
     }
@@ -260,11 +260,11 @@ const UserDashboard = () => {
     // Pour les autres chemins
     if (path.startsWith('/')) {
       const cleanPath = path.substring(1);
-      const url = `http://localhost:3001/api/public/${cleanPath}?v=${Date.now()}`;
+      const url = `http://localhost:3001/api/public/${cleanPath}`;
       console.log('Constructed URL for root path:', url);
       return url;
     } else {
-      const url = `http://localhost:3001/api/static?path=${encodeURIComponent(path)}&v=${Date.now()}`;
+      const url = `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
       console.log('Constructed URL for other path:', url);
       return url;
     }
