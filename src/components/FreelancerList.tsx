@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Tooltip from './Tooltip';
 
 type FreelancerData = {
   _id: string;
@@ -27,16 +28,6 @@ interface FreelancerListProps {
 // URL de l'API backend
 const API_URL = 'http://localhost:3001';
 
-// Tooltip simple (même que UserList)
-const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
-  <span className="relative group cursor-pointer">
-    {children}
-    <span className="absolute z-[9999] left-1/2 -translate-x-1/2 bottom-full mb-2 w-max max-w-xs px-2 py-1 rounded bg-black text-xs text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
-      {text}
-    </span>
-  </span>
-);
-
 const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'freelancer' }) => {
   const { user } = useAuth();
   const [freelancers, setFreelancers] = useState<FreelancerData[]>([]);
@@ -49,6 +40,8 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   const [actionInProgress, setActionInProgress] = useState<Record<string, boolean>>({});
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
   const [activeFreelancerId, setActiveFreelancerId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ userId: string; x: number; y: number } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const isFounder = user?.role === 'fondateur';
   
   // État pour le filtre des freelancers
@@ -60,6 +53,9 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (contextMenu && contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+        closeContextMenu();
+      }
       for (const freelancerId in dropdownOpen) {
         if (dropdownOpen[freelancerId] && !dropdownRefs.current[freelancerId]?.contains(event.target as Node)) {
           closeDropdown(freelancerId);
@@ -71,7 +67,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [dropdownOpen]);
+  }, [dropdownOpen, contextMenu]);
 
   useEffect(() => {
     // Fonction pour positionner les menus déroulants
@@ -452,6 +448,86 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
     </div>
   );
 
+  const handleContextMenu = (e: React.MouseEvent, freelancerId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setContextMenu({
+      userId: freelancerId,
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+
+  const closeContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contextMenu && contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+        closeContextMenu();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [contextMenu]);
+
+  const toggleUserVerification = async (freelancerId: string, isEmailVerified?: boolean, isAdminVerified?: boolean) => {
+    try {
+      setActionInProgress({ ...actionInProgress, [freelancerId]: true });
+      
+      const token = localStorage.getItem('authToken');
+      const freelancer = freelancers.find(f => f._id === freelancerId);
+      
+      if (!freelancer) {
+        throw new Error('Freelancer non trouvé');
+      }
+
+      const response = await fetch(`${API_URL}/api/freelancers/${freelancerId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          isEmailVerified: isEmailVerified !== undefined ? isEmailVerified : freelancer.isEmailVerified,
+          isAdminVerified: isAdminVerified !== undefined ? isAdminVerified : freelancer.isAdminVerified
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de la mise à jour du statut');
+      }
+      
+      // Mettre à jour la liste locale des freelancers
+      setFreelancers(prevFreelancers => 
+        prevFreelancers.map(f => 
+          f._id === freelancerId 
+            ? { 
+                ...f, 
+                isEmailVerified: isEmailVerified !== undefined ? isEmailVerified : f.isEmailVerified,
+                isAdminVerified: isAdminVerified !== undefined ? isAdminVerified : f.isAdminVerified
+              } 
+            : f
+        )
+      );
+      
+      const action = isEmailVerified !== undefined 
+        ? (isEmailVerified ? 'activé' : 'désactivé')
+        : (isAdminVerified ? 'validé' : 'invalidé');
+      
+      alert(`Statut ${action} avec succès`);
+    } catch (err: any) {
+      alert(err.message || 'Une erreur est survenue');
+    } finally {
+      setActionInProgress({ ...actionInProgress, [freelancerId]: false });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -573,12 +649,15 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                   Rôle
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Statut compte</th>
-                <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#292b2f]">
+            <tbody>
               {sortedFreelancers.map((freelancer) => (
-                <tr key={freelancer._id} className="hover:bg-[#36393F] transition-colors">
+                <tr 
+                  key={freelancer._id} 
+                  className="hover:bg-[#36393F] transition-colors cursor-pointer group"
+                  onContextMenu={(e) => handleContextMenu(e, freelancer._id)}
+                >
                   <td className="px-4 py-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-[#202225]">
                       <img 
@@ -610,19 +689,8 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                   <td className="px-4 py-3 whitespace-nowrap">
                     {renderRoleTags(freelancer.role)}
                   </td>
-                  <td className="px-2 py-3 text-center">
+                  <td className="px-4 py-3 text-center">
                     {renderAccountStatus(freelancer)}
-                  </td>
-                  <td className="px-2 py-3 whitespace-nowrap text-right">
-                    <div className="relative flex justify-end">
-                      <button 
-                        onClick={(e) => toggleDropdown(freelancer._id, e)}
-                        className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                        aria-label="Plus d'options"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))}
@@ -639,7 +707,11 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       {renderFilters()}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortFreelancers(filteredFreelancers).map((freelancer) => (
-          <div key={freelancer._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm relative">
+          <div 
+            key={freelancer._id} 
+            className="bg-[#36393F] rounded-md overflow-hidden shadow-sm relative cursor-pointer hover:shadow-lg hover:bg-[#40444b] transition-all duration-150 group"
+            onContextMenu={(e) => handleContextMenu(e, freelancer._id)}
+          >
             <div className="absolute top-3 right-3 flex space-x-2">
               {freelancer.isEmailVerified ? (
                 <Tooltip text="Compte activé">
@@ -664,6 +736,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                 </Tooltip>
               )}
             </div>
+            
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -699,15 +772,6 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                     </div>
                   </div>
                 </div>
-                <div className="relative flex justify-end">
-                  <button 
-                    onClick={(e) => toggleDropdown(freelancer._id, e)}
-                    className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                    aria-label="Plus d'options"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
               
               <div className="space-y-2 text-sm">
@@ -738,9 +802,80 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
     </div>
   );
 
+  // --- Début du rendu du menu contextuel global ---
+  const contextMenuElement = contextMenu && (() => {
+    const freelancer = freelancers.find(f => f._id === contextMenu.userId);
+    if (!freelancer) return null;
+    return (
+      <div
+        ref={contextMenuRef}
+        className="fixed z-[9999] bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
+        style={{ 
+          top: contextMenu.y,
+          left: contextMenu.x
+        }}
+        tabIndex={0}
+        onBlur={closeContextMenu}
+        onContextMenu={e => e.preventDefault()}
+      >
+        <button
+          className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+          onClick={() => { editFreelancer(freelancer._id); closeContextMenu(); }}
+        >
+          <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+          Éditer
+        </button>
+        {!freelancer.isEmailVerified && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+            onClick={() => { toggleUserVerification(freelancer._id, true); closeContextMenu(); }}
+          >
+            <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+            Activer compte
+          </button>
+        )}
+        {freelancer.isEmailVerified && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+            onClick={() => { toggleUserVerification(freelancer._id, false); closeContextMenu(); }}
+          >
+            <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+            Désactiver compte
+          </button>
+        )}
+        {!freelancer.isAdminVerified && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+            onClick={() => { toggleUserVerification(freelancer._id, undefined, true); closeContextMenu(); }}
+          >
+            <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+            Activer admin
+          </button>
+        )}
+        {freelancer.isAdminVerified && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+            onClick={() => { toggleUserVerification(freelancer._id, undefined, false); closeContextMenu(); }}
+          >
+            <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+            Désactiver admin
+          </button>
+        )}
+        <button
+          className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+          onClick={() => { deleteFreelancer(freelancer._id); closeContextMenu(); }}
+        >
+          <Trash className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+          Supprimer
+        </button>
+      </div>
+    );
+  })();
+
   return (
     <div onClick={() => activeFreelancerId && closeDropdown(activeFreelancerId)}>
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
+      {contextMenuElement}
       {renderDropdownMenu()}
     </div>
   );
