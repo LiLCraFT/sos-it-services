@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     // Récupérer tous les freelancers (y compris ceux qui ont le rôle freelancer_admin)
     const freelancers = await User.find({ 
       role: { $in: ['freelancer', 'freelancer_admin'] } 
-    }).select('_id firstName lastName email phone city role profileImage createdAt');
+    }).select('_id firstName lastName email phone city role profileImage createdAt isEmailVerified isAdminVerified emailVerificationToken');
       
     return NextResponse.json({ freelancers }, { status: 200 });
   } catch (error: any) {

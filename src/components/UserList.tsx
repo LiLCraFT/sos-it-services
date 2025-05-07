@@ -28,6 +28,16 @@ interface UserListProps {
 // URL de l'API backend
 const API_URL = 'http://localhost:3001';
 
+// Tooltip simple
+const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
+  <span className="relative group cursor-pointer">
+    {children}
+    <span className="absolute z-[9999] left-1/2 -translate-x-1/2 bottom-full mb-2 w-max max-w-xs px-2 py-1 rounded bg-black text-xs text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+      {text}
+    </span>
+  </span>
+);
+
 const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) => {
   const { user } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
@@ -540,18 +550,28 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
       <div className="flex items-center justify-center space-x-2">
         {/* Statut compte */}
         {user.isEmailVerified ? (
-          <CheckCircle className="w-4 h-4 text-green-500" />
+          <Tooltip text="Compte activé">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+          </Tooltip>
         ) : user.emailVerificationToken ? (
-          <Clock className="w-4 h-4 text-yellow-400" />
+          <Tooltip text="En attente d'activation">
+            <Clock className="w-4 h-4 text-yellow-400" />
+          </Tooltip>
         ) : (
-          <XCircle className="w-4 h-4 text-red-500" />
+          <Tooltip text="Compte désactivé">
+            <XCircle className="w-4 h-4 text-red-500" />
+          </Tooltip>
         )}
         {/* Statut admin pour freelancer */}
         {user.clientType === 'Freelancer' && (
           user.isAdminVerified ? (
-            <CheckCircle className="w-4 h-4 text-yellow-400" />
+            <Tooltip text="Freelancer validé par l'admin">
+              <CheckCircle className="w-4 h-4 text-yellow-400" />
+            </Tooltip>
           ) : (
-            <XCircle className="w-4 h-4 text-yellow-400" />
+            <Tooltip text="En attente de validation admin">
+              <Clock className="w-4 h-4 text-yellow-400" />
+            </Tooltip>
           )
         )}
       </div>
@@ -703,17 +723,27 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
             {/* Icônes de statut en haut à droite */}
             <div className="absolute top-3 right-3 flex space-x-2">
               {user.isEmailVerified ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <Tooltip text="Compte activé">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </Tooltip>
               ) : user.emailVerificationToken ? (
-                <Clock className="w-5 h-5 text-yellow-400" />
+                <Tooltip text="En attente d'activation">
+                  <Clock className="w-5 h-5 text-yellow-400" />
+                </Tooltip>
               ) : (
-                <XCircle className="w-5 h-5 text-red-500" />
+                <Tooltip text="Compte désactivé">
+                  <XCircle className="w-5 h-5 text-red-500" />
+                </Tooltip>
               )}
               {user.clientType === 'Freelancer' && (
                 user.isAdminVerified ? (
-                  <CheckCircle className="w-5 h-5 text-yellow-400" />
+                  <Tooltip text="Freelancer validé par l'admin">
+                    <CheckCircle className="w-5 h-5 text-yellow-400" />
+                  </Tooltip>
                 ) : (
-                  <XCircle className="w-5 h-5 text-yellow-400" />
+                  <Tooltip text="En attente de validation admin">
+                    <Clock className="w-5 h-5 text-yellow-400" />
+                  </Tooltip>
                 )
               )}
             </div>

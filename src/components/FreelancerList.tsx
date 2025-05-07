@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter } from 'lucide-react';
+import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type FreelancerData = {
@@ -12,6 +12,9 @@ type FreelancerData = {
   role: string;
   profileImage: string;
   createdAt: string;
+  isEmailVerified: boolean;
+  isAdminVerified: boolean;
+  emailVerificationToken?: string | null;
 };
 
 type SortField = 'firstName' | 'lastName' | 'email' | 'city' | 'createdAt';
@@ -23,6 +26,16 @@ interface FreelancerListProps {
 
 // URL de l'API backend
 const API_URL = 'http://localhost:3001';
+
+// Tooltip simple (même que UserList)
+const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
+  <span className="relative group cursor-pointer">
+    {children}
+    <span className="absolute z-[9999] left-1/2 -translate-x-1/2 bottom-full mb-2 w-max max-w-xs px-2 py-1 rounded bg-black text-xs text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+      {text}
+    </span>
+  </span>
+);
 
 const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'freelancer' }) => {
   const { user } = useAuth();
@@ -411,6 +424,34 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
     );
   };
 
+  // Affichage du statut de compte (CheckCircle, XCircle, Clock)
+  const renderAccountStatus = (freelancer: FreelancerData) => (
+    <div className="flex items-center justify-center space-x-2">
+      {freelancer.isEmailVerified ? (
+        <Tooltip text="Compte activé">
+          <CheckCircle className="w-4 h-4 text-green-500" />
+        </Tooltip>
+      ) : freelancer.emailVerificationToken ? (
+        <Tooltip text="En attente d'activation">
+          <Clock className="w-4 h-4 text-yellow-400" />
+        </Tooltip>
+      ) : (
+        <Tooltip text="Compte désactivé">
+          <XCircle className="w-4 h-4 text-red-500" />
+        </Tooltip>
+      )}
+      {freelancer.isAdminVerified ? (
+        <Tooltip text="Freelancer validé par l'admin">
+          <CheckCircle className="w-4 h-4 text-yellow-400" />
+        </Tooltip>
+      ) : (
+        <Tooltip text="En attente de validation admin">
+          <Clock className="w-4 h-4 text-yellow-400" />
+        </Tooltip>
+      )}
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -531,6 +572,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Rôle
                 </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Statut compte</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -568,6 +610,9 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
                   <td className="px-4 py-3 whitespace-nowrap">
                     {renderRoleTags(freelancer.role)}
                   </td>
+                  <td className="px-2 py-3 text-center">
+                    {renderAccountStatus(freelancer)}
+                  </td>
                   <td className="px-2 py-3 whitespace-nowrap text-right">
                     <div className="relative flex justify-end">
                       <button 
@@ -594,7 +639,31 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       {renderFilters()}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortFreelancers(filteredFreelancers).map((freelancer) => (
-          <div key={freelancer._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
+          <div key={freelancer._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm relative">
+            <div className="absolute top-3 right-3 flex space-x-2">
+              {freelancer.isEmailVerified ? (
+                <Tooltip text="Compte activé">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </Tooltip>
+              ) : freelancer.emailVerificationToken ? (
+                <Tooltip text="En attente d'activation">
+                  <Clock className="w-5 h-5 text-yellow-400" />
+                </Tooltip>
+              ) : (
+                <Tooltip text="Compte désactivé">
+                  <XCircle className="w-5 h-5 text-red-500" />
+                </Tooltip>
+              )}
+              {freelancer.isAdminVerified ? (
+                <Tooltip text="Freelancer validé par l'admin">
+                  <CheckCircle className="w-5 h-5 text-yellow-400" />
+                </Tooltip>
+              ) : (
+                <Tooltip text="En attente de validation admin">
+                  <Clock className="w-5 h-5 text-yellow-400" />
+                </Tooltip>
+              )}
+            </div>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
