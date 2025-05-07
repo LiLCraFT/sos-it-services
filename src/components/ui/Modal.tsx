@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, Users } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg';
 }
@@ -65,14 +65,19 @@ export const Modal: React.FC<ModalProps> = ({
         ref={modalRef}
         className={`bg-[#2F3136] rounded-lg shadow-xl w-full ${maxWidthClasses[maxWidth]} mx-4 transform transition-all duration-300 ease-in-out`}
       >
-        <div className="flex justify-between items-center p-4 border-b border-[#40444B]">
-          <h3 className="text-lg font-medium text-white">{title}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+        <div className="bg-[#5865F2] p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="w-6 h-6 text-white mr-2" />
+              <h3 className="text-2xl font-bold text-white">{title}</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:text-gray-200 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
         <div className="p-5">
           {children}

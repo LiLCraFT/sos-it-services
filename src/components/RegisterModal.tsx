@@ -24,7 +24,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Inscription"
+      title={<h2 className="text-2xl font-bold text-white">Inscription</h2>}
       maxWidth="lg"
     >
       <RegisterForm 

@@ -16,6 +16,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     lastName: '',
     companyName: '',
     email: '',
+    confirmEmail: '',
     password: '',
     confirmPassword: '',
     address: '',
@@ -39,6 +40,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Vérification des emails
+    if (formData.email !== formData.confirmEmail) {
+      setError('Les adresses email ne correspondent pas');
+      return;
+    }
 
     // Vérification des mots de passe
     if (formData.password !== formData.confirmPassword) {
@@ -102,13 +109,66 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         </div>
       )}
       
-      {/* GROUPE 1: Information personnelles/entreprise */}
-      <div className="space-y-4 border border-[#40444B] rounded-md p-4">
-        <h3 className="text-md font-medium text-gray-200 mb-2">Informations personnelles</h3>
+      {/* GROUPE 0: Informations de connexion */}
+      <div className="space-y-4 border border-[#40444B] rounded-xl p-4">
+        <h3 className="text-xl font-semibold text-[#5865F2] mb-4 flex items-center">
+          <Mail className="h-5 w-5 mr-2" />
+          Informations de connexion
+        </h3>
         
         <div>
-          <label htmlFor="clientType" className="block text-sm font-medium text-gray-300 mb-1">
-            Type d'utilisateur
+          <label htmlFor="email" className="block text-sm font-medium text-white mb-1">
+            Email <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Mail className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              placeholder="votre@email.com"
+            />
+          </div>
+        </div>
+        
+        <div>
+          <label htmlFor="confirmEmail" className="block text-sm font-medium text-white mb-1">
+            Confirmer l'email <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Mail className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              id="confirmEmail"
+              name="confirmEmail"
+              type="email"
+              value={formData.confirmEmail}
+              onChange={handleChange}
+              required
+              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              placeholder="Confirmez votre email"
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* GROUPE 1: Information personnelles/entreprise */}
+      <div className="space-y-4 border border-[#40444B] rounded-xl p-4">
+        <h3 className="text-xl font-semibold text-[#5865F2] mb-4 flex items-center">
+          <User className="h-5 w-5 mr-2" />
+          Informations personnelles
+        </h3>
+        
+        <div>
+          <label htmlFor="clientType" className="block text-sm font-medium text-white mb-1">
+            Type d'utilisateur <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -120,7 +180,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               value={formData.clientType}
               onChange={handleChange}
               required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
             >
               <option value="Particulier">Particulier</option>
               <option value="Professionnel">Professionnel</option>
@@ -131,7 +191,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
       
         {formData.clientType === 'Professionnel' ? (
           <div>
-            <label htmlFor="companyName" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="companyName" className="block text-sm font-medium text-white mb-1">
               Nom de l'entreprise
             </label>
             <div className="relative">
@@ -145,7 +205,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                 value={formData.companyName}
                 onChange={handleChange}
                 required
-                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
                 placeholder="Nom de votre entreprise"
               />
             </div>
@@ -153,8 +213,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         ) : (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
-                Prénom
+              <label htmlFor="firstName" className="block text-sm font-medium text-white mb-1">
+                Prénom <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -167,15 +227,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                  className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
                   placeholder="Prénom"
                 />
               </div>
             </div>
             
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
-                Nom
+              <label htmlFor="lastName" className="block text-sm font-medium text-white mb-1">
+                Nom <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -188,7 +248,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                  className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
                   placeholder="Nom"
                 />
               </div>
@@ -196,30 +256,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
           </div>
         )}
         
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
-            Email
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-              placeholder="votre@email.com"
-            />
-          </div>
-        </div>
-        
         {formData.clientType !== 'Professionnel' && (
           <div>
-            <label htmlFor="birthDate" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="birthDate" className="block text-sm font-medium text-white mb-1">
               Date de naissance
             </label>
             <div className="relative">
@@ -233,7 +272,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                 value={formData.birthDate}
                 onChange={handleChange}
                 required={formData.clientType !== 'Professionnel'}
-                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
               />
             </div>
           </div>
@@ -241,12 +280,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
       </div>
       
       {/* GROUPE 2: Informations d'adresse */}
-      <div className="space-y-4 border border-[#40444B] rounded-md p-4">
-        <h3 className="text-md font-medium text-gray-200 mb-2">Coordonnées</h3>
+      <div className="space-y-4 border border-[#40444B] rounded-xl p-4">
+        <h3 className="text-xl font-semibold text-[#5865F2] mb-4 flex items-center">
+          <MapPin className="h-5 w-5 mr-2" />
+          Coordonnées
+        </h3>
         
         <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-1">
-            Adresse
+          <label htmlFor="address" className="block text-sm font-medium text-white mb-1">
+            Adresse <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -259,7 +301,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               value={formData.address}
               onChange={handleChange}
               required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
               placeholder="Votre adresse"
             />
           </div>
@@ -267,8 +309,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1">
-              Ville
+            <label htmlFor="city" className="block text-sm font-medium text-white mb-1">
+              Ville <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -281,15 +323,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                 value={formData.city}
                 onChange={handleChange}
                 required
-                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
                 placeholder="Votre ville"
               />
             </div>
           </div>
           
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
-              Téléphone
+            <label htmlFor="phone" className="block text-sm font-medium text-white mb-1">
+              Téléphone <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -302,7 +344,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
                 placeholder="06XXXXXXXX"
               />
             </div>
@@ -311,12 +353,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
       </div>
       
       {/* GROUPE 3: Mots de passe */}
-      <div className="space-y-4 border border-[#40444B] rounded-md p-4">
-        <h3 className="text-md font-medium text-gray-200 mb-2">Sécurité</h3>
+      <div className="space-y-4 border border-[#40444B] rounded-xl p-4">
+        <h3 className="text-xl font-semibold text-[#5865F2] mb-4 flex items-center">
+          <Lock className="h-5 w-5 mr-2" />
+          Sécurité
+        </h3>
         
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
-            Mot de passe
+          <label htmlFor="password" className="block text-sm font-medium text-white mb-1">
+            Mot de passe <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -329,15 +374,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               value={formData.password}
               onChange={handleChange}
               required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
               placeholder="••••••••"
             />
           </div>
         </div>
         
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
-            Confirmer le mot de passe
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-white mb-1">
+            Confirmer le mot de passe <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -350,7 +395,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
               placeholder="••••••••"
             />
           </div>
@@ -363,7 +408,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
           className="w-full"
           disabled={isLoading}
         >
-          {isLoading ? 'Inscription en cours...' : 'S\'inscrire'}
+          {isLoading ? 'Inscription en cours...' : 'Rejoindre la communauté'}
         </Button>
       </div>
       
