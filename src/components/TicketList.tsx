@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown, Trash2, Hand } from 'lucide-react';
 import { Modal } from './ui/Modal';
+import FreelancerDetailsModal from './FreelancerDetailsModal';
 
 interface Attachment {
   filename: string;
@@ -74,6 +75,16 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [modalTicket, setModalTicket] = useState<Ticket | null>(null);
   const [activeTab, setActiveTab] = useState<string>('tous');
+  const [showAdminView, setShowAdminView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('showAdminView');
+      return stored === 'true';
+    }
+    return false;
+  });
+  const [viewSwitch, setViewSwitch] = useState<'cards' | 'table'>(viewMode);
+  const [showFreelancerModal, setShowFreelancerModal] = useState(false);
+  const [modalFreelancer, setModalFreelancer] = useState<any>(null);
 
   const fetchTickets = async () => {
     try {
@@ -460,21 +471,26 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Filtrage des tickets selon l'onglet actif et l'assignation
   const getFilteredTickets = () => {
     if (!user) return [];
-
-    // Pour l'onglet "tous", on montre tous les tickets assignés à l'utilisateur
+    // Mode administration : filtrage par statut mais pas par assigné
+    if (showAdminView && (user.role === 'admin' || user.role === 'fondateur')) {
+      if (activeTab === 'tous') {
+        return tickets;
+      }
+      if (activeTab === 'libre') {
+        return tickets.filter(ticket => ticket.status === 'libre');
+      }
+      return tickets.filter(ticket => ticket.status === activeTab);
+    }
+    // Mode normal : filtrage par statut ET par assigné
     if (activeTab === 'tous') {
       return tickets.filter(ticket => 
         ticket.status === 'libre' || 
         (ticket.assignedTo && ticket.assignedTo._id === user._id)
       );
     }
-
-    // Pour l'onglet "libre", on montre tous les tickets libres
     if (activeTab === 'libre') {
       return tickets.filter(ticket => ticket.status === 'libre');
     }
-
-    // Pour tous les autres états, on ne montre que les tickets assignés à l'utilisateur
     return tickets.filter(ticket => 
       ticket.status === activeTab && 
       ticket.assignedTo && 
@@ -512,6 +528,13 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     } finally {
       setUpdateLoading(prev => ({ ...prev, [ticket._id]: false }));
     }
+  };
+
+  // Quand la checkbox change, je sauvegarde dans le localStorage
+  const handleAdminViewChange = (checked: boolean) => {
+    setShowAdminView(checked);
+    localStorage.setItem('showAdminView', checked ? 'true' : 'false');
+    closeContextMenu();
   };
 
   if (loading) {
@@ -592,6 +615,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   {renderSortIcon('createdAt')}
                 </div>
               </th>
+              {showAdminView && (
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Assigné à
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#202225]">
@@ -618,6 +646,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-300">{formatDate(ticket.createdAt)}</td>
+                {showAdminView && (
+                  <td className="px-4 py-3 text-sm text-gray-300">
+                    {ticket.assignedTo ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}` : <span className="text-gray-500">-</span>}
+                  </td>
+                )}
                 <td className="px-4 py-3 text-right text-sm whitespace-nowrap">
                   <div className="flex justify-end">
                     {user && ticket.createdBy._id === user._id && ticket.status !== 'closed' && (
@@ -665,15 +698,13 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                                 <X className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
                                 <span className="truncate">Clôturer le ticket</span>
                               </button>
-                              {(user && (user.role === 'admin' || user.role === 'fondateur')) && (
+                              {showAdminView && user && (user.role === 'admin' || user.role === 'fondateur') && (
                                 <button
-                                  onClick={() => deleteTicket(ticket._id)}
-                                  disabled={updateLoading[ticket._id]}
-                                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
-                                  role="menuitem"
+                                  className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+                                  onClick={() => { deleteTicket(ticket._id); closeContextMenu(); }}
                                 >
                                   <Trash2 className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                                  <span className="truncate">Supprimer le ticket</span>
+                                  Supprimer le ticket
                                 </button>
                               )}
                               {ticket.status === 'libre' && (
@@ -762,15 +793,13 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                           <X className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
                           <span className="truncate">Clôturer le ticket</span>
                         </button>
-                        {(user && (user.role === 'admin' || user.role === 'fondateur')) && (
+                        {showAdminView && user && (user.role === 'admin' || user.role === 'fondateur') && (
                           <button
-                            onClick={() => deleteTicket(ticket._id)}
-                            disabled={updateLoading[ticket._id]}
-                            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors whitespace-nowrap"
-                            role="menuitem"
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+                            onClick={() => { deleteTicket(ticket._id); closeContextMenu(); }}
                           >
                             <Trash2 className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                            <span className="truncate">Supprimer le ticket</span>
+                            Supprimer le ticket
                           </button>
                         )}
                         {ticket.status === 'libre' && (
@@ -883,6 +912,15 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           <ExternalLink className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
           Voir le ticket
         </a>
+        {showAdminView && ticket.assignedTo && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-indigo-400 hover:bg-[#36393F]"
+            onClick={() => { setModalFreelancer(ticket.assignedTo); setShowFreelancerModal(true); closeContextMenu(); }}
+          >
+            <UserCheck className="w-4 h-4 mr-2 text-indigo-400 flex-shrink-0" />
+            Voir le freelancer
+          </button>
+        )}
         {ticket.status === 'libre' && (
           <button
             className="flex items-center w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-[#36393F]"
@@ -933,7 +971,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             </button>
           </>
         )}
-        {(user && (user.role === 'admin' || user.role === 'fondateur')) && (
+        {showAdminView && user && (user.role === 'admin' || user.role === 'fondateur') && (
           <button
             className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
             onClick={() => { deleteTicket(ticket._id); closeContextMenu(); }}
@@ -1012,10 +1050,29 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
 
   return (
     <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          {/* Switch cartes/tableau ici si existant */}
+        </div>
+      </div>
       {renderTabs()}
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
       {contextMenuElement}
       <TicketDetailsModal ticket={modalTicket} isOpen={showTicketModal} onClose={() => setShowTicketModal(false)} />
+      <FreelancerDetailsModal freelancer={modalFreelancer} isOpen={showFreelancerModal} onClose={() => setShowFreelancerModal(false)} />
+      {user && (user.role === 'admin' || user.role === 'fondateur') && (
+        <div className="flex justify-end mt-8">
+          <label className="flex items-center cursor-pointer select-none">
+            <span className="mr-2 text-sm font-medium text-red-400">Administration</span>
+            <input
+              type="checkbox"
+              checked={showAdminView}
+              onChange={e => handleAdminViewChange(e.target.checked)}
+              className="form-checkbox h-5 w-5 text-red-500 rounded focus:ring-0 border-gray-400 bg-[#23272A]"
+            />
+          </label>
+        </div>
+      )}
     </div>
   );
 };
