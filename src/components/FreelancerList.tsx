@@ -227,8 +227,17 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       setActionInProgress({ ...actionInProgress, [freelancerId]: true });
       
       const token = localStorage.getItem('authToken');
+      console.log('Token:', token); // Debug log
+      
+      if (!token) {
+        throw new Error('Token d\'authentification manquant');
+      }
+      
       const isCurrentlyAdmin = currentRole === 'freelancer_admin';
       const isAdmin = !isCurrentlyAdmin;
+      
+      console.log('Envoi de la requête à:', `${API_URL}/api/freelancers`); // Debug log
+      console.log('Données envoyées:', { freelancerId, isAdmin }); // Debug log
       
       const response = await fetch(`${API_URL}/api/freelancers`, {
         method: 'PATCH',
@@ -236,11 +245,16 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ freelancerId, isAdmin })
+        body: JSON.stringify({ 
+          freelancerId,
+          isAdmin 
+        })
       });
       
       if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour du rôle');
+        const errorData = await response.json().catch(() => null);
+        console.error('Réponse d\'erreur:', errorData); // Debug log
+        throw new Error(errorData?.message || `Erreur ${response.status}: ${response.statusText}`);
       }
       
       // Mettre à jour la liste locale des freelancers
@@ -255,7 +269,8 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       alert(`Droits d'administration ${isAdmin ? 'accordés' : 'retirés'} avec succès`);
       closeDropdown(freelancerId);
     } catch (err: any) {
-      alert(err.message || 'Une erreur est survenue');
+      console.error('Erreur détaillée:', err);
+      alert(err.message || 'Une erreur est survenue lors de la mise à jour du rôle');
     } finally {
       setActionInProgress({ ...actionInProgress, [freelancerId]: false });
     }
@@ -809,15 +824,6 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
           <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
           Voir freelancer
         </button>
-        {!isAdmin && (
-          <button
-            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-            onClick={() => { editFreelancer(freelancer._id); closeContextMenu(); }}
-          >
-            <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-            Éditer
-          </button>
-        )}
         {!freelancer.isEmailVerified && (
           <button
             className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
