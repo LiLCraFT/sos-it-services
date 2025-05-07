@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
     }
     
     // Ne retourner que les champs nécessaires
-    const users = await User.find(query).select('_id firstName lastName email role clientType profileImage');
+    const users = await User.find(query).select('_id firstName lastName email role clientType profileImage isEmailVerified isAdminVerified emailVerificationToken');
       
     return NextResponse.json({ users }, { status: 200 });
   } catch (error: any) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter } from 'lucide-react';
+import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type UserData = {
@@ -15,6 +15,7 @@ type UserData = {
   clientType?: string;
   isEmailVerified: boolean;
   isAdminVerified: boolean;
+  emailVerificationToken?: string | null;
 };
 
 type SortField = 'firstName' | 'lastName' | 'email' | 'city' | 'createdAt';
@@ -45,6 +46,12 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   const [clientTypeFilter, setClientTypeFilter] = useState<string | null>(null);
   const [freelancerTypeFilter, setFreelancerTypeFilter] = useState<string | null>(null);
 
+  // Ajout d'un état pour le menu contextuel
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; userId: string | null } | null>(null);
+
+  // Ajout d'une ref pour le menu contextuel
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -63,6 +70,18 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [dropdownOpen]);
+
+  // Fermer le menu contextuel si clic en dehors
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClick = (event: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+        closeContextMenu();
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [contextMenu]);
 
   const fetchUsers = async () => {
     try {
@@ -418,6 +437,19 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     return null;
   };
 
+  // Fonction pour ouvrir le menu contextuel
+  const handleContextMenu = (event: React.MouseEvent, userId: string) => {
+    event.preventDefault();
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      userId,
+    });
+  };
+
+  // Fonction pour fermer le menu contextuel
+  const closeContextMenu = () => setContextMenu(null);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -499,26 +531,28 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     }
   };
 
-  const renderVerificationStatus = (user: UserData) => {
+  const renderVerificationStatus = (user: UserData & { emailVerificationToken?: string | null }) => {
+    // Statut compte :
+    // - Sablier si en attente d'activation (isEmailVerified === false && emailVerificationToken !== null)
+    // - CheckCircle si activé
+    // - XCircle si désactivé (isEmailVerified === false && emailVerificationToken === null)
     return (
-      <div className="flex items-center space-x-2">
-        <div className="flex items-center">
-          <Mail className="w-3 h-3 mr-1" />
-          {user.isEmailVerified ? (
-            <CheckCircle className="w-4 h-4 text-green-500" />
-          ) : (
-            <XCircle className="w-4 h-4 text-red-500" />
-          )}
-        </div>
+      <div className="flex items-center justify-center space-x-2">
+        {/* Statut compte */}
+        {user.isEmailVerified ? (
+          <CheckCircle className="w-4 h-4 text-green-500" />
+        ) : user.emailVerificationToken ? (
+          <Clock className="w-4 h-4 text-yellow-400" />
+        ) : (
+          <XCircle className="w-4 h-4 text-red-500" />
+        )}
+        {/* Statut admin pour freelancer */}
         {user.clientType === 'Freelancer' && (
-          <div className="flex items-center">
-            <Shield className="w-3 h-3 mr-1" />
-            {user.isAdminVerified ? (
-              <CheckCircle className="w-4 h-4 text-green-500" />
-            ) : (
-              <XCircle className="w-4 h-4 text-red-500" />
-            )}
-          </div>
+          user.isAdminVerified ? (
+            <CheckCircle className="w-4 h-4 text-yellow-400" />
+          ) : (
+            <XCircle className="w-4 h-4 text-yellow-400" />
+          )
         )}
       </div>
     );
@@ -551,16 +585,13 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
                   Rôle
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[10%]">
-                  Vérification
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider w-[5%]">
-                  Actions
+                  Statut compte
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#292b2f]">
               {sortedUsers.map((userData) => (
-                <tr key={userData._id} className="hover:bg-[#36393F] transition-colors">
+                <tr key={userData._id} className="hover:bg-[#36393F] transition-colors cursor-pointer" onContextMenu={(e) => handleContextMenu(e, userData._id)}>
                   <td className="px-6 py-4 text-sm text-white">
                     {userData.firstName} {userData.lastName}
                   </td>
@@ -580,26 +611,82 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
                   <td className="px-6 py-4 whitespace-nowrap">
                     {renderRoleTags(userData.role, userData)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-300">
+                  <td className="px-6 py-4 text-sm text-gray-300 text-center">
                     {renderVerificationStatus(userData)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    {userData.role !== 'fondateur' && (
-                      <div className="relative flex justify-end">
-                        <button 
-                          onClick={(e) => toggleDropdown(userData._id, e)}
-                          className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                          aria-label="Plus d'options"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {/* Menu contextuel */}
+          {contextMenu && (() => {
+            const user = users.find(u => u._id === contextMenu.userId);
+            if (!user) return null;
+            const isFreelancer = user.clientType === 'Freelancer';
+            return (
+              <div
+                ref={contextMenuRef}
+                className="fixed z-50 bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
+                style={{ top: contextMenu.y, left: contextMenu.x }}
+                tabIndex={0}
+                onBlur={closeContextMenu}
+                onContextMenu={e => e.preventDefault()}
+              >
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                  onClick={() => { alert('Édition non implémentée'); closeContextMenu(); }}
+                >
+                  <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+                  Éditer
+                </button>
+                {/* Email verification logic */}
+                {!user.isEmailVerified && (
+                  <button
+                    className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                    onClick={() => { toggleUserVerification(user._id, true); closeContextMenu(); }}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                    Activer compte
+                  </button>
+                )}
+                {user.isEmailVerified && (
+                  <button
+                    className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                    onClick={() => { toggleUserVerification(user._id, false); closeContextMenu(); }}
+                  >
+                    <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                    Désactiver compte
+                  </button>
+                )}
+                {/* Admin verification logic for freelancers */}
+                {isFreelancer && !user.isAdminVerified && (
+                  <button
+                    className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                    onClick={() => { toggleUserVerification(user._id, undefined, true); closeContextMenu(); }}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                    Activer admin
+                  </button>
+                )}
+                {isFreelancer && user.isAdminVerified && (
+                  <button
+                    className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                    onClick={() => { toggleUserVerification(user._id, undefined, false); closeContextMenu(); }}
+                  >
+                    <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                    Désactiver admin
+                  </button>
+                )}
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+                  onClick={() => { deleteUser(user._id); closeContextMenu(); }}
+                >
+                  <Trash className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                  Supprimer
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </div>
     );
@@ -611,7 +698,25 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
       {renderFilters()}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortUsers(filteredUsers).map((user) => (
-          <div key={user._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm">
+          <div key={user._id} className="bg-[#36393F] rounded-md overflow-hidden shadow-sm relative cursor-pointer hover:shadow-lg hover:bg-[#40444b] transition-all duration-150"
+            onContextMenu={(e) => handleContextMenu(e, user._id)}>
+            {/* Icônes de statut en haut à droite */}
+            <div className="absolute top-3 right-3 flex space-x-2">
+              {user.isEmailVerified ? (
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              ) : user.emailVerificationToken ? (
+                <Clock className="w-5 h-5 text-yellow-400" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500" />
+              )}
+              {user.clientType === 'Freelancer' && (
+                user.isAdminVerified ? (
+                  <CheckCircle className="w-5 h-5 text-yellow-400" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-yellow-400" />
+                )
+              )}
+            </div>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -632,70 +737,98 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
                     </div>
                   </div>
                 </div>
-                {user.role !== 'fondateur' && (
-                  <div className="relative flex justify-end">
-                    <button 
-                      onClick={(e) => toggleDropdown(user._id, e)}
-                      className="p-1 text-gray-400 hover:text-white hover:bg-[#4F545C] rounded-full transition-colors"
-                      aria-label="Plus d'options"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
               </div>
-              
               <div className="space-y-2 text-sm">
                 <div className="flex items-center text-gray-300">
                   <Mail className="w-3 h-3 text-gray-500 mr-2" />
                   <span className="truncate">{user.email}</span>
                 </div>
-                
                 <div className="flex items-center text-gray-300">
                   <Phone className="w-3 h-3 text-gray-500 mr-2" />
                   <span>{user.phone || 'Non renseigné'}</span>
                 </div>
-                
                 <div className="flex items-center text-gray-300">
                   <MapPin className="w-3 h-3 text-gray-500 mr-2" />
                   <span>{user.city || 'Non renseigné'}</span>
                 </div>
-                
                 <div className="flex items-center text-gray-300">
                   <Calendar className="w-3 h-3 text-gray-500 mr-2" />
                   <span>Inscrit le {formatDate(user.createdAt)}</span>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="text-sm text-gray-300">
-                  <div className="flex items-center justify-between">
-                    <span>Vérification Email:</span>
-                    <div className="flex items-center">
-                      {user.isEmailVerified ? (
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-red-500" />
-                      )}
-                    </div>
-                  </div>
-                  {user.clientType === 'Freelancer' && (
-                    <div className="flex items-center justify-between mt-2">
-                      <span>Vérification Admin:</span>
-                      <div className="flex items-center">
-                        {user.isAdminVerified ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-500" />
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           </div>
         ))}
       </div>
+      {/* Menu contextuel pour la vue carte */}
+      {contextMenu && (() => {
+        const user = users.find(u => u._id === contextMenu.userId);
+        if (!user) return null;
+        const isFreelancer = user.clientType === 'Freelancer';
+        return (
+          <div
+            ref={contextMenuRef}
+            className="fixed z-50 bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            tabIndex={0}
+            onBlur={closeContextMenu}
+            onContextMenu={e => e.preventDefault()}
+          >
+            <button
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+              onClick={() => { alert('Édition non implémentée'); closeContextMenu(); }}
+            >
+              <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+              Éditer
+            </button>
+            {/* Email verification logic */}
+            {!user.isEmailVerified && (
+              <button
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                onClick={() => { toggleUserVerification(user._id, true); closeContextMenu(); }}
+              >
+                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                Activer compte
+              </button>
+            )}
+            {user.isEmailVerified && (
+              <button
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                onClick={() => { toggleUserVerification(user._id, false); closeContextMenu(); }}
+              >
+                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                Désactiver compte
+              </button>
+            )}
+            {/* Admin verification logic for freelancers */}
+            {isFreelancer && !user.isAdminVerified && (
+              <button
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                onClick={() => { toggleUserVerification(user._id, undefined, true); closeContextMenu(); }}
+              >
+                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                Activer admin
+              </button>
+            )}
+            {isFreelancer && user.isAdminVerified && (
+              <button
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                onClick={() => { toggleUserVerification(user._id, undefined, false); closeContextMenu(); }}
+              >
+                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                Désactiver admin
+              </button>
+            )}
+            <button
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+              onClick={() => { deleteUser(user._id); closeContextMenu(); }}
+            >
+              <Trash className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+              Supprimer
+            </button>
+          </div>
+        );
+      })()}
     </div>
   );
 
