@@ -590,7 +590,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
         {renderFilters()}
         <div className="overflow-x-auto w-full">
           <table className="w-full divide-y divide-[#292b2f]">
-            <thead className="bg-[#36393F]">
+            <thead className="bg-[#202225]">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[20%]">
                   Utilisateur
