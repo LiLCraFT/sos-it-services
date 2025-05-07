@@ -24,6 +24,10 @@ export interface IUser extends Document {
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
   isModified(path: string): boolean;
+  isEmailVerified: boolean;
+  isAdminVerified: boolean;
+  emailVerificationToken: string;
+  emailVerificationTokenExpires: Date;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -98,6 +102,20 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ['user', 'admin', 'fondateur', 'freelancer', 'freelancer_admin'],
       default: 'user',
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isAdminVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: {
+      type: String,
+    },
+    emailVerificationTokenExpires: {
+      type: Date,
     },
     profileImage: {
       type: String,

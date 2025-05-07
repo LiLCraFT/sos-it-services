@@ -13,6 +13,8 @@ type UserData = {
   profileImage: string;
   createdAt: string;
   clientType?: string;
+  isEmailVerified: boolean;
+  isAdminVerified: boolean;
 };
 
 type SortField = 'firstName' | 'lastName' | 'email' | 'city' | 'createdAt';
@@ -245,6 +247,42 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     }
   };
 
+  const toggleUserVerification = async (userId: string, isEmailVerified?: boolean, isAdminVerified?: boolean) => {
+    try {
+      const response = await fetch('/api/admin/toggle-user-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          isEmailVerified,
+          isAdminVerified,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la mise à jour du statut de vérification');
+      }
+
+      // Mettre à jour la liste des utilisateurs
+      const updatedUsers = users.map(user => {
+        if (user._id === userId) {
+          return {
+            ...user,
+            isEmailVerified: isEmailVerified !== undefined ? isEmailVerified : user.isEmailVerified,
+            isAdminVerified: isAdminVerified !== undefined ? isAdminVerified : user.isAdminVerified,
+          };
+        }
+        return user;
+      });
+      setUsers(updatedUsers);
+    } catch (error) {
+      console.error('Error toggling user verification:', error);
+      alert('Erreur lors de la mise à jour du statut de vérification');
+    }
+  };
+
   // Filtrer les utilisateurs selon le type demandé (regular ou freelancer)
   const getFilteredUsers = () => {
     let filtered = [...users];
@@ -461,105 +499,91 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     }
   };
 
+  const renderVerificationStatus = (user: UserData) => {
+    return (
+      <div className="flex items-center space-x-2">
+        <div className="flex items-center">
+          <Mail className="w-3 h-3 mr-1" />
+          {user.isEmailVerified ? (
+            <CheckCircle className="w-4 h-4 text-green-500" />
+          ) : (
+            <XCircle className="w-4 h-4 text-red-500" />
+          )}
+        </div>
+        {user.clientType === 'Freelancer' && (
+          <div className="flex items-center">
+            <Shield className="w-3 h-3 mr-1" />
+            {user.isAdminVerified ? (
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            ) : (
+              <XCircle className="w-4 h-4 text-red-500" />
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Rendu en mode tableau
   const renderTableView = () => {
     const sortedUsers = sortUsers(filteredUsers);
     
-    // Helper pour afficher l'icône de tri
-    const renderSortIcon = (field: SortField) => {
-      if (sortField !== field) return null;
-      return sortDirection === 'asc' ? 
-        <ChevronUp className="w-4 h-4 ml-1" /> : 
-        <ChevronDown className="w-4 h-4 ml-1" />;
-    };
-
     return (
-      <div>
+      <div className="w-full">
         {renderFilters()}
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-[#2F3136] rounded-md overflow-hidden">
-            <thead className="bg-[#202225]">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full divide-y divide-[#292b2f]">
+            <thead className="bg-[#36393F]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Photo
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[20%]">
+                  Utilisateur
                 </th>
-                <th 
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                  onClick={() => handleSortClick('lastName')}
-                >
-                  <div className="flex items-center">
-                    <span>Nom</span>
-                    {renderSortIcon('lastName')}
-                  </div>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[20%]">
+                  Email
                 </th>
-                <th 
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                  onClick={() => handleSortClick('email')}
-                >
-                  <div className="flex items-center">
-                    <span>Email</span>
-                    {renderSortIcon('email')}
-                  </div>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[15%]">
+                  Ville
                 </th>
-                <th 
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                  onClick={() => handleSortClick('city')}
-                >
-                  <div className="flex items-center">
-                    <span>Ville</span>
-                    {renderSortIcon('city')}
-                  </div>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[15%]">
+                  Date d'inscription
                 </th>
-                <th 
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
-                  onClick={() => handleSortClick('createdAt')}
-                >
-                  <div className="flex items-center">
-                    <span>Inscrit le</span>
-                    {renderSortIcon('createdAt')}
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[15%]">
                   Rôle
                 </th>
-                <th className="px-4 py-3"></th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[10%]">
+                  Vérification
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider w-[5%]">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#292b2f]">
               {sortedUsers.map((userData) => (
                 <tr key={userData._id} className="hover:bg-[#36393F] transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-[#202225]">
-                      <img 
-                        src={userData.profileImage || '/images/default-profile.png'} 
-                        alt={`${userData.firstName} ${userData.lastName}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/default-profile.png';
-                        }}
-                      />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-white">
+                  <td className="px-6 py-4 text-sm text-white">
                     {userData.firstName} {userData.lastName}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-300">
+                  <td className="px-6 py-4 text-sm text-gray-300">
                     <div className="flex items-center">
                       <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
-                      <span className="truncate max-w-[150px]">{userData.email}</span>
+                      <span className="truncate max-w-[200px]">{userData.email}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-300">
+                  <td className="px-6 py-4 text-sm text-gray-300">
                     <div className="flex items-center">
                       <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
                       <span>{userData.city}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-300">{formatDate(userData.createdAt)}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-6 py-4 text-sm text-gray-300">{formatDate(userData.createdAt)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     {renderRoleTags(userData.role, userData)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right">
+                  <td className="px-6 py-4 text-sm text-gray-300">
+                    {renderVerificationStatus(userData)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
                     {userData.role !== 'fondateur' && (
                       <div className="relative flex justify-end">
                         <button 
@@ -642,6 +666,32 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
                   <span>Inscrit le {formatDate(user.createdAt)}</span>
                 </div>
               </div>
+              <div className="mt-4">
+                <div className="text-sm text-gray-300">
+                  <div className="flex items-center justify-between">
+                    <span>Vérification Email:</span>
+                    <div className="flex items-center">
+                      {user.isEmailVerified ? (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-500" />
+                      )}
+                    </div>
+                  </div>
+                  {user.clientType === 'Freelancer' && (
+                    <div className="flex items-center justify-between mt-2">
+                      <span>Vérification Admin:</span>
+                      <div className="flex items-center">
+                        {user.isAdminVerified ? (
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-500" />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         ))}
@@ -670,13 +720,41 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
       >
         <div className="py-1" role="menu" aria-orientation="vertical">
           <button 
-            onClick={() => alert('Édition non implémentée')} // À implémenter
+            onClick={() => alert('Édition non implémentée')}
             className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
             disabled={actionInProgress[activeUserId]}
           >
             <Edit className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
             <span>Modifier l'utilisateur</span>
           </button>
+          
+          <button 
+            onClick={() => toggleUserVerification(activeUserId, !userData.isEmailVerified)}
+            className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+            disabled={actionInProgress[activeUserId]}
+          >
+            {userData.isEmailVerified ? (
+              <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+            ) : (
+              <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+            )}
+            <span>{userData.isEmailVerified ? 'Désactiver' : 'Activer'} l'email</span>
+          </button>
+          
+          {userData.clientType === 'Freelancer' && (
+            <button 
+              onClick={() => toggleUserVerification(activeUserId, undefined, !userData.isAdminVerified)}
+              className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#36393F] transition-colors"
+              disabled={actionInProgress[activeUserId]}
+            >
+              {userData.isAdminVerified ? (
+                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+              ) : (
+                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+              )}
+              <span>{userData.isAdminVerified ? 'Désactiver' : 'Activer'} l'admin</span>
+            </button>
+          )}
           
           <button 
             onClick={() => deleteUser(activeUserId)}

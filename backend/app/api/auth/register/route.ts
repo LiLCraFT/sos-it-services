@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import { sendVerificationEmail, sendAdminVerificationEmail } from '@/lib/email-service';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_development';
 
@@ -57,7 +59,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_developmen
  *               properties:
  *                 user:
  *                   type: object
- *                 token:
+ *                 message:
  *                   type: string
  *       400:
  *         description: Données invalides ou utilisateur déjà existant
@@ -137,7 +139,11 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Création du document utilisateur (sans l'enregistrer encore)
+    // Génération du token de vérification
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
+    
+    // Création du document utilisateur
     const userData = {
       email,
       password,
@@ -149,8 +155,12 @@ export async function POST(req: NextRequest) {
       birthDate: clientType === 'Professionnel' ? undefined : birthDate,
       city,
       clientType,
-      subscriptionType: 'none', // À la carte par défaut
-      role: 'user', // Par défaut, tous les nouveaux utilisateurs ont le rôle 'user'
+      subscriptionType: 'none',
+      role: 'user',
+      isEmailVerified: false,
+      isAdminVerified: false,
+      emailVerificationToken: verificationToken,
+      emailVerificationTokenExpires: verificationTokenExpires,
     };
     
     console.log('Creating user with data:', {
@@ -163,16 +173,12 @@ export async function POST(req: NextRequest) {
     
     console.log('User created successfully:', user._id);
     
-    // Génération du token JWT
-    const token = jwt.sign(
-      {
-        userId: user._id,
-        email: user.email,
-        role: user.role,
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    // Envoi de l'email de vérification
+    if (clientType === 'Freelancer') {
+      await sendAdminVerificationEmail(email, verificationToken);
+    } else {
+      await sendVerificationEmail(email, verificationToken);
+    }
     
     // On ne renvoie pas le mot de passe
     const userWithoutPassword = {
@@ -184,12 +190,14 @@ export async function POST(req: NextRequest) {
       role: user.role,
       clientType: user.clientType,
       subscriptionType: user.subscriptionType,
+      isEmailVerified: user.isEmailVerified,
+      isAdminVerified: user.isAdminVerified,
     };
     
     return NextResponse.json(
       {
         user: userWithoutPassword,
-        token,
+        message: 'Un email de vérification a été envoyé à votre adresse email',
       },
       { status: 201 }
     );

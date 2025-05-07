@@ -93,6 +93,22 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Vérification si le compte est activé
+    if (!user.isEmailVerified) {
+      return NextResponse.json(
+        { error: 'Veuillez vérifier votre email avant de vous connecter' },
+        { status: 401 }
+      );
+    }
+
+    // Pour les freelancers, vérifier si le compte a été approuvé par un admin
+    if (user.clientType === 'Freelancer' && !user.isAdminVerified) {
+      return NextResponse.json(
+        { error: 'Votre compte est en attente d\'approbation par un administrateur' },
+        { status: 401 }
+      );
+    }
     
     // Génération du token JWT
     const token = jwt.sign(

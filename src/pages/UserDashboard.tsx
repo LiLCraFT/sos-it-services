@@ -535,7 +535,7 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-5xl pt-24">
+    <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
         {/* En-tête du profil */}
         <div className="bg-[#5865F2] p-6">
