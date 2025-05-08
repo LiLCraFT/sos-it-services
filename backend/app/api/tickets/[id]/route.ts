@@ -144,16 +144,22 @@ export async function PUT(
       }
     }
     
-    // Mettre à jour le ticket - utiliser $push pour ajouter à l'array auditTrail
-    const update = {
-      ...data,
-      $push: { auditTrail: auditEvent }
+    // Mettre à jour le ticket
+    const update: any = {
+      status: data.status
     };
-    
-    // Supprimer auditTrail de l'objet principal pour éviter la duplication
-    if (update.auditTrail) {
-      delete update.auditTrail;
+
+    // Si on a un feedback, on l'ajoute
+    if (data.description && !data.skipFeedback) {
+      update.feedback = {
+        description: data.description,
+        rating: data.rating || 5,
+        date: new Date()
+      };
     }
+
+    // Ajouter l'événement d'audit
+    update.$push = { auditTrail: auditEvent };
     
     // Update the ticket
     const updatedTicket = await Ticket.findByIdAndUpdate(

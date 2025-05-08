@@ -43,6 +43,7 @@ interface Ticket {
     firstName: string;
     lastName: string;
     email: string;
+    profileImage?: string;
   };
   targetUser?: {
     _id: string;
@@ -1195,6 +1196,50 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     return (
       <Modal isOpen={showCloseModal} onClose={() => setShowCloseModal(false)} title="Clôturer le ticket" maxWidth="sm">
         <div className="space-y-4">
+          {/* Affichage du statut du ticket et message de paiement */}
+          <div className="bg-[#36393F] p-4 rounded-md">
+            <div className="flex items-center mb-2">
+              {closeModalTicket.status === 'resolved' ? (
+                <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
+              ) : (
+                <X className="w-5 h-5 text-red-400 mr-2" />
+              )}
+              <span className="text-white font-medium">
+                {closeModalTicket.status === 'resolved' ? 'Ticket résolu' : 'Ticket en échec'}
+              </span>
+            </div>
+            <p className="text-gray-300 text-sm">
+              {closeModalTicket.status === 'resolved' 
+                ? 'Vous serez débité du montant correspondant à la prestation.'
+                : 'Vous ne serez pas débité car le ticket est en échec.'}
+            </p>
+          </div>
+
+          {/* Affichage des informations du freelancer */}
+          {closeModalTicket.assignedTo && (
+            <div className="flex items-center space-x-4 bg-[#36393F] p-4 rounded-md">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#23272A]">
+                {closeModalTicket.assignedTo.profileImage ? (
+                  <img 
+                    src={closeModalTicket.assignedTo.profileImage} 
+                    alt={`${closeModalTicket.assignedTo.firstName} ${closeModalTicket.assignedTo.lastName}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <User className="w-6 h-6" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <h4 className="text-white font-medium">
+                  {closeModalTicket.assignedTo.firstName} {closeModalTicket.assignedTo.lastName}
+                </h4>
+                <p className="text-gray-400 text-sm">Freelancer</p>
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Décrivez la prestation réalisée</label>
             <textarea
@@ -1204,6 +1249,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               placeholder="Votre retour sur la prestation..."
             />
           </div>
+
           {closeModalTicket.assignedTo && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Notez le freelancer</label>
@@ -1223,27 +1269,34 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               </div>
             </div>
           )}
+
           <div className="flex justify-end gap-2 mt-4">
             <button
               className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
-              onClick={() => setShowCloseModal(false)}
+              onClick={() => {
+                setShowCloseModal(false);
+                setCloseDescription('');
+                setCloseRating(5);
+              }}
             >
               Annuler
             </button>
             <button
-              className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+              className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
               onClick={async () => {
-                // Appel API pour clôturer le ticket (à adapter côté backend)
                 try {
                   const token = localStorage.getItem('authToken');
                   if (!token) throw new Error('Non authentifié');
-                  const response = await fetch(`http://localhost:3001/api/tickets/${closeModalTicket._id}/close`, {
-                    method: 'POST',
+                  const response = await fetch(`http://localhost:3001/api/tickets/${closeModalTicket._id}`, {
+                    method: 'PUT',
                     headers: {
                       'Content-Type': 'application/json',
                       Authorization: `Bearer ${token}`
                     },
-                    body: JSON.stringify({ description: closeDescription, rating: closeModalTicket.assignedTo ? closeRating : undefined })
+                    body: JSON.stringify({ 
+                      status: 'closed',
+                      skipFeedback: true
+                    })
                   });
                   if (!response.ok) throw new Error('Erreur lors de la clôture du ticket');
                   setShowCloseModal(false);
@@ -1254,7 +1307,36 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   setError(err instanceof Error ? err.message : 'Erreur lors de la clôture du ticket');
                 }
               }}
-              disabled={!closeDescription.trim()}
+            >
+              Passer sans avis
+            </button>
+            <button
+              className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem('authToken');
+                  if (!token) throw new Error('Non authentifié');
+                  const response = await fetch(`http://localhost:3001/api/tickets/${closeModalTicket._id}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                      status: 'closed',
+                      description: closeDescription, 
+                      rating: closeModalTicket.assignedTo ? closeRating : undefined
+                    })
+                  });
+                  if (!response.ok) throw new Error('Erreur lors de la clôture du ticket');
+                  setShowCloseModal(false);
+                  setCloseDescription('');
+                  setCloseRating(5);
+                  fetchTickets();
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Erreur lors de la clôture du ticket');
+                }
+              }}
             >
               Valider
             </button>

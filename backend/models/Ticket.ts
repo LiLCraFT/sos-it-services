@@ -31,6 +31,11 @@ export interface ITicket extends Document {
   targetUser?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  feedback: {
+    description: string;
+    rating: number;
+    date: Date;
+  };
 }
 
 const TicketSchema = new Schema<ITicket>(
@@ -109,6 +114,14 @@ const TicketSchema = new Schema<ITicket>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    feedback: {
+      description: String,
+      rating: Number,
+      date: {
+        type: Date,
+        default: Date.now
+      }
+    }
   },
   {
     timestamps: true,
