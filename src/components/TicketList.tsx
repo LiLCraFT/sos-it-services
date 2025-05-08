@@ -1008,7 +1008,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     };
     
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title={`Détails du ticket`} maxWidth="lg">
+      <Modal isOpen={isOpen} onClose={onClose} title={`Détails du ticket`} maxWidth="xl">
         <div className="space-y-6">
           <div className="flex flex-wrap gap-4 items-center">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(ticket.status)}`}>{translateStatus(ticket.status)}</span>
