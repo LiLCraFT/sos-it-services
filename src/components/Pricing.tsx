@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
-import { Check, Wifi, Monitor, Home, Zap, Clock, BadgeCheck, Shield, Award, User, Users, Wrench, Settings, Package } from 'lucide-react';
+import { Check, Wifi, Monitor, Home, Zap, Clock, BadgeCheck, Shield, Award, User, Users, Wrench, Settings, Package, Search, UserCheck, Percent, Calendar, MessageSquare } from 'lucide-react';
 
 interface ServicePlan {
   name: string;
@@ -44,6 +44,17 @@ interface DepannageOption {
   features: string[];
 }
 
+const DiscordIcon = () => (
+  <svg
+    className="h-4 w-4"
+    viewBox="0 0 71 55"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.4562 70.6943 45.3914C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" />
+  </svg>
+);
+
 const Pricing: React.FC = () => {
   const [abonnementType, setAbonnementType] = useState<'solo' | 'famille'>('solo');
   const [depannageType, setDepannageType] = useState<'distance' | 'domicile'>('distance');
@@ -54,34 +65,36 @@ const Pricing: React.FC = () => {
   const abonnements: Record<'solo' | 'famille', AbonnementOption> = {
     solo: {
       name: "Solo",
-      price: "29",
+      price: "49.90",
       duration: "/mois",
       description: "1 personne",
       icon: <User className="h-5 w-5 text-[#5865F2]" />,
       features: [
         "1 personne",
         "Interventions à distance illimitées",
+        "1 intervention à domicile par mois inclus (sinon ne payer que le déplacement)",
         "Assistance prioritaire",
         "Sans engagement",
-        "Frais réduit si intervention à domicile",
-        "50% de crédit d'impôt pour particuliers"
+        "50% de crédit d'impôt pour particuliers",
+        "Accès exclusif au groupe d'entraide Discord"
       ]
     },
     famille: {
       name: "Famille",
-      price: "69",
+      price: "149.90",
       duration: "/mois",
-      description: "Jusqu'à 5 personnes",
+      description: "Le forfait pour toute la famille",
       badge: "Économique",
       highlight: true,
       icon: <Users className="h-5 w-5 text-[#5865F2]" />,
       features: [
-        "Jusqu'à 5 personnes",
+        "Jusqu'à 5 personnes (meme famille)",
         "Interventions à distance illimitées",
+        "3 interventions à domicile par mois incluses (sinon ne payer que le déplacement)",
         "Assistance prioritaire",
         "Sans engagement",
-        "Frais réduit si intervention à domicile",
-        "50% de crédit d'impôt pour particuliers"
+        "50% de crédit d'impôt pour particuliers",
+        "Accès exclusif au groupe d'entraide Discord"
       ]
     }
   };
@@ -89,32 +102,33 @@ const Pricing: React.FC = () => {
   const depannages: Record<'distance' | 'domicile', DepannageOption> = {
     distance: {
       name: "Dépannage à distance",
-      price: "49",
-      priceSubtext: "à partir de",
+      price: "49.90",
+      priceSubtext: "intervention simple",
       duration: "",
       highlight: true,
       badge: "Populaire",
       icon: <Wifi className="h-5 w-5 text-[#5865F2]" />,
       features: [
-        "Intervention jusqu'à 60 min",
         "Diagnostic gratuit inclus",
-        "Sans engagement",
-        "Paiement uniquement si problème résolu",
+        "Un expert dédié à votre écoute",
+        "Intervention simple (30 min) : 49,90€",
+        "Intervention complexe (60 min) : 79,90€",
+        "Ne payez que si problème est résolu",
         "50% de crédit d'impôt pour particuliers"
       ]
     },
     domicile: {
       name: "Intervention à domicile",
-      price: "119",
+      price: "149.90",
       priceSubtext: "déplacement inclus",
       description: "1h max incluse",
-      badge: "Service Premium",
       icon: <Home className="h-5 w-5 text-[#5865F2]" />,
       features: [
-        "1h d'intervention incluse",
-        "Frais de déplacement : 25 € (jusqu'à 30 km)",
-        "Intervention possible le jour-même",
-        "Satisfait ou remboursé",
+        "Diagnostic gratuit inclus",
+        "Un expert dédié à votre écoute",
+        "Jusqu'à 1h d'intervention (au delà sur devis)",
+        "Frais de déplacement : 49,90€",
+        "Possibilité d'intervention le jour-même",
         "50% de crédit d'impôt pour particuliers"
       ]
     }
@@ -210,7 +224,7 @@ const Pricing: React.FC = () => {
                           <div className="bg-green-400/10 rounded p-2 border border-green-400/30 ml-3">
                             <div className="flex flex-col items-center">
                               <span className="text-green-400 text-2xl font-bold">
-                                {Math.round(parseInt(selectedDepannage.price) / 2)} €
+                                {(parseFloat(selectedDepannage.price) / 2).toFixed(2)} €
                               </span>
                               <span className="text-xs text-gray-300">après crédit d'impôt</span>
                               {selectedDepannage.duration && (
@@ -230,7 +244,12 @@ const Pricing: React.FC = () => {
                   {selectedDepannage.features?.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
                       <div className="bg-green-400/10 rounded-full p-1 mr-2 mt-0.5">
-                        <Check className="text-green-400 h-3 w-3 flex-shrink-0" />
+                        {featureIndex === 0 ? <Search className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 1 ? <UserCheck className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 2 ? <Clock className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 3 ? <Clock className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 4 ? <Shield className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         <Percent className="text-green-400 h-3 w-3 flex-shrink-0" />}
                       </div>
                       <span className="text-gray-200 text-sm">{feature}</span>
                     </li>
@@ -299,7 +318,7 @@ const Pricing: React.FC = () => {
                           <div className="bg-green-400/10 rounded p-2 border border-green-400/30 ml-3">
                             <div className="flex flex-col items-center">
                               <span className="text-green-400 text-2xl font-bold">
-                                {Math.round(parseInt(selectedAbonnement.price) / 2)} € <span className="text-sm font-normal">{selectedAbonnement.duration}</span>
+                                {(parseFloat(selectedAbonnement.price) / 2).toFixed(2)} € <span className="text-sm font-normal">{selectedAbonnement.duration}</span>
                               </span>
                               <span className="text-xs text-gray-300">après crédit d'impôt</span>
                             </div>
@@ -315,8 +334,14 @@ const Pricing: React.FC = () => {
                 <ul className="space-y-3">
                   {selectedAbonnement.features?.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
-                      <div className="bg-green-400/10 rounded-full p-1 mr-2 mt-0.5">
-                        <Check className="text-green-400 h-3 w-3 flex-shrink-0" />
+                      <div className={`${featureIndex === 6 ? 'bg-[#5865F2]/20' : 'bg-green-400/10'} rounded-full p-1 mr-2 mt-0.5`}>
+                        {featureIndex === 0 ? <Users className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 1 ? <Wifi className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 2 ? <Home className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 3 ? <Zap className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 4 ? <Calendar className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         featureIndex === 5 ? <Percent className="text-green-400 h-3 w-3 flex-shrink-0" /> :
+                         <DiscordIcon />}
                       </div>
                       <span className="text-gray-200 text-sm">{feature}</span>
                     </li>
