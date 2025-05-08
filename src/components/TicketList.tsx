@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown, Trash2, Hand, History, RefreshCw, CheckSquare, Circle, Search, Archive } from 'lucide-react';
 import { Modal } from './ui/Modal';
 import FreelancerDetailsModal from './FreelancerDetailsModal';
+import Pagination from './ui/Pagination';
 
 interface Attachment {
   filename: string;
@@ -101,6 +102,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const [closeDescription, setCloseDescription] = useState('');
   const [closeRating, setCloseRating] = useState(5);
   const [closeModalTicket, setCloseModalTicket] = useState<Ticket | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ticketsPerPage = 10;
 
   const fetchTickets = async () => {
     try {
@@ -749,6 +752,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     closeContextMenu();
   };
 
+  // Remettre la page à 1 si le filtre change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortField, sortDirection, activeTab, tickets]);
+
   if (loading) {
     return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
   }
@@ -771,6 +779,9 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Rendu en mode tableau
   const renderTableView = () => {
     const sortedTickets = sortTickets(getFilteredTickets());
+    const totalTickets = sortedTickets.length;
+    const totalPages = Math.ceil(totalTickets / ticketsPerPage);
+    const paginatedTickets = sortedTickets.slice((currentPage - 1) * ticketsPerPage, currentPage * ticketsPerPage);
     
     // Helper pour afficher l'icône de tri
     const renderSortIcon = (field: SortField) => {
@@ -835,7 +846,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#202225]">
-            {sortedTickets.map((ticket) => (
+            {paginatedTickets.map((ticket) => (
               <tr key={ticket._id} className="hover:bg-[#36393F] transition-colors cursor-pointer" onContextMenu={e => handleContextMenu(e, ticket._id)}>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(ticket.status)}`}>
@@ -867,98 +878,107 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             ))}
           </tbody>
         </table>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     );
   };
 
   // Rendu en mode carte (vue actuelle)
-  const renderCardView = () => (
-    <div className="space-y-4">
-      {getFilteredTickets().map((ticket) => (
-        <div key={ticket._id} className="bg-[#36393F] rounded-md p-4 shadow-sm hover:bg-[#444] transition-colors cursor-pointer relative" onContextMenu={e => handleContextMenu(e, ticket._id)}>
-          <div className="flex justify-between items-start mb-1">
-            <div className="flex items-center">
-              {getPriorityIcon(ticket.priority)}
-              <h3 className="text-white font-medium ml-2">{ticket.title}</h3>
-            </div>
-            <div className="flex items-center">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(ticket.status)}`}>
-                {translateStatus(ticket.status)}
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex items-center text-xs text-gray-400 mb-3 ml-7">
-            <Folder className="w-3 h-3 mr-1" />
-            <span>{ticket.category || 'Autre'}{(ticket.subcategory && ticket.subcategory !== 'Non spécifié') ? ` > ${ticket.subcategory}` : ticket.category ? '' : ' > Non spécifié'}</span>
-          </div>
-          
-          <div className="bg-[#2F3136] border border-[#202225] rounded-md p-3 mb-3">
-            <div className="flex items-center mb-2">
-              <MessageCircle className="w-4 h-4 text-gray-400 mr-2" />
-              <span className="text-gray-300 text-xs font-medium">Description du problème</span>
-            </div>
-            <p className="text-white text-sm whitespace-pre-line">{ticket.description}</p>
-            
-            {ticket.attachments && ticket.attachments.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-[#202225]">
+  const renderCardView = () => {
+    const filteredTickets = getFilteredTickets();
+    const totalTickets = filteredTickets.length;
+    const totalPages = Math.ceil(totalTickets / ticketsPerPage);
+    const paginatedTickets = filteredTickets.slice((currentPage - 1) * ticketsPerPage, currentPage * ticketsPerPage);
+    return (
+      <>
+        <div className="space-y-4">
+          {paginatedTickets.map((ticket) => (
+            <div key={ticket._id} className="bg-[#36393F] rounded-md p-4 shadow-sm hover:bg-[#444] transition-colors cursor-pointer relative" onContextMenu={e => handleContextMenu(e, ticket._id)}>
+              <div className="flex justify-between items-start mb-1">
+                <div className="flex items-center">
+                  {getPriorityIcon(ticket.priority)}
+                  <h3 className="text-white font-medium ml-2">{ticket.title}</h3>
+                </div>
+                <div className="flex items-center">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(ticket.status)}`}>{translateStatus(ticket.status)}</span>
+                </div>
+              </div>
+              <div className="flex items-center text-xs text-gray-400 mb-3 ml-7">
+                <Folder className="w-3 h-3 mr-1" />
+                <span>{ticket.category || 'Autre'}{(ticket.subcategory && ticket.subcategory !== 'Non spécifié') ? ` > ${ticket.subcategory}` : ticket.category ? '' : ' > Non spécifié'}</span>
+              </div>
+              <div className="bg-[#2F3136] border border-[#202225] rounded-md p-3 mb-3">
                 <div className="flex items-center mb-2">
-                  <Paperclip className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-gray-300 text-xs font-medium">Pièces jointes ({ticket.attachments.length})</span>
+                  <MessageCircle className="w-4 h-4 text-gray-400 mr-2" />
+                  <span className="text-gray-300 text-xs font-medium">Description du problème</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {ticket.attachments.map((attachment, index) => (
-                    <a 
-                      key={index}
-                      href={`http://localhost:3001${attachment.path}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center bg-[#202225] p-2 rounded hover:bg-[#2D3035] transition-colors"
-                    >
-                      {getAttachmentIcon(attachment.mimetype)}
-                      <div className="ml-2 flex-1 min-w-0">
-                        <div className="text-white text-xs truncate">{attachment.originalname}</div>
-                        <div className="text-gray-400 text-[10px]">{formatFileSize(attachment.size)}</div>
-                      </div>
-                      <Download className="w-3 h-3 text-gray-400" />
-                    </a>
-                  ))}
+                <p className="text-white text-sm whitespace-pre-line">{ticket.description}</p>
+                {ticket.attachments && ticket.attachments.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[#202225]">
+                    <div className="flex items-center mb-2">
+                      <Paperclip className="w-4 h-4 text-gray-400 mr-2" />
+                      <span className="text-gray-300 text-xs font-medium">Pièces jointes ({ticket.attachments.length})</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {ticket.attachments.map((attachment, index) => (
+                        <a 
+                          key={index}
+                          href={`http://localhost:3001${attachment.path}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center bg-[#202225] p-2 rounded hover:bg-[#2D3035] transition-colors"
+                        >
+                          {getAttachmentIcon(attachment.mimetype)}
+                          <div className="ml-2 flex-1 min-w-0">
+                            <div className="text-white text-xs truncate">{attachment.originalname}</div>
+                            <div className="text-gray-400 text-[10px]">{formatFileSize(attachment.size)}</div>
+                          </div>
+                          <Download className="w-3 h-3 text-gray-400" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400 mb-2">
+                <div className="flex items-center">
+                  <User className="w-3 h-3 text-gray-500 mr-1" />
+                  <span className="font-medium mr-1">Créé par:</span>
+                  <span>{ticket.createdBy.firstName} {ticket.createdBy.lastName}</span>
                 </div>
+                <div className="flex items-center">
+                  <Calendar className="w-3 h-3 text-gray-500 mr-1" />
+                  <span className="font-medium mr-1">Créé le:</span>
+                  <span>{formatDate(ticket.createdAt)}</span>
+                </div>
+                <div className="flex items-center">
+                  <Flag className="w-3 h-3 text-gray-500 mr-1" />
+                  <span className="font-medium mr-1">Priorité:</span>
+                  <span>{translatePriority(ticket.priority)}</span>
+                </div>
+                {ticket.targetUser && (
+                  <div className="flex items-center">
+                    <UserCheck className="w-3 h-3 text-gray-500 mr-1" />
+                    <span className="font-medium mr-1">Pour:</span>
+                    <span>{ticket.targetUser.firstName} {ticket.targetUser.lastName}</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400 mb-2">
-            <div className="flex items-center">
-              <User className="w-3 h-3 text-gray-500 mr-1" />
-              <span className="font-medium mr-1">Créé par:</span>
-              <span>{ticket.createdBy.firstName} {ticket.createdBy.lastName}</span>
             </div>
-            
-            <div className="flex items-center">
-              <Calendar className="w-3 h-3 text-gray-500 mr-1" />
-              <span className="font-medium mr-1">Créé le:</span>
-              <span>{formatDate(ticket.createdAt)}</span>
-            </div>
-            
-            <div className="flex items-center">
-              <Flag className="w-3 h-3 text-gray-500 mr-1" />
-              <span className="font-medium mr-1">Priorité:</span>
-              <span>{translatePriority(ticket.priority)}</span>
-            </div>
-            
-            {ticket.targetUser && (
-              <div className="flex items-center">
-                <UserCheck className="w-3 h-3 text-gray-500 mr-1" />
-                <span className="font-medium mr-1">Pour:</span>
-                <span>{ticket.targetUser.firstName} {ticket.targetUser.lastName}</span>
-              </div>
-            )}
-          </div>
+          ))}
         </div>
-      ))}
-    </div>
-  );
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </>
+    );
+  };
 
   const contextMenuElement = contextMenu && (() => {
     const ticket = tickets.find(t => t._id === contextMenu.ticketId);

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import UserDetailsModal from './UserDetailsModal';
+import Pagination from './ui/Pagination';
 
 type UserData = {
   _id: string;
@@ -66,6 +67,9 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -96,6 +100,8 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [contextMenu]);
+
+  useEffect(() => { setCurrentPage(1); }, [sortField, sortDirection, clientTypeFilter, freelancerTypeFilter, users]);
 
   const fetchUsers = async () => {
     try {
@@ -600,6 +606,9 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   // Rendu en mode tableau
   const renderTableView = () => {
     const sortedUsers = sortUsers(filteredUsers);
+    const totalUsers = sortedUsers.length;
+    const totalPages = Math.ceil(totalUsers / usersPerPage);
+    const paginatedUsers = sortedUsers.slice((currentPage - 1) * usersPerPage, currentPage * usersPerPage);
     
     return (
       <div className="w-full">
@@ -629,7 +638,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
               </tr>
             </thead>
             <tbody className="divide-y divide-[#292b2f]">
-              {sortedUsers.map((userData) => (
+              {paginatedUsers.map((userData) => (
                 <tr key={userData._id} className="hover:bg-[#36393F] transition-colors cursor-pointer" onContextMenu={(e) => handleContextMenu(e, userData._id)}>
                   <td className="px-6 py-4 text-sm text-white">
                     {userData.firstName} {userData.lastName}
@@ -657,6 +666,11 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
               ))}
             </tbody>
           </table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
           {/* Menu contextuel */}
           {contextMenu && (() => {
             const user = users.find(u => u._id === contextMenu.userId);
@@ -733,127 +747,139 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   };
 
   // Rendu en mode carte
-  const renderCardView = () => (
-    <div>
-      {renderFilters()}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortUsers(filteredUsers).map((user) => (
-          <div
-            key={user._id}
-            className="bg-[#36393F] rounded-lg p-4 hover:bg-[#40444b] transition-colors cursor-pointer relative"
-            onClick={() => handleCardClick(user._id)}
-            onContextMenu={(e) => handleContextMenu(e, user._id)}
-          >
-            <div className="absolute top-3 right-3">
-              {renderStatus(user)}
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
-                <img
-                  src={getImageUrl(user.profileImage, user._id)}
-                  alt={`${user.firstName} ${user.lastName}`}
-                  className="w-full h-full object-cover"
-                  onError={() => setImageError(prev => ({ ...prev, [user._id]: true }))}
-                />
+  const renderCardView = () => {
+    const sortedUsers = sortUsers(filteredUsers);
+    const totalUsers = sortedUsers.length;
+    const totalPages = Math.ceil(totalUsers / usersPerPage);
+    const paginatedUsers = sortedUsers.slice((currentPage - 1) * usersPerPage, currentPage * usersPerPage);
+    
+    return (
+      <div>
+        {renderFilters()}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {paginatedUsers.map((user) => (
+            <div
+              key={user._id}
+              className="bg-[#36393F] rounded-lg p-4 hover:bg-[#40444b] transition-colors cursor-pointer relative"
+              onClick={() => handleCardClick(user._id)}
+              onContextMenu={(e) => handleContextMenu(e, user._id)}
+            >
+              <div className="absolute top-3 right-3">
+                {renderStatus(user)}
               </div>
-              <div>
-                <h3 className="text-white font-medium">
-                  {user.firstName} {user.lastName}
-                </h3>
-                <div className="mt-1">
-                  {renderRoleTags(user.role, user)}
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
+                  <img
+                    src={getImageUrl(user.profileImage, user._id)}
+                    alt={`${user.firstName} ${user.lastName}`}
+                    className="w-full h-full object-cover"
+                    onError={() => setImageError(prev => ({ ...prev, [user._id]: true }))}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-white font-medium">
+                    {user.firstName} {user.lastName}
+                  </h3>
+                  <div className="mt-1">
+                    {renderRoleTags(user.role, user)}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-3 h-3 text-gray-500" />
+                  <span className="text-gray-300 text-sm truncate">{user.email}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-3 h-3 text-gray-500" />
+                  <span className="text-gray-300 text-sm">{user.city || 'Non renseignée'}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-3 h-3 text-gray-500" />
+                  <span className="text-gray-300 text-sm">Inscrit le {formatDate(user.createdAt)}</span>
                 </div>
               </div>
             </div>
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center space-x-2">
-                <Mail className="w-3 h-3 text-gray-500" />
-                <span className="text-gray-300 text-sm truncate">{user.email}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-3 h-3 text-gray-500" />
-                <span className="text-gray-300 text-sm">{user.city || 'Non renseignée'}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-3 h-3 text-gray-500" />
-                <span className="text-gray-300 text-sm">Inscrit le {formatDate(user.createdAt)}</span>
-              </div>
+          ))}
+        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+        {/* Menu contextuel pour la vue carte */}
+        {contextMenu && (() => {
+          const user = users.find(u => u._id === contextMenu.userId);
+          if (!user) return null;
+          const isFreelancer = user.clientType === 'Freelancer';
+          const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
+          return (
+            <div
+              ref={contextMenuRef}
+              className="fixed z-50 bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
+              style={{ top: contextMenu.y, left: contextMenu.x }}
+              tabIndex={0}
+              onBlur={closeContextMenu}
+              onContextMenu={e => e.preventDefault()}
+            >
+              <button
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                onClick={() => { setSelectedUser(user); closeContextMenu(); }}
+              >
+                <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+                Voir utilisateur
+              </button>
+              {/* Email verification logic */}
+              {!user.isEmailVerified && (
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                  onClick={() => { toggleUserVerification(user._id, true); closeContextMenu(); }}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                  Activer compte
+                </button>
+              )}
+              {user.isEmailVerified && (
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                  onClick={() => { toggleUserVerification(user._id, false); closeContextMenu(); }}
+                >
+                  <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                  Désactiver compte
+                </button>
+              )}
+              {/* Admin verification logic for freelancers */}
+              {isFreelancer && !user.isAdminVerified && (
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                  onClick={() => { toggleUserVerification(user._id, undefined, true); closeContextMenu(); }}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                  Activer admin
+                </button>
+              )}
+              {isFreelancer && user.isAdminVerified && (
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+                  onClick={() => { toggleUserVerification(user._id, undefined, false); closeContextMenu(); }}
+                >
+                  <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                  Désactiver admin
+                </button>
+              )}
+              <button
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+                onClick={() => { deleteUser(user._id); closeContextMenu(); }}
+              >
+                <Trash className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                Supprimer
+              </button>
             </div>
-          </div>
-        ))}
+          );
+        })()}
       </div>
-      {/* Menu contextuel pour la vue carte */}
-      {contextMenu && (() => {
-        const user = users.find(u => u._id === contextMenu.userId);
-        if (!user) return null;
-        const isFreelancer = user.clientType === 'Freelancer';
-        const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
-        return (
-          <div
-            ref={contextMenuRef}
-            className="fixed z-50 bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
-            style={{ top: contextMenu.y, left: contextMenu.x }}
-            tabIndex={0}
-            onBlur={closeContextMenu}
-            onContextMenu={e => e.preventDefault()}
-          >
-            <button
-              className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-              onClick={() => { setSelectedUser(user); closeContextMenu(); }}
-            >
-              <User className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-              Voir utilisateur
-            </button>
-            {/* Email verification logic */}
-            {!user.isEmailVerified && (
-              <button
-                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-                onClick={() => { toggleUserVerification(user._id, true); closeContextMenu(); }}
-              >
-                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                Activer compte
-              </button>
-            )}
-            {user.isEmailVerified && (
-              <button
-                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-                onClick={() => { toggleUserVerification(user._id, false); closeContextMenu(); }}
-              >
-                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                Désactiver compte
-              </button>
-            )}
-            {/* Admin verification logic for freelancers */}
-            {isFreelancer && !user.isAdminVerified && (
-              <button
-                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-                onClick={() => { toggleUserVerification(user._id, undefined, true); closeContextMenu(); }}
-              >
-                <CheckCircle className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
-                Activer admin
-              </button>
-            )}
-            {isFreelancer && user.isAdminVerified && (
-              <button
-                className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-                onClick={() => { toggleUserVerification(user._id, undefined, false); closeContextMenu(); }}
-              >
-                <XCircle className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-                Désactiver admin
-              </button>
-            )}
-            <button
-              className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
-              onClick={() => { deleteUser(user._id); closeContextMenu(); }}
-            >
-              <Trash className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-              Supprimer
-            </button>
-          </div>
-        );
-      })()}
-    </div>
-  );
+    );
+  };
 
   // Rendu du menu popup (à rendre une seule fois en dehors du tableau)
   const renderDropdownMenu = () => {

@@ -3,6 +3,7 @@ import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, C
 import { useAuth } from '../contexts/AuthContext';
 import Tooltip from './Tooltip';
 import FreelancerDetailsModal from './FreelancerDetailsModal';
+import Pagination from './ui/Pagination';
 
 type FreelancerData = {
   _id: string;
@@ -50,6 +51,8 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   const [freelancerTypeFilter, setFreelancerTypeFilter] = useState<string | null>(null);
   const [selectedFreelancer, setSelectedFreelancer] = useState<FreelancerData | null>(null);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const freelancersPerPage = 10;
 
   useEffect(() => {
     fetchFreelancers();
@@ -114,6 +117,8 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       window.removeEventListener('resize', positionDropdowns);
     };
   }, [dropdownOpen]);
+
+  useEffect(() => { setCurrentPage(1); }, [sortField, sortDirection, freelancerTypeFilter, freelancers]);
 
   const fetchFreelancers = async () => {
     try {
@@ -601,6 +606,9 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   // Rendu en mode tableau
   const renderTableView = () => {
     const sortedFreelancers = sortFreelancers(filteredFreelancers);
+    const totalFreelancers = sortedFreelancers.length;
+    const totalPages = Math.ceil(totalFreelancers / freelancersPerPage);
+    const paginatedFreelancers = sortedFreelancers.slice((currentPage - 1) * freelancersPerPage, currentPage * freelancersPerPage);
     
     // Helper pour afficher l'icône de tri
     const renderSortIcon = (field: SortField) => {
@@ -687,7 +695,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
               </tr>
             </thead>
             <tbody>
-              {sortedFreelancers.map((freelancer) => (
+              {paginatedFreelancers.map((freelancer) => (
                 <tr 
                   key={freelancer._id} 
                   className="hover:bg-[#36393F] transition-colors cursor-pointer group"
@@ -729,88 +737,105 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
               ))}
             </tbody>
           </table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
     );
   };
 
   // Rendu en mode carte
-  const renderCardView = () => (
-    <div>
-      {renderFilters()}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortFreelancers(filteredFreelancers).map((freelancer) => (
-          <div 
-            key={freelancer._id} 
-            className="bg-[#36393F] rounded-md overflow-hidden shadow-sm relative cursor-pointer hover:shadow-lg hover:bg-[#40444b] transition-all duration-150 group"
-            onContextMenu={(e) => handleContextMenu(e, freelancer._id)}
-          >
-            <div className="absolute top-3 right-3 flex space-x-2">
-              {renderStatus(freelancer)}
-            </div>
-            
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
-                    <img 
-                      src={getImageUrl(freelancer.profileImage, freelancer._id)} 
-                      alt={`${freelancer.firstName} ${freelancer.lastName}`}
-                      className="w-full h-full object-cover"
-                      onError={() => setImageError(prev => ({ ...prev, [freelancer._id]: true }))}
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-white font-medium">{freelancer.firstName} {freelancer.lastName}</h3>
-                    <div className="flex space-x-1 mt-1">
-                      {freelancer.role === 'freelancer_admin' ? (
-                        <>
-                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
-                            Freelancer
+  const renderCardView = () => {
+    const sortedFreelancers = sortFreelancers(filteredFreelancers);
+    const totalFreelancers = sortedFreelancers.length;
+    const totalPages = Math.ceil(totalFreelancers / freelancersPerPage);
+    const paginatedFreelancers = sortedFreelancers.slice((currentPage - 1) * freelancersPerPage, currentPage * freelancersPerPage);
+    
+    return (
+      <div>
+        {renderFilters()}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {paginatedFreelancers.map((freelancer) => (
+            <div 
+              key={freelancer._id} 
+              className="bg-[#36393F] rounded-md overflow-hidden shadow-sm relative cursor-pointer hover:shadow-lg hover:bg-[#40444b] transition-all duration-150 group"
+              onContextMenu={(e) => handleContextMenu(e, freelancer._id)}
+            >
+              <div className="absolute top-3 right-3 flex space-x-2">
+                {renderStatus(freelancer)}
+              </div>
+              
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
+                      <img 
+                        src={getImageUrl(freelancer.profileImage, freelancer._id)} 
+                        alt={`${freelancer.firstName} ${freelancer.lastName}`}
+                        className="w-full h-full object-cover"
+                        onError={() => setImageError(prev => ({ ...prev, [freelancer._id]: true }))}
+                      />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-white font-medium">{freelancer.firstName} {freelancer.lastName}</h3>
+                      <div className="flex space-x-1 mt-1">
+                        {freelancer.role === 'freelancer_admin' ? (
+                          <>
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
+                              Freelancer
+                            </span>
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                              Admin
+                            </span>
+                          </>
+                        ) : (
+                          <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                            freelancer.role === 'admin' ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-500'
+                          }`}>
+                            {freelancer.role === 'admin' ? 'Admin' : 'Freelancer'}
                           </span>
-                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
-                            Admin
-                          </span>
-                        </>
-                      ) : (
-                        <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
-                          freelancer.role === 'admin' ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-500'
-                        }`}>
-                          {freelancer.role === 'admin' ? 'Admin' : 'Freelancer'}
-                        </span>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center text-gray-300">
-                  <Mail className="w-3 h-3 text-gray-500 mr-2" />
-                  <span className="truncate">{freelancer.email}</span>
-                </div>
                 
-                <div className="flex items-center text-gray-300">
-                  <Phone className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>{freelancer.phone}</span>
-                </div>
-                
-                <div className="flex items-center text-gray-300">
-                  <MapPin className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>{freelancer.city}</span>
-                </div>
-                
-                <div className="flex items-center text-gray-300">
-                  <Calendar className="w-3 h-3 text-gray-500 mr-2" />
-                  <span>Inscrit le {formatDate(freelancer.createdAt)}</span>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center text-gray-300">
+                    <Mail className="w-3 h-3 text-gray-500 mr-2" />
+                    <span className="truncate">{freelancer.email}</span>
+                  </div>
+                  
+                  <div className="flex items-center text-gray-300">
+                    <Phone className="w-3 h-3 text-gray-500 mr-2" />
+                    <span>{freelancer.phone}</span>
+                  </div>
+                  
+                  <div className="flex items-center text-gray-300">
+                    <MapPin className="w-3 h-3 text-gray-500 mr-2" />
+                    <span>{freelancer.city}</span>
+                  </div>
+                  
+                  <div className="flex items-center text-gray-300">
+                    <Calendar className="w-3 h-3 text-gray-500 mr-2" />
+                    <span>Inscrit le {formatDate(freelancer.createdAt)}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
-    </div>
-  );
+    );
+  };
 
   // --- Début du rendu du menu contextuel global ---
   const contextMenuElement = contextMenu && (() => {
