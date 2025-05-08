@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown, Trash2, Hand, History, RefreshCw, CheckSquare } from 'lucide-react';
+import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown, Trash2, Hand, History, RefreshCw, CheckSquare, Circle, Search, Archive } from 'lucide-react';
 import { Modal } from './ui/Modal';
 import FreelancerDetailsModal from './FreelancerDetailsModal';
 
@@ -485,19 +485,28 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         className={`px-4 py-2 rounded-t-md text-sm font-bold transition-colors shadow-md border-2 ${activeTab === 'tous' ? 'bg-[#7289DA] text-white border-[#5865F2]' : 'bg-[#36393F] text-gray-200 border-[#23272A] hover:bg-[#444]'}`}
         onClick={() => { setActiveTab('tous'); closeContextMenu(); }}
       >
-        Tous
+        <div className="flex items-center">
+          <List className="w-4 h-4 mr-2" />
+          Tous
+        </div>
       </button>
       <button
         className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'libre' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
         onClick={() => { setActiveTab('libre'); closeContextMenu(); }}
       >
-        {translateStatus('libre')}
+        <div className="flex items-center">
+          <Circle className="w-4 h-4 mr-2" />
+          {translateStatus('libre')}
+        </div>
       </button>
       <button
         className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'diagnostic' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
         onClick={() => { setActiveTab('diagnostic'); closeContextMenu(); }}
       >
-        {translateStatus('diagnostic')}
+        <div className="flex items-center">
+          <Search className="w-4 h-4 mr-2" />
+          {translateStatus('diagnostic')}
+        </div>
       </button>
       {/* Groupe En ligne / À domicile */}
       <div className="flex rounded-t-md overflow-hidden border border-[#36393F] bg-[#23272A]">
@@ -505,13 +514,19 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'online' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
           onClick={() => { setActiveTab('online'); closeContextMenu(); }}
         >
-          {translateStatus('online')}
+          <div className="flex items-center">
+            <MessageCircle className="w-4 h-4 mr-2" />
+            {translateStatus('online')}
+          </div>
         </button>
         <button
           className={`px-4 py-2 text-sm font-medium transition-colors border-l border-[#36393F] ${activeTab === 'onsite' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
           onClick={() => { setActiveTab('onsite'); closeContextMenu(); }}
         >
-          {translateStatus('onsite')}
+          <div className="flex items-center">
+            <User className="w-4 h-4 mr-2" />
+            {translateStatus('onsite')}
+          </div>
         </button>
       </div>
       {/* Groupe Échec / Résolu */}
@@ -520,20 +535,29 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'failed' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
           onClick={() => { setActiveTab('failed'); closeContextMenu(); }}
         >
-          {translateStatus('failed')}
+          <div className="flex items-center">
+            <X className="w-4 h-4 mr-2" />
+            {translateStatus('failed')}
+          </div>
         </button>
         <button
           className={`px-4 py-2 text-sm font-medium transition-colors border-l border-[#36393F] ${activeTab === 'resolved' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
           onClick={() => { setActiveTab('resolved'); closeContextMenu(); }}
         >
-          {translateStatus('resolved')}
+          <div className="flex items-center">
+            <CheckCircle className="w-4 h-4 mr-2" />
+            {translateStatus('resolved')}
+          </div>
         </button>
       </div>
       <button
         className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'closed' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
         onClick={() => { setActiveTab('closed'); closeContextMenu(); }}
       >
-        {translateStatus('closed')}
+        <div className="flex items-center">
+          <Archive className="w-4 h-4 mr-2" />
+          {translateStatus('closed')}
+        </div>
       </button>
     </div>
   );
