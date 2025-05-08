@@ -478,87 +478,155 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     }
   }, [contextMenu]);
 
+  // Fonction pour compter les tickets par statut
+  const getTicketCount = (status: string) => {
+    if (!user) return 0;
+    
+    if (showAdminView && (user.role === 'admin' || user.role === 'fondateur')) {
+      if (status === 'tous') {
+        return tickets.length;
+      }
+      return tickets.filter(ticket => ticket.status === status).length;
+    }
+    
+    if (status === 'tous') {
+      return tickets.filter(ticket => 
+        ticket.status === 'libre' || 
+        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
+        (ticket.createdBy && ticket.createdBy._id === user._id)
+      ).length;
+    }
+    
+    return tickets.filter(ticket => 
+      ticket.status === status && 
+      (
+        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
+        (ticket.createdBy && ticket.createdBy._id === user._id)
+      )
+    ).length;
+  };
+
   // Barre d'onglets pour filtrer par statut
   const renderTabs = () => (
     <div className="flex space-x-2 mb-6 items-end">
-      <button
-        className={`px-4 py-2 rounded-t-md text-sm font-bold transition-colors shadow-md border-2 ${activeTab === 'tous' ? 'bg-[#7289DA] text-white border-[#5865F2]' : 'bg-[#36393F] text-gray-200 border-[#23272A] hover:bg-[#444]'}`}
-        onClick={() => { setActiveTab('tous'); closeContextMenu(); }}
-      >
-        <div className="flex items-center">
-          <List className="w-4 h-4 mr-2" />
-          Tous
-        </div>
-      </button>
-      <button
-        className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'libre' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
-        onClick={() => { setActiveTab('libre'); closeContextMenu(); }}
-      >
-        <div className="flex items-center">
-          <Circle className="w-4 h-4 mr-2" />
-          {translateStatus('libre')}
-        </div>
-      </button>
-      <button
-        className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'diagnostic' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
-        onClick={() => { setActiveTab('diagnostic'); closeContextMenu(); }}
-      >
-        <div className="flex items-center">
-          <Search className="w-4 h-4 mr-2" />
-          {translateStatus('diagnostic')}
-        </div>
-      </button>
+      <div className="relative inline-block">
+        <button
+          className={`px-4 py-2 rounded-t-md text-sm font-bold transition-colors shadow-md border-2 ${activeTab === 'tous' ? 'bg-[#7289DA] text-white border-[#5865F2]' : 'bg-[#36393F] text-gray-200 border-[#23272A] hover:bg-[#444]'}`}
+          onClick={() => { setActiveTab('tous'); closeContextMenu(); }}
+        >
+          <div className="flex items-center">
+            <List className="w-4 h-4 mr-2" />
+            Tous
+          </div>
+        </button>
+        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+          {getTicketCount('tous')}
+        </span>
+      </div>
+      <div className="relative inline-block">
+        <button
+          className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'libre' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
+          onClick={() => { setActiveTab('libre'); closeContextMenu(); }}
+        >
+          <div className="flex items-center">
+            <Circle className="w-4 h-4 mr-2" />
+            {translateStatus('libre')}
+          </div>
+        </button>
+        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+          {getTicketCount('libre')}
+        </span>
+      </div>
+      <div className="relative inline-block">
+        <button
+          className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'diagnostic' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
+          onClick={() => { setActiveTab('diagnostic'); closeContextMenu(); }}
+        >
+          <div className="flex items-center">
+            <Search className="w-4 h-4 mr-2" />
+            {translateStatus('diagnostic')}
+          </div>
+        </button>
+        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+          {getTicketCount('diagnostic')}
+        </span>
+      </div>
       {/* Groupe En ligne / À domicile */}
-      <div className="flex rounded-t-md overflow-hidden border border-[#36393F] bg-[#23272A]">
-        <button
-          className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'online' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
-          onClick={() => { setActiveTab('online'); closeContextMenu(); }}
-        >
-          <div className="flex items-center">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            {translateStatus('online')}
-          </div>
-        </button>
-        <button
-          className={`px-4 py-2 text-sm font-medium transition-colors border-l border-[#36393F] ${activeTab === 'onsite' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
-          onClick={() => { setActiveTab('onsite'); closeContextMenu(); }}
-        >
-          <div className="flex items-center">
-            <User className="w-4 h-4 mr-2" />
-            {translateStatus('onsite')}
-          </div>
-        </button>
+      <div className="flex rounded-t-md overflow-visible border border-[#36393F] bg-[#23272A]">
+        <div className="relative inline-block">
+          <button
+            className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'online' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
+            onClick={() => { setActiveTab('online'); closeContextMenu(); }}
+          >
+            <div className="flex items-center">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              {translateStatus('online')}
+            </div>
+          </button>
+          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+            {getTicketCount('online')}
+          </span>
+        </div>
+        <div className="relative inline-block">
+          <button
+            className={`px-4 py-2 text-sm font-medium transition-colors border-l border-[#36393F] ${activeTab === 'onsite' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
+            onClick={() => { setActiveTab('onsite'); closeContextMenu(); }}
+          >
+            <div className="flex items-center">
+              <User className="w-4 h-4 mr-2" />
+              {translateStatus('onsite')}
+            </div>
+          </button>
+          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+            {getTicketCount('onsite')}
+          </span>
+        </div>
       </div>
       {/* Groupe Échec / Résolu */}
-      <div className="flex rounded-t-md overflow-hidden border border-[#36393F] bg-[#23272A] ml-2">
-        <button
-          className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'failed' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
-          onClick={() => { setActiveTab('failed'); closeContextMenu(); }}
-        >
-          <div className="flex items-center">
-            <X className="w-4 h-4 mr-2" />
-            {translateStatus('failed')}
-          </div>
-        </button>
-        <button
-          className={`px-4 py-2 text-sm font-medium transition-colors border-l border-[#36393F] ${activeTab === 'resolved' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
-          onClick={() => { setActiveTab('resolved'); closeContextMenu(); }}
-        >
-          <div className="flex items-center">
-            <CheckCircle className="w-4 h-4 mr-2" />
-            {translateStatus('resolved')}
-          </div>
-        </button>
-      </div>
-      <button
-        className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'closed' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
-        onClick={() => { setActiveTab('closed'); closeContextMenu(); }}
-      >
-        <div className="flex items-center">
-          <Archive className="w-4 h-4 mr-2" />
-          {translateStatus('closed')}
+      <div className="flex rounded-t-md overflow-visible border border-[#36393F] bg-[#23272A] ml-2">
+        <div className="relative inline-block">
+          <button
+            className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'failed' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
+            onClick={() => { setActiveTab('failed'); closeContextMenu(); }}
+          >
+            <div className="flex items-center">
+              <X className="w-4 h-4 mr-2" />
+              {translateStatus('failed')}
+            </div>
+          </button>
+          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+            {getTicketCount('failed')}
+          </span>
         </div>
-      </button>
+        <div className="relative inline-block">
+          <button
+            className={`px-4 py-2 text-sm font-medium transition-colors border-l border-[#36393F] ${activeTab === 'resolved' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
+            onClick={() => { setActiveTab('resolved'); closeContextMenu(); }}
+          >
+            <div className="flex items-center">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {translateStatus('resolved')}
+            </div>
+          </button>
+          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+            {getTicketCount('resolved')}
+          </span>
+        </div>
+      </div>
+      <div className="relative inline-block">
+        <button
+          className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'closed' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
+          onClick={() => { setActiveTab('closed'); closeContextMenu(); }}
+        >
+          <div className="flex items-center">
+            <Archive className="w-4 h-4 mr-2" />
+            {translateStatus('closed')}
+          </div>
+        </button>
+        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+          {getTicketCount('closed')}
+        </span>
+      </div>
     </div>
   );
 
@@ -865,7 +933,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     return (
       <div
         ref={contextMenuRef}
-        className="fixed z-[9999] bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
+        className="fixed z-[999] bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
         style={{ top: contextMenu.y, left: contextMenu.x }}
         tabIndex={0}
         onBlur={closeContextMenu}
