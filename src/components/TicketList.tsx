@@ -506,9 +506,30 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     ).length;
   };
 
-  // Compte le nombre total de tickets en cours (hors fermés et hors libres)
+  // Compte le nombre total de tickets en cours (hors fermés et hors libres), selon le mode admin ou non
   const getTotalOpenTickets = () => {
-    return tickets.filter(ticket => ticket.status !== 'closed' && ticket.status !== 'libre').length;
+    if (!user) return 0;
+    if (
+      showAdminView &&
+      (
+        (Array.isArray(user.role)
+          ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
+          : typeof user.role === 'string' &&
+            (user.role.includes('admin') || user.role.includes('fondateur'))
+        )
+      )
+    ) {
+      return tickets.filter(ticket => ticket.status !== 'closed' && ticket.status !== 'libre').length;
+    }
+    // Sinon, tickets accessibles à l'utilisateur (hors closed/libre)
+    return tickets.filter(ticket =>
+      ticket.status !== 'closed' &&
+      ticket.status !== 'libre' &&
+      (
+        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
+        (ticket.createdBy && ticket.createdBy._id === user._id)
+      )
+    ).length;
   };
 
   // Barre d'onglets pour filtrer par statut
@@ -635,7 +656,16 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const getFilteredTickets = () => {
     if (!user) return [];
     // Mode administration : filtrage par statut mais pas par assigné
-    if (showAdminView && (user.role === 'admin' || user.role === 'fondateur')) {
+    if (
+      showAdminView &&
+      (
+        (Array.isArray(user.role)
+          ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
+          : typeof user.role === 'string' &&
+            (user.role.includes('admin') || user.role.includes('fondateur'))
+        )
+      )
+    ) {
       if (activeTab === 'tous') {
         return tickets;
       }
@@ -1031,7 +1061,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             Voir le freelancer
           </button>
         )}
-        {showAdminView && user && (user.role === 'admin' || user.role === 'fondateur') && (
+        {showAdminView && user && (
           <button
             className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
             onClick={() => { deleteTicket(ticket._id); closeContextMenu(); }}
@@ -1455,18 +1485,24 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         <div className="text-sm text-gray-300 bg-[#23272A] border-2 border-[#5865F2] rounded-lg px-3 py-1 font-semibold">
           Tickets en cours : {getTotalOpenTickets()}
         </div>
-        {user && (user.role === 'admin' || user.role === 'fondateur') && (
-          <div className="flex justify-end">
-            <label className="flex items-center cursor-pointer select-none">
-              <span className="mr-2 text-sm font-medium text-red-400">Administration</span>
-              <input
-                type="checkbox"
-                checked={showAdminView}
-                onChange={e => handleAdminViewChange(e.target.checked)}
-                className="form-checkbox h-5 w-5 text-red-500 rounded focus:ring-0 border-gray-400 bg-[#23272A]"
-              />
-            </label>
-          </div>
+        {user && (
+          (Array.isArray(user.role)
+            ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
+            : typeof user.role === 'string' &&
+              (user.role.includes('admin') || user.role.includes('fondateur'))
+          ) && (
+            <div className="flex justify-end">
+              <label className="flex items-center cursor-pointer select-none">
+                <span className="mr-2 text-sm font-medium text-red-400">Administration</span>
+                <input
+                  type="checkbox"
+                  checked={showAdminView}
+                  onChange={e => handleAdminViewChange(e.target.checked)}
+                  className="form-checkbox h-5 w-5 text-red-500 rounded focus:ring-0 border-gray-400 bg-[#23272A]"
+                />
+              </label>
+            </div>
+          )
         )}
       </div>
     </div>
