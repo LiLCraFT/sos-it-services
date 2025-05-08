@@ -554,9 +554,21 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'libre' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
           onClick={() => { setActiveTab('libre'); closeContextMenu(); }}
         >
-          <div className="flex items-center">
-            <Circle className="w-4 h-4 mr-2" />
-            {translateStatus('libre')}
+          <div className="flex items-center justify-center h-6">
+            {(user && (
+              (Array.isArray(user.role)
+                ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
+                : typeof user.role === 'string' &&
+                  (user.role.includes('admin') || user.role.includes('fondateur'))
+              )
+            )) ? (
+              <>
+                <Circle className="w-4 h-4 mr-2" />
+                {translateStatus('libre')}
+              </>
+            ) : (
+              <Clock className={`w-5 h-5 ${activeTab === 'libre' ? 'text-white' : 'text-[#5865F2]'}`} />
+            )}
           </div>
         </button>
         <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
@@ -1470,7 +1482,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   }
 
   return (
-    <div>
+    <div className="relative min-h-[500px]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           {/* Switch cartes/tableau ici si existant */}
@@ -1481,10 +1493,18 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
       {contextMenuElement}
       <TicketDetailsModal ticket={modalTicket} isOpen={showTicketModal} onClose={() => setShowTicketModal(false)} />
       <FreelancerDetailsModal freelancer={modalFreelancer} isOpen={showFreelancerModal} onClose={() => setShowFreelancerModal(false)} />
-      <div className="flex justify-between items-end mt-8">
-        <div className="text-sm text-gray-300 bg-[#23272A] border-2 border-[#5865F2] rounded-lg px-3 py-1 font-semibold">
-          Tickets en cours : {getTotalOpenTickets()}
-        </div>
+      <div className="absolute bottom-0 left-0 w-full flex justify-between items-end px-4 pb-4 z-10">
+        {(user && (
+          (Array.isArray(user.role)
+            ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
+            : typeof user.role === 'string' &&
+              (user.role.includes('admin') || user.role.includes('fondateur'))
+          )
+        )) && (
+          <div className="text-sm text-gray-300 bg-[#23272A] border-2 border-[#5865F2] rounded-lg px-3 py-1 font-semibold">
+            Tickets en cours : {getTotalOpenTickets()}
+          </div>
+        )}
         {user && (
           (Array.isArray(user.role)
             ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
