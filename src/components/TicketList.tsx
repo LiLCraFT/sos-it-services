@@ -953,6 +953,35 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Composant modale pour afficher les détails d'un ticket
   const TicketDetailsModal: React.FC<{ ticket: Ticket | null; isOpen: boolean; onClose: () => void }> = ({ ticket, isOpen, onClose }) => {
     if (!ticket) return null;
+    
+    // Vérifier les permissions pour les actions
+    const canDoDiagnostic = () => {
+      if (!user || !ticket) return false;
+      const roles = Array.isArray(user.role) ? user.role : (typeof user.role === 'string' ? user.role.split(',') : []);
+      const isFounder = roles.includes('fondateur');
+      const isFreelancer = roles.some(r => r.includes('freelancer'));
+      return ticket.status === 'libre' && (isFounder || (isFreelancer && ticket.assignedTo && ticket.assignedTo._id === user._id));
+    };
+    
+    const canChangeStatus = () => {
+      if (!user || !ticket) return false;
+      const roles = Array.isArray(user.role) ? user.role : (typeof user.role === 'string' ? user.role.split(',') : []);
+      const isFounder = roles.includes('fondateur');
+      const isFreelancer = roles.some(r => r.includes('freelancer'));
+      return (ticket.status === 'diagnostic' || ticket.status === 'online' || ticket.status === 'onsite') && 
+             (isFounder || (isFreelancer && ticket.assignedTo && ticket.assignedTo._id === user._id));
+    };
+    
+    const canCloseTicket = () => {
+      if (!user || !ticket) return false;
+      return (ticket.status === 'resolved' || ticket.status === 'failed') && user.role === 'user';
+    };
+    
+    const canDeleteTicket = () => {
+      if (!user || !ticket) return false;
+      return showAdminView && (user.role === 'admin' || user.role === 'fondateur');
+    };
+    
     return (
       <Modal isOpen={isOpen} onClose={onClose} title={`Détails du ticket`} maxWidth="lg">
         <div className="space-y-6">
@@ -1009,6 +1038,97 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               </div>
             </div>
           )}
+          
+          {/* Section des boutons d'action */}
+          <div className="flex flex-wrap gap-2">
+            {canDoDiagnostic() && (
+              <button
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center text-sm"
+                onClick={() => { doDiagnostic(ticket); onClose(); }}
+                disabled={updateLoading[ticket._id]}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Faire le diagnostic
+              </button>
+            )}
+            
+            {ticket.status === 'diagnostic' && canChangeStatus() && (
+              <>
+                <button
+                  className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md flex items-center text-sm"
+                  onClick={() => { updateTicketStatus(ticket._id, 'online'); onClose(); }}
+                  disabled={updateLoading[ticket._id]}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Intervention en ligne
+                </button>
+                <button
+                  className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md flex items-center text-sm"
+                  onClick={() => { updateTicketStatus(ticket._id, 'onsite'); onClose(); }}
+                  disabled={updateLoading[ticket._id]}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Intervention à domicile
+                </button>
+              </>
+            )}
+            
+            {(ticket.status === 'online' || ticket.status === 'onsite') && canChangeStatus() && (
+              <>
+                <button
+                  className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center text-sm"
+                  onClick={() => { updateTicketStatus(ticket._id, 'failed'); onClose(); }}
+                  disabled={updateLoading[ticket._id]}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Échec du ticket
+                </button>
+                <button
+                  className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center text-sm"
+                  onClick={() => { updateTicketStatus(ticket._id, 'resolved'); onClose(); }}
+                  disabled={updateLoading[ticket._id]}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Ticket résolu
+                </button>
+              </>
+            )}
+            
+            {canCloseTicket() && (
+              <button
+                className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center text-sm"
+                onClick={() => { setCloseModalTicket(ticket); setShowCloseModal(true); onClose(); }}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Fermer le ticket
+              </button>
+            )}
+            
+            {showAdminView && ticket.assignedTo && (
+              <button
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md flex items-center text-sm"
+                onClick={() => { setModalFreelancer(ticket.assignedTo); setShowFreelancerModal(true); onClose(); }}
+              >
+                <UserCheck className="w-4 h-4 mr-2" />
+                Voir le freelancer
+              </button>
+            )}
+            
+            {canDeleteTicket() && (
+              <button
+                className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center text-sm"
+                onClick={() => { 
+                  if (window.confirm('Êtes-vous sûr de vouloir supprimer ce ticket ? Cette action est irréversible.')) {
+                    deleteTicket(ticket._id);
+                    onClose();
+                  }
+                }}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Supprimer le ticket
+              </button>
+            )}
+          </div>
           
           {/* Section Audit Trail */}
           {ticket.auditTrail && ticket.auditTrail.length > 0 && (
