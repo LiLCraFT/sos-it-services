@@ -44,11 +44,21 @@ export async function GET(req: NextRequest) {
 
     let query = {};
     
-    // Si l'utilisateur est admin, fondateur, freelancer_admin ou freelancer, il peut voir tous les tickets
-    if (user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin' || user.role === 'freelancer') {
+    // Si l'utilisateur est admin ou fondateur, il peut voir tous les tickets
+    if (user.role === 'admin' || user.role === 'fondateur') {
       query = {};
-      console.log('Admin/Fondateur/Freelancer query:', query);
+      console.log('Admin/Fondateur query:', query);
     } 
+    // Si l'utilisateur est freelancer_admin, il peut voir tous les tickets
+    else if (user.role === 'freelancer_admin') {
+      query = {};
+      console.log('Freelancer admin query:', query);
+    }
+    // Si l'utilisateur est freelancer, il peut voir les tickets qui lui sont assignés
+    else if (user.role === 'freelancer') {
+      query = { assignedTo: userId };
+      console.log('Freelancer query:', query);
+    }
     // Pour les autres utilisateurs
     else if (targetUserId) {
       query = { targetUser: targetUserId };

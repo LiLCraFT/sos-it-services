@@ -31,7 +31,7 @@ export interface ITicket extends Document {
   targetUser?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
-  feedback: {
+  feedback?: {
     description: string;
     rating: number;
     date: Date;
