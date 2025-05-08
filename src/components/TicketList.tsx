@@ -778,7 +778,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
 
   // Rendu en mode tableau
   const renderTableView = () => {
-    const sortedTickets = sortTickets(getFilteredTickets());
+    const filteredTickets = getFilteredTickets();
+    const sortedTickets = sortTickets(filteredTickets);
     const totalTickets = sortedTickets.length;
     const totalPages = Math.ceil(totalTickets / ticketsPerPage);
     const paginatedTickets = sortedTickets.slice((currentPage - 1) * ticketsPerPage, currentPage * ticketsPerPage);
@@ -790,6 +791,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         <ChevronUp className="w-4 h-4 ml-1" /> : 
         <ChevronDown className="w-4 h-4 ml-1" />;
     };
+
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
 
     return (
       <div className="overflow-x-auto">
@@ -890,9 +893,10 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   // Rendu en mode carte (vue actuelle)
   const renderCardView = () => {
     const filteredTickets = getFilteredTickets();
-    const totalTickets = filteredTickets.length;
+    const sortedTickets = sortTickets(filteredTickets);
+    const totalTickets = sortedTickets.length;
     const totalPages = Math.ceil(totalTickets / ticketsPerPage);
-    const paginatedTickets = filteredTickets.slice((currentPage - 1) * ticketsPerPage, currentPage * ticketsPerPage);
+    const paginatedTickets = sortedTickets.slice((currentPage - 1) * ticketsPerPage, currentPage * ticketsPerPage);
     return (
       <>
         <div className="space-y-4">
