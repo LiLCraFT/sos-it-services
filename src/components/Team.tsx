@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from './ui/Card';
-import { Github, Linkedin, Twitter, User, Users, Award, BadgeCheck } from 'lucide-react';
+import { Github, Linkedin, Twitter, User, Users, Award, BadgeCheck, Star } from 'lucide-react';
 
 // URL de l'image par défaut
 const DEFAULT_IMAGE = 'http://localhost:3001/api/default-image';
@@ -12,6 +12,7 @@ interface TeamMember {
   role: string;
   profileImage: string;
   email: string;
+  rating?: number;
   social?: {
     twitter?: string;
     linkedin?: string;
@@ -19,7 +20,7 @@ interface TeamMember {
   };
 }
 
-const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImage, social = {} }) => {
+const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImage, social = {}, rating }) => {
   // Fonction pour construire l'URL de l'image
   const getImageUrl = (path: string) => {
     console.log('getImageUrl appelé avec path:', path);
@@ -145,6 +146,20 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
           <p className="text-[#5865F2] mb-2">{role === 'fondateur' ? 'Fondateur' : 
                                             role === 'freelancer' || role === 'freelancer_admin' ? 'Freelancer' : 
                                             role === 'admin' ? 'Administrateur' : 'Expert'}</p>
+          {rating !== undefined && rating > 0 && (
+            <div className="flex items-center mt-1">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${star <= Math.round(rating) ? 'text-yellow-400' : 'text-gray-400'} ${star === 1 ? '' : 'ml-1'}`}
+                    fill={star <= Math.round(rating) ? 'currentColor' : 'none'}
+                  />
+                ))}
+              </div>
+              <span className="text-yellow-400 ml-2">{rating.toFixed(1)}</span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -194,13 +209,39 @@ const Team: React.FC = () => {
           members = [];
         }
 
+        // Mettre à jour les notes des freelancers
+        for (const member of members) {
+          if (member.role === 'freelancer' || member.role === 'freelancer_admin') {
+            try {
+              console.log(`Récupération de la note pour ${member.firstName} ${member.lastName} (${member._id})`);
+              const ratingResponse = await fetch(`http://localhost:3001/api/users/${member._id}/rating`, {
+                headers: {
+                  'Authorization': token ? `Bearer ${token}` : '',
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              if (ratingResponse.ok) {
+                const ratingData = await ratingResponse.json();
+                console.log(`Note reçue pour ${member.firstName} ${member.lastName}:`, ratingData);
+                member.rating = ratingData.rating;
+              } else {
+                console.error(`Erreur lors de la récupération de la note pour ${member.firstName} ${member.lastName}:`, await ratingResponse.text());
+              }
+            } catch (error) {
+              console.error(`Erreur lors de la récupération de la note pour ${member.firstName} ${member.lastName}:`, error);
+            }
+          }
+        }
+
         // Log détaillé de chaque membre
         members.forEach((member, index) => {
           console.log(`Membre ${index + 1}:`, {
             id: member._id,
             nom: `${member.firstName} ${member.lastName}`,
             role: member.role,
-            profileImage: member.profileImage
+            profileImage: member.profileImage,
+            rating: member.rating
           });
         });
 

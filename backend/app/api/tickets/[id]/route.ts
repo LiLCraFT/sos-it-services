@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Ticket from '@/models/Ticket';
-import User from '@/models/User';
+import User, { IUser } from '@/models/User';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 
 // Helper function to get user ID from JWT token
 const getUserIdFromToken = (req: NextRequest): string | null => {
@@ -156,6 +157,16 @@ export async function PUT(
         rating: data.rating || 5,
         date: new Date()
       };
+
+      try {
+        // Mettre à jour la note moyenne du freelancer
+        if (ticket.assignedTo) {
+          const averageRating = await User.calculateAverageRating(ticket.assignedTo.toString());
+          await User.findByIdAndUpdate(ticket.assignedTo, { rating: averageRating });
+        }
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour de la note moyenne:', error);
+      }
     }
 
     // Ajouter l'événement d'audit

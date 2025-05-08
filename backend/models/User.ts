@@ -28,6 +28,7 @@ export interface IUser extends Document {
   isAdminVerified: boolean;
   emailVerificationToken: string;
   emailVerificationTokenExpires: Date;
+  rating?: number;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -121,6 +122,12 @@ const UserSchema = new Schema<IUser>(
       type: String,
       default: '/images/default-profile.png', // Image de profil par défaut
     },
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5
+    }
   },
   {
     timestamps: true,
@@ -143,6 +150,22 @@ UserSchema.pre('save', async function(this: IUser, next: mongoose.CallbackWithou
 // Méthode pour comparer les mots de passe
 UserSchema.methods.comparePassword = async function(this: IUser, candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Méthode statique pour calculer la moyenne des notes d'un freelancer
+UserSchema.statics.calculateAverageRating = async function(userId: string): Promise<number> {
+  const Ticket = mongoose.model('Ticket');
+  const tickets = await Ticket.find({ 
+    assignedTo: userId,
+    'feedback.rating': { $exists: true }
+  });
+
+  if (tickets.length === 0) {
+    return 0;
+  }
+
+  const totalRating = tickets.reduce((sum, ticket) => sum + (ticket.feedback?.rating || 0), 0);
+  return totalRating / tickets.length;
 };
 
 // Créer un nouveau modèle (après avoir supprimé l'ancien si présent)
