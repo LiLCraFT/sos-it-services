@@ -993,51 +993,65 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-200">Sous-catégorie : {ticket.subcategory}</span>
             )}
           </div>
-          <div>
-            <h4 className="text-sm font-semibold text-gray-300 mb-1">Description</h4>
-            <p className="text-white whitespace-pre-line">{ticket.description}</p>
+          {/* Nouveau bloc designé pour la description et les infos principales */}
+          <div className="bg-[#23272A] rounded-lg p-5 mb-6 shadow-sm">
+            <div className="mb-4">
+              <h4 className="flex items-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                <MessageCircle className="w-4 h-4 mr-2 text-gray-500" />
+                Description
+              </h4>
+              <p className="text-white text-sm whitespace-pre-line">{ticket.description}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="flex items-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <User className="w-4 h-4 mr-2 text-gray-500" />
+                  Créé par
+                </h4>
+                <p className="text-white text-base">{ticket.createdBy.firstName} {ticket.createdBy.lastName}</p>
+              </div>
+              {ticket.assignedTo && (
+                <div>
+                  <h4 className="flex items-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                    <UserCheck className="w-4 h-4 mr-2 text-gray-500" />
+                    Assigné à
+                  </h4>
+                  <p className="text-white text-base">{ticket.assignedTo.firstName} {ticket.assignedTo.lastName}</p>
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 border-t border-[#36393F] pt-4">
+              <div>
+                <h4 className="flex items-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <Calendar className="w-4 h-4 mr-2 text-gray-500" />
+                  Créé le
+                </h4>
+                <p className="text-white text-base">{formatDate(ticket.createdAt)}</p>
+              </div>
+              <div>
+                <h4 className="flex items-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  <Clock className="w-4 h-4 mr-2 text-gray-500" />
+                  Dernière mise à jour
+                </h4>
+                <p className="text-white text-base">{formatDate(ticket.updatedAt)}</p>
+              </div>
+            </div>
           </div>
           <div className="flex flex-wrap gap-6">
-            <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-1">Créé par</h4>
-              <p className="text-white">{ticket.createdBy.firstName} {ticket.createdBy.lastName}</p>
-            </div>
-            {ticket.assignedTo && (
+            {ticket.attachments && ticket.attachments.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-gray-300 mb-1">Assigné à</h4>
-                <p className="text-white">{ticket.assignedTo.firstName} {ticket.assignedTo.lastName}</p>
-              </div>
-            )}
-            {ticket.targetUser && (
-              <div>
-                <h4 className="text-sm font-semibold text-gray-300 mb-1">Pour</h4>
-                <p className="text-white">{ticket.targetUser.firstName} {ticket.targetUser.lastName}</p>
+                <h4 className="text-sm font-semibold text-gray-300 mb-2">Pièces jointes</h4>
+                <div className="flex flex-wrap gap-3">
+                  {ticket.attachments.map((attachment, idx) => (
+                    <a key={idx} href={`http://localhost:3001${attachment.path}`} target="_blank" rel="noopener noreferrer" className="flex items-center bg-[#202225] p-2 rounded hover:bg-[#2D3035] transition-colors">
+                      {getAttachmentIcon(attachment.mimetype)}
+                      <span className="ml-2 text-white text-sm truncate max-w-[120px]">{attachment.originalname}</span>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-6">
-            <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-1">Créé le</h4>
-              <p className="text-white">{formatDate(ticket.createdAt)}</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-1">Dernière mise à jour</h4>
-              <p className="text-white">{formatDate(ticket.updatedAt)}</p>
-            </div>
-          </div>
-          {ticket.attachments && ticket.attachments.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-2">Pièces jointes</h4>
-              <div className="flex flex-wrap gap-3">
-                {ticket.attachments.map((attachment, idx) => (
-                  <a key={idx} href={`http://localhost:3001${attachment.path}`} target="_blank" rel="noopener noreferrer" className="flex items-center bg-[#202225] p-2 rounded hover:bg-[#2D3035] transition-colors">
-                    {getAttachmentIcon(attachment.mimetype)}
-                    <span className="ml-2 text-white text-sm truncate max-w-[120px]">{attachment.originalname}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
           
           {/* Section des boutons d'action */}
           <div className="flex flex-wrap gap-2">
