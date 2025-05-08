@@ -506,6 +506,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     ).length;
   };
 
+  // Compte le nombre total de tickets en cours (hors fermés et hors libres)
+  const getTotalOpenTickets = () => {
+    return tickets.filter(ticket => ticket.status !== 'closed' && ticket.status !== 'libre').length;
+  };
+
   // Barre d'onglets pour filtrer par statut
   const renderTabs = () => (
     <div className="flex space-x-2 mb-6 items-end">
@@ -519,7 +524,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             Tous
           </div>
         </button>
-        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
           {getTicketCount('tous')}
         </span>
       </div>
@@ -533,26 +538,25 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             {translateStatus('libre')}
           </div>
         </button>
-        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
           {getTicketCount('libre')}
         </span>
       </div>
-      <div className="relative inline-block">
-        <button
-          className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'diagnostic' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
-          onClick={() => { setActiveTab('diagnostic'); closeContextMenu(); }}
-        >
-          <div className="flex items-center">
-            <Search className="w-4 h-4 mr-2" />
-            {translateStatus('diagnostic')}
-          </div>
-        </button>
-        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
-          {getTicketCount('diagnostic')}
-        </span>
-      </div>
-      {/* Groupe En ligne / À domicile */}
-      <div className="flex rounded-t-md overflow-visible border border-[#36393F] bg-[#23272A]">
+      <div className="relative flex items-end px-2 py-1 bg-[#23272A] rounded-lg border-2 border-[#5865F2] mr-2">
+        <div className="relative inline-block">
+          <button
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'diagnostic' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
+            onClick={() => { setActiveTab('diagnostic'); closeContextMenu(); }}
+          >
+            <div className="flex items-center">
+              <Search className="w-4 h-4 mr-2" />
+              {translateStatus('diagnostic')}
+            </div>
+          </button>
+          <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
+            {getTicketCount('diagnostic')}
+          </span>
+        </div>
         <div className="relative inline-block">
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'online' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
@@ -563,7 +567,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               {translateStatus('online')}
             </div>
           </button>
-          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
             {getTicketCount('online')}
           </span>
         </div>
@@ -577,13 +581,10 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               {translateStatus('onsite')}
             </div>
           </button>
-          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
             {getTicketCount('onsite')}
           </span>
         </div>
-      </div>
-      {/* Groupe Échec / Résolu */}
-      <div className="flex rounded-t-md overflow-visible border border-[#36393F] bg-[#23272A] ml-2">
         <div className="relative inline-block">
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'failed' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
@@ -594,7 +595,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               {translateStatus('failed')}
             </div>
           </button>
-          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
             {getTicketCount('failed')}
           </span>
         </div>
@@ -608,7 +609,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               {translateStatus('resolved')}
             </div>
           </button>
-          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+          <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
             {getTicketCount('resolved')}
           </span>
         </div>
@@ -623,7 +624,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             {translateStatus('closed')}
           </div>
         </button>
-        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-[999]">
+        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
           {getTicketCount('closed')}
         </span>
       </div>
@@ -1450,19 +1451,24 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
       {contextMenuElement}
       <TicketDetailsModal ticket={modalTicket} isOpen={showTicketModal} onClose={() => setShowTicketModal(false)} />
       <FreelancerDetailsModal freelancer={modalFreelancer} isOpen={showFreelancerModal} onClose={() => setShowFreelancerModal(false)} />
-      {user && (user.role === 'admin' || user.role === 'fondateur') && (
-        <div className="flex justify-end mt-8">
-          <label className="flex items-center cursor-pointer select-none">
-            <span className="mr-2 text-sm font-medium text-red-400">Administration</span>
-            <input
-              type="checkbox"
-              checked={showAdminView}
-              onChange={e => handleAdminViewChange(e.target.checked)}
-              className="form-checkbox h-5 w-5 text-red-500 rounded focus:ring-0 border-gray-400 bg-[#23272A]"
-            />
-          </label>
+      <div className="flex justify-between items-end mt-8">
+        <div className="text-sm text-gray-300 bg-[#23272A] border-2 border-[#5865F2] rounded-lg px-3 py-1 font-semibold">
+          Tickets en cours : {getTotalOpenTickets()}
         </div>
-      )}
+        {user && (user.role === 'admin' || user.role === 'fondateur') && (
+          <div className="flex justify-end">
+            <label className="flex items-center cursor-pointer select-none">
+              <span className="mr-2 text-sm font-medium text-red-400">Administration</span>
+              <input
+                type="checkbox"
+                checked={showAdminView}
+                onChange={e => handleAdminViewChange(e.target.checked)}
+                className="form-checkbox h-5 w-5 text-red-500 rounded focus:ring-0 border-gray-400 bg-[#23272A]"
+              />
+            </label>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
