@@ -37,7 +37,7 @@ type TabConfig = {
 };
 
 const UserDashboard = () => {
-  const { user, isAuthenticated, logout, updateUser } = useAuth();
+  const { user, isAuthenticated, isLoading, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [uploading, setUploading] = useState(false);
@@ -587,9 +587,23 @@ const UserDashboard = () => {
   };
 
   // Si non authentifié, ne pas afficher le dashboard
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Chargement...</div>;
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('authToken', token);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window.location.reload();
+    }
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pt-24">

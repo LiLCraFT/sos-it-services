@@ -22,6 +22,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  API_URL: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('authToken');
+        console.log('Vérification du token dans AuthContext:', token);
         if (token) {
           // Vérifier la validité du token avec l'API backend
           try {
@@ -54,6 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
             if (response.ok) {
               const data = await response.json();
+              console.log('Réponse du backend /api/auth/verify:', data);
               setUser(data.user);
             } else {
               // Token invalide ou expiré
@@ -138,6 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         logout,
         updateUser,
+        API_URL
       }}
     >
       {children}

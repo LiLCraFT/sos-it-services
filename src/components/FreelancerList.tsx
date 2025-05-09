@@ -126,6 +126,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       setError(null);
       
       const token = localStorage.getItem('authToken');
+      console.log('fetchFreelancers: token utilisé pour Authorization:', token);
       
       const response = await fetch(`${API_URL}/api/freelancers`, {
         headers: {

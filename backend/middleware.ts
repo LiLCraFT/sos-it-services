@@ -12,6 +12,7 @@ const publicRoutes = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/verify',
+  '/api/auth/google',
   '/api/users',
   '/api-docs',
   '/swagger',

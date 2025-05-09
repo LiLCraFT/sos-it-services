@@ -13,13 +13,14 @@ const getUserFromToken = (req: NextRequest): { userId: string | null, role: stri
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development') as { 
-      userId: string,
-      role: string
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development') as {
+      _id?: string,
+      userId?: string,
+      role?: string
     };
-    return { 
-      userId: decoded.userId,
-      role: decoded.role
+    return {
+      userId: decoded._id || decoded.userId || null,
+      role: decoded.role || null
     };
   } catch (error) {
     return { userId: null, role: null };
@@ -32,6 +33,7 @@ export async function GET(req: NextRequest) {
     await dbConnect();
     
     const { userId } = getUserFromToken(req);
+    console.log('userId extrait du token:', userId);
 
     if (!userId) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
@@ -39,6 +41,7 @@ export async function GET(req: NextRequest) {
     
     // Vérifier si l'utilisateur est fondateur ou freelancer_admin
     const user = await User.findById(userId);
+    console.log('Utilisateur trouvé en base:', user);
     if (!user || (user.role !== 'fondateur' && user.role !== 'freelancer_admin')) {
       return NextResponse.json({ error: 'Accès restreint aux fondateurs et freelancer_admin' }, { status: 403 });
     }

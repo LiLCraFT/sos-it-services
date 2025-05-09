@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
 
+// Endpoint POST /api/auth/google : génère l'URL Google OAuth pour le front Vite
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -15,15 +16,11 @@ export async function POST() {
         'https://www.googleapis.com/auth/userinfo.profile',
         'https://www.googleapis.com/auth/userinfo.email',
       ],
+      prompt: 'consent',
     });
-
     return NextResponse.json({ url: authUrl });
   } catch (error) {
-    console.error('Error generating Google auth URL:', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la génération de l\'URL d\'authentification' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erreur lors de la génération de l\'URL Google' }, { status: 500 });
   }
 }
 

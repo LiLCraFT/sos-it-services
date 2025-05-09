@@ -12,6 +12,7 @@ import UserDashboard from './pages/UserDashboard';
 import DepannageInformatique from './pages/DepannageInformatique';
 import CreationSiteWeb from './pages/CreationSiteWeb';
 import TicketDetail from './pages/TicketDetail';
+import TokenHandler from './components/TokenHandler';
 
 // HomePage component pour regrouper les sections de la page d'accueil
 const HomePage = () => (
@@ -48,7 +49,15 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/depannage-informatique" element={<DepannageInformatique />} />
             <Route path="/creation-site-web" element={<CreationSiteWeb />} />
-            <Route path="/mon-espace" element={<UserDashboard />} />
+            <Route
+              path="/mon-espace"
+              element={
+                <>
+                  <TokenHandler />
+                  <UserDashboard />
+                </>
+              }
+            />
             <Route path="/tickets/:id" element={<TicketDetail />} />
           </Routes>
           <Footer />

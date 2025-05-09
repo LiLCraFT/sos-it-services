@@ -24,6 +24,14 @@ JWT_EXPIRES_IN=30d
 API_URL=http://localhost:3001
 # Port sur lequel l'API sera accessible
 PORT=3001
+
+# Google OAuth - Authentification
+# ID client Google OAuth (obtenu depuis la console Google Cloud)
+GOOGLE_CLIENT_ID=votre_client_id_google
+# Clé secrète Google OAuth (obtenue depuis la console Google Cloud)
+GOOGLE_CLIENT_SECRET=votre_client_secret_google
+# URI de redirection pour l'authentification Google
+GOOGLE_REDIRECT_URI=http://localhost:3001/api/auth/google/callback
 ```
 
 ## Variables d'environnement optionnelles
@@ -50,6 +58,17 @@ Vous pouvez générer une clé JWT sécurisée en exécutant cette commande dans
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
+
+## Comment configurer l'authentification Google
+
+1. Allez sur la [Console Google Cloud](https://console.cloud.google.com/)
+2. Créez un nouveau projet ou sélectionnez un projet existant
+3. Activez l'API Google+ API
+4. Dans "Credentials", créez un nouveau "OAuth 2.0 Client ID"
+5. Configurez les URIs de redirection autorisés:
+   - `http://localhost:3001/api/auth/google/callback` (pour le développement)
+   - `https://votre-domaine.com/api/auth/google/callback` (pour la production)
+6. Copiez le Client ID et le Client Secret dans votre fichier `.env.local`
 
 ## Initialisation de la base de données
 
