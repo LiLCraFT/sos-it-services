@@ -760,8 +760,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
           {paginatedUsers.map((user) => (
             <div
               key={user._id}
-              className="bg-[#36393F] rounded-lg p-4 hover:bg-[#40444b] transition-colors cursor-pointer relative"
-              onClick={() => handleCardClick(user._id)}
+              className="bg-[#36393F] rounded-lg p-4 hover:bg-[#40444b] transition-colors relative"
               onContextMenu={(e) => handleContextMenu(e, user._id)}
             >
               <div className="absolute top-3 right-3">
