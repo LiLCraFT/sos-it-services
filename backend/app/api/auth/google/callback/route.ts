@@ -70,6 +70,7 @@ export async function GET(req: NextRequest) {
     );
 
     const redirectUrl = `http://localhost:3000/mon-espace?token=${appToken}`;
+    console.log('Redirection finale vers:', redirectUrl);
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error('Erreur callback Google:', error);
