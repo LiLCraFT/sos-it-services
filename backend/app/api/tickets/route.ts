@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
+import { dbConnect } from '@/lib/mongodb';
 import Ticket from '@/models/Ticket';
 import jwt from 'jsonwebtoken';
 import User from '@/models/User';

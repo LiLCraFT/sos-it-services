@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hasAdminRights } from '@/lib/auth-utils';
 import User from '@/models/User';
-import dbConnect from '@/lib/mongodb';
+import { dbConnect } from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
 
 // Helper function to get user ID and role from JWT token

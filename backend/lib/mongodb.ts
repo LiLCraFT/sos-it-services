@@ -1,48 +1,45 @@
+import { MongoClient } from 'mongodb';
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sos-it-services';
-
-if (!MONGODB_URI) {
-  throw new Error('MONGODB_URI must be defined in environment variables');
+if (!process.env.MONGODB_URI) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
 
-// Réinitialiser les modèles si en développement pour éviter les problèmes de cache
+const uri = process.env.MONGODB_URI;
+const options = {};
+
+let client: MongoClient;
+let clientPromise: Promise<MongoClient>;
+
 if (process.env.NODE_ENV === 'development') {
-  // Vider le cache des modèles si le modèle existe déjà
-  if (mongoose.models.User) {
-    delete mongoose.models.User;
+  let globalWithMongo = global as typeof globalThis & {
+    _mongoClientPromise?: Promise<MongoClient>;
+  };
+
+  if (!globalWithMongo._mongoClientPromise) {
+    client = new MongoClient(uri, options);
+    globalWithMongo._mongoClientPromise = client.connect();
+  }
+  clientPromise = globalWithMongo._mongoClientPromise;
+} else {
+  client = new MongoClient(uri, options);
+  clientPromise = client.connect();
+}
+
+// Fonction d'aide pour la connexion MongoDB
+export async function dbConnect() {
+  try {
+    if (mongoose.connection.readyState >= 1) {
+      return;
+    }
+
+    return await mongoose.connect(uri);
+  } catch (error) {
+    console.error('Erreur de connexion à MongoDB:', error);
+    throw error;
   }
 }
 
-let cached = global as any;
-if (!cached.mongoose) {
-  cached.mongoose = { conn: null, promise: null };
-}
-
-async function dbConnect() {
-  if (cached.mongoose.conn) {
-    return cached.mongoose.conn;
-  }
-
-  if (!cached.mongoose.promise) {
-    const opts = {
-      bufferCommands: false,
-      // useNewUrlParser et useUnifiedTopology sont maintenant par défaut dans les nouvelles versions de Mongoose
-    };
-
-    cached.mongoose.promise = mongoose.connect(MONGODB_URI, opts)
-      .then((mongoose) => {
-        console.log('Connected to MongoDB');
-        return mongoose;
-      })
-      .catch((error) => {
-        console.error('Error connecting to MongoDB:', error);
-        throw error;
-      });
-  }
-  
-  cached.mongoose.conn = await cached.mongoose.promise;
-  return cached.mongoose.conn;
-}
-
-export default dbConnect; 
+// Export both the client and the promise
+export { client, clientPromise };
+export default clientPromise; 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
+import { dbConnect } from '@/lib/mongodb';
 import User from '@/models/User';
 import { writeFile } from 'fs/promises';
 import path from 'path';

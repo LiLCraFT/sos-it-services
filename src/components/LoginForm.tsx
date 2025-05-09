@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { Button } from './ui/Button';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
-  onSuccess: () => void;
+  onSuccess?: () => void;
   onRegisterClick?: () => void;
 }
 
@@ -23,13 +21,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     setIsLoading(true);
 
     try {
-      // Utiliser la fonction de connexion du contexte d'authentification
       await login(email, password);
-      
-      // Notifier le parent du succès
-      onSuccess();
-      
-      // Rediriger vers la page "Mon espace"
+      if (onSuccess) {
+        onSuccess();
+      }
       navigate('/mon-espace');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de connexion');
@@ -38,95 +33,120 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Erreur lors de la connexion avec Google');
+      }
+      const data = await response.json();
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur de connexion avec Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/50 rounded-md p-3 flex items-start">
-          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-          <span className="text-red-500 text-sm">{error}</span>
+    <div className="flex items-center justify-center bg-[#36393F] py-4 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-4">
+        <div>
+          <h2 className="mt-2 text-center text-2xl font-extrabold text-white">
+            Connectez-vous à votre compte
+          </h2>
         </div>
-      )}
-      
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
-          Email
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail className="h-5 w-5 text-gray-400" />
+        <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Adresse email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-400 text-white bg-[#23272A] rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Adresse email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Mot de passe
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-400 text-white bg-[#23272A] rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Mot de passe"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
           </div>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-            placeholder="votre@email.com"
-          />
-        </div>
-      </div>
-      
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
-          Mot de passe
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock className="h-5 w-5 text-gray-400" />
+
+          {error && (
+            <div className="text-red-500 text-sm text-center">{error}</div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {isLoading ? 'Connexion...' : 'Se connecter'}
+            </button>
           </div>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-            placeholder="••••••••"
-          />
-        </div>
+
+          <div className="mt-4">
+            <div className="relative flex items-center">
+              <div className="flex-grow border-t border-gray-600"></div>
+              <span className="mx-4 text-gray-400 text-sm">Ou continuez avec</span>
+              <div className="flex-grow border-t border-gray-600"></div>
+            </div>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="mt-4 w-full flex items-center justify-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-200 bg-[#23272A] hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <img
+                className="h-5 w-5 mr-2"
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                alt="Google logo"
+              />
+              Google
+            </button>
+            <div className="text-center mt-4">
+              <span className="text-gray-400 text-sm">
+                Pas encore de compte ?{' '}
+                <button
+                  type="button"
+                  onClick={onRegisterClick}
+                  className="text-indigo-400 hover:underline focus:outline-none"
+                >
+                  Inscrivez-vous
+                </button>
+              </span>
+            </div>
+          </div>
+        </form>
       </div>
-      
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <input
-            id="remember-me"
-            name="remember-me"
-            type="checkbox"
-            className="h-4 w-4 bg-[#202225] border border-[#40444B] rounded focus:ring-[#5865F2] focus:outline-none"
-          />
-          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
-            Se souvenir de moi
-          </label>
-        </div>
-        <div className="text-sm">
-          <a href="#" className="text-[#5865F2] hover:text-[#5865F2]/90">
-            Mot de passe oublié?
-          </a>
-        </div>
-      </div>
-      
-      <div>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Connexion en cours...' : 'Se connecter'}
-        </Button>
-      </div>
-      
-      <div className="text-center text-sm text-gray-400">
-        Pas encore de compte?{' '}
-        <button 
-          type="button" 
-          onClick={onRegisterClick}
-          className="text-[#5865F2] hover:text-[#5865F2]/90 border-none bg-transparent p-0"
-        >
-          S'inscrire
-        </button>
-      </div>
-    </form>
+    </div>
   );
 };
 
