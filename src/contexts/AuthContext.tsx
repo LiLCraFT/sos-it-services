@@ -122,6 +122,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setUser(null);
+    window.location.href = '/';
   };
 
   const updateUser = (userData: Partial<User>) => {

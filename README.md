@@ -47,7 +47,7 @@ npm run dev
 cd backend && npm run dev
 ```
 
-Le frontend sera accessible sur http://localhost:5173
+Le frontend sera accessible sur http://localhost:3000
 Le backend sera accessible sur http://localhost:3001
 
 ## 🔧 Configuration de l'environnement
