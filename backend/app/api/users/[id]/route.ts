@@ -33,13 +33,12 @@ const getUserFromToken = (req: NextRequest): { userId: string | null, role: stri
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development') as { 
-      userId: string,
-      role: string
-    };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development') as { userId?: string, _id?: string, role?: string };
+    const userId = decoded.userId || decoded._id || null;
+    const role = decoded.role || null;
     return { 
-      userId: decoded.userId,
-      role: decoded.role
+      userId,
+      role
     };
   } catch (error) {
     return { userId: null, role: null };

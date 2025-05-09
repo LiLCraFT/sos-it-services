@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   }
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development') as { userId?: string, _id?: string };
     return NextResponse.json({ user: decoded });
   } catch (error) {
     return NextResponse.json({ error: 'Token invalide' }, { status: 401 });

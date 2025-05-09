@@ -10,8 +10,8 @@ export const getUserIdFromToken = (req: NextRequest): string | null => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development') as { userId: string };
-    return decoded.userId;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development') as { userId?: string, _id?: string };
+    return decoded.userId || decoded._id || null;
   } catch (error) {
     return null;
   }
