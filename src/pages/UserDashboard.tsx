@@ -9,6 +9,8 @@ import { SiVisa } from 'react-icons/si';
 import FreelancerList from '../components/FreelancerList';
 import UserList from '../components/UserList';
 import { Modal } from '../components/ui/Modal';
+import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
+import { Visa, Mastercard, Amex } from 'react-payment-logos/dist/flat-rounded';
 
 // URL de l'image par défaut
 const DEFAULT_IMAGE = '/images/default-profile.png';
@@ -935,7 +937,7 @@ const UserDashboard = () => {
                     </div>
                     <div className="pl-8 flex items-center">
                       <div className="bg-white p-2 rounded mr-2 flex items-center justify-center">
-                        <SiVisa className="text-[#1434CB] w-10 h-6" />
+                        <img src="/icons/cb.svg" alt="CB" className="w-12 h-8 object-contain" />
                       </div>
                       <p className="text-white">Carte se terminant par 4242</p>
                     </div>
@@ -960,6 +962,18 @@ const UserDashboard = () => {
                   maxWidth="md"
                 >
                   <div className="space-y-4">
+                    {/* Section des cartes acceptées */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Cartes acceptées
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <img src="/icons/cb.svg" alt="CB" className="w-12 h-8 object-contain" />
+                        <Visa width={48} />
+                        <Mastercard width={48} />
+                        <Amex width={48} />
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1">
                         Numéro de carte
