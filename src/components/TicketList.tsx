@@ -1341,8 +1341,12 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
       if (!response.ok) {
         throw new Error('Erreur lors de l\'assignation du ticket');
       }
-      const data = await response.json();
-      setTickets(prevTickets => prevTickets.map(t => t._id === ticket._id ? data.ticket : t));
+      // Rafraîchir la liste après modification
+      if (user && (Array.isArray(user.role) ? user.role.some(r => r.includes('freelancer')) : typeof user.role === 'string' && user.role.includes('freelancer'))) {
+        fetchFreelancerTickets();
+      } else {
+        fetchTickets();
+      }
       setActiveTab('diagnostic');
       closeContextMenu();
     } catch (err) {

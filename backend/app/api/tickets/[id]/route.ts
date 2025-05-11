@@ -150,6 +150,9 @@ export async function PUT(
     const update: any = {
       status: data.status
     };
+    if (data.assignedTo) {
+      update.assignedTo = data.assignedTo;
+    }
 
     // Si on a un feedback, on l'ajoute
     if (data.description && !data.skipFeedback) {
