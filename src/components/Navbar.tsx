@@ -21,14 +21,12 @@ const getImageUrl = (path: string | null | undefined): string => {
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
   const [mobileDropdowns, setMobileDropdowns] = useState<Record<number, boolean>>({});
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const [hasSubscription, setHasSubscription] = useState(false);
   const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("none");
   
   const whatsappNumber = "33695358625"; // Remplacez par votre numéro WhatsApp
@@ -60,10 +58,8 @@ const Navbar: React.FC = () => {
     // Mettre à jour le type d'abonnement quand l'utilisateur est chargé
     if (user && user.subscriptionType) {
       setSubscriptionType(user.subscriptionType);
-      setHasSubscription(user.subscriptionType !== "none");
     } else {
       setSubscriptionType("none");
-      setHasSubscription(false);
     }
   }, [user]);
 
