@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Save } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Save, Wrench } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
@@ -908,38 +908,49 @@ const UserDashboard = () => {
                 <div className="space-y-6">
                   <div className="p-4 bg-[#36393F] rounded-md relative">
                     <div className="flex items-center space-x-3 mb-2">
-                      <CreditCard className="w-5 h-5 text-gray-400" />
-                      <h4 className="font-medium text-gray-300">Statut de l'abonnement</h4>
-                    </div>
-                    {subscriptionType !== "none" && (
-                      <div className="absolute top-4 right-4 text-right">
-                        <div className="text-white font-medium">
-                          {subscriptionType === "solo" ? "29,99€/mois" : "49,99€/mois"}
-                        </div>
-                        <div className="text-green-400 text-sm flex items-center justify-end mt-1">
-                          <Percent className="w-3 h-3 mr-1" />
-                          <span>Après crédit d'impôts: </span>
-                          <span className="font-bold ml-1">{subscriptionType === "solo" ? "14,99€/mois" : "24,99€/mois"}</span>
-                        </div>
-                      </div>
-                    )}
-                    <div className="pl-8 flex items-center">
+                      <Wrench className="w-5 h-5 text-gray-400" />
+                      {/* Nouveau tag harmonisé pour le titre de l'abonnement */}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400 mr-2">
+                        <Crown className="w-3 h-3 mr-1" />
+                        {getSubscriptionName()}
+                      </span>
                       <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/20 text-green-400">
                         Actif
                       </span>
                     </div>
-                    <p className="text-white pl-8 mt-2">{getSubscriptionName()}</p>
+                    {/* Suppression de l'ancien affichage du titre */}
+                    {/* <p className="text-white pl-8 mt-2">{getSubscriptionName()}</p> */}
                     <p className="text-gray-400 pl-8 text-sm">
                       {subscriptionType !== "none" ? "Abonnement sans engagement" : "Pas d'abonnement en cours"}
                     </p>
 
                     <div className="pl-8 mt-4">
-                      <button className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none mr-2">
-                        Gérer mon abonnement
-                      </button>
-                      <button className="px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none">
-                        Résilier mon abonnement
-                      </button>
+                      <select
+                        className="px-4 py-2 bg-[#36393F] text-white rounded-md border border-[#5865F2] focus:outline-none mr-2"
+                        value={subscriptionType}
+                        onChange={e => setSubscriptionType(e.target.value as "none" | "solo" | "family")}
+                      >
+                        <option value="none">A la carte - 0€ / mois</option>
+                        <option value="solo">Solo - 29,99€ / mois (1 personne)</option>
+                        <option value="family">Famille - 49,99€ / mois (jusqu'à 5 personnes)</option>
+                      </select>
+                      {subscriptionType !== "none" && (
+                        <button className="px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none">
+                          Résilier mon abonnement
+                        </button>
+                      )}
+                    </div>
+                    {/* Lien vers la page de dépannage informatique */}
+                    <div className="absolute bottom-4 right-4">
+                      <a
+                        href="/depannage-informatique"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center text-sm text-[#5865F2] hover:underline hover:text-[#4752C4] font-medium"
+                      >
+                        Voir le détail des packages
+                        <svg xmlns="http://www.w3.org/2000/svg" className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 7l-10 10m0 0h7m-7 0V7" /></svg>
+                      </a>
                     </div>
                   </div>
                   
