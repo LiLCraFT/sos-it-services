@@ -58,6 +58,15 @@ function App() {
                 </>
               }
             />
+            <Route
+              path="/dashboard"
+              element={
+                <>
+                  <TokenHandler />
+                  <UserDashboard />
+                </>
+              }
+            />
             <Route path="/tickets/:id" element={<TicketDetail />} />
           </Routes>
           <Footer />

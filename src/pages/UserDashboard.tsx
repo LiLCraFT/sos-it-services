@@ -173,7 +173,8 @@ const UserDashboard = () => {
     if (newTab !== activeTab) {
       setActiveTab(newTab);
     }
-  }, [tabParam, user?.role]);
+    // Ajout de location.search comme dépendance pour réagir à la navigation SPA
+  }, [tabParam, user?.role, location.search]);
 
   // Mettre à jour les données du formulaire quand l'utilisateur change
   useEffect(() => {
@@ -879,7 +880,7 @@ const UserDashboard = () => {
                       <button
                         onClick={() => {
                           setShowPaymentModal(false);
-                          window.location.href = '/dashboard?tab=subscription';
+                          navigate('/dashboard?tab=subscription');
                         }}
                         className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
                       >
