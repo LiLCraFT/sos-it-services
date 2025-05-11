@@ -57,8 +57,14 @@ export async function GET(req: NextRequest) {
     }
     // Si l'utilisateur est freelancer, il peut voir les tickets qui lui sont assignés
     else if (user.role === 'freelancer') {
-      query = { assignedTo: userId };
-      console.log('Freelancer query:', query);
+      const assignedTo = url.searchParams.get('assignedTo');
+      if (assignedTo) {
+        query = { assignedTo };
+        console.log('Freelancer query (param):', query);
+      } else {
+        query = { assignedTo: userId };
+        console.log('Freelancer query (self):', query);
+      }
     }
     // Pour les autres utilisateurs
     else if (targetUserId) {

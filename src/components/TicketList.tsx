@@ -88,13 +88,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [modalTicket, setModalTicket] = useState<Ticket | null>(null);
   const [activeTab, setActiveTab] = useState<string>('tous');
-  const [showAdminView, setShowAdminView] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('showAdminView');
-      return stored === 'true';
-    }
-    return false;
-  });
   const [viewSwitch, setViewSwitch] = useState<'cards' | 'table'>(viewMode);
   const [showFreelancerModal, setShowFreelancerModal] = useState(false);
   const [modalFreelancer, setModalFreelancer] = useState<any>(null);
@@ -148,13 +141,65 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     }
   };
 
+  // Fonction fetch pour les freelancers : tickets assignés + tickets libres non assignés
+  const fetchFreelancerTickets = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('authToken');
+      if (!token || !user) {
+        setError('Non authentifié. Veuillez vous reconnecter.');
+        setLoading(false);
+        return;
+      }
+      // 1. Tickets assignés au freelancer
+      const assignedRes = await fetch(`http://localhost:3001/api/tickets?assignedTo=${user._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      let assignedTickets = [];
+      if (assignedRes.ok) {
+        const assignedData = await assignedRes.json();
+        assignedTickets = assignedData.tickets || [];
+      }
+      // 2. Tickets libres non assignés
+      const libresRes = await fetch('http://localhost:3001/api/tickets/unassigned', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      let libresTickets = [];
+      if (libresRes.ok) {
+        const libresData = await libresRes.json();
+        libresTickets = libresData.tickets || [];
+      }
+      // 3. Fusionner sans doublons
+      const allTickets = [
+        ...assignedTickets,
+        ...libresTickets.filter((libre: Ticket) => !assignedTickets.some((a: Ticket) => a._id === libre._id))
+      ];
+      setTickets(allTickets);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // useEffect adapté pour les freelancers
   useEffect(() => {
     if (isAuthenticated) {
-      fetchTickets();
+      if (user && (Array.isArray(user.role) ? user.role.some(r => r.includes('freelancer')) : typeof user.role === 'string' && user.role.includes('freelancer'))) {
+        fetchFreelancerTickets();
+      } else {
+        fetchTickets();
+      }
     } else {
       setError('Veuillez vous connecter pour accéder aux tickets');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const toggleDropdown = (ticketId: string) => {
     setDropdownOpen(prev => ({
@@ -481,58 +526,97 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     }
   }, [contextMenu]);
 
+  // Fonction pour obtenir les rôles de l'utilisateur
+  const getUserRoles = () => {
+    if (!user) return { isAdmin: false, isFounder: false, isFreelancer: false };
+    
+    const roles = Array.isArray(user.role) ? user.role : [user.role];
+    return {
+      isAdmin: roles.some(role => role.includes('admin')),
+      isFounder: roles.some(role => role.includes('fondateur')),
+      isFreelancer: roles.some(role => role.includes('freelancer'))
+    };
+  };
+
   // Fonction pour compter les tickets par statut
   const getTicketCount = (status: string) => {
     if (!user) return 0;
     
-    if (showAdminView && (user.role === 'admin' || user.role === 'fondateur')) {
-      if (status === 'tous') {
-        return tickets.length;
-      }
+    const { isAdmin, isFounder, isFreelancer } = getUserRoles();
+    
+    // Les fondateurs et admins voient tous les tickets
+    if (isFounder || isAdmin) {
+      if (status === 'tous') return tickets.length;
       return tickets.filter(ticket => ticket.status === status).length;
     }
     
-    if (status === 'tous') {
+    // Les freelancers voient les tickets libres et leurs tickets assignés
+    if (isFreelancer) {
+      if (status === 'tous') {
+        return tickets.filter(ticket => 
+          ticket.status === 'libre' || 
+          (ticket.assignedTo && ticket.assignedTo._id === user._id)
+        ).length;
+      }
+      if (status === 'libre') {
+        return tickets.filter(ticket => ticket.status === 'libre').length;
+      }
       return tickets.filter(ticket => 
-        ticket.status === 'libre' || 
-        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
-        (ticket.createdBy && ticket.createdBy._id === user._id)
+        ticket.status === status && 
+        ticket.assignedTo && 
+        ticket.assignedTo._id === user._id
       ).length;
     }
     
+    // Les utilisateurs standards ne voient que leurs tickets
+    if (status === 'tous') {
+      return tickets.filter(ticket => ticket.createdBy._id === user._id).length;
+    }
     return tickets.filter(ticket => 
       ticket.status === status && 
-      (
-        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
-        (ticket.createdBy && ticket.createdBy._id === user._id)
-      )
+      ticket.createdBy._id === user._id
     ).length;
   };
 
-  // Compte le nombre total de tickets en cours (hors fermés et hors libres), selon le mode admin ou non
-  const getTotalOpenTickets = () => {
-    if (!user) return 0;
-    if (
-      showAdminView &&
-      (
-        (Array.isArray(user.role)
-          ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
-          : typeof user.role === 'string' &&
-            (user.role.includes('admin') || user.role.includes('fondateur'))
-        )
-      )
-    ) {
-      return tickets.filter(ticket => ticket.status !== 'closed' && ticket.status !== 'libre').length;
+  // Fonction pour filtrer les tickets selon le statut actif
+  const getFilteredTickets = () => {
+    if (!user) return [];
+    
+    const { isAdmin, isFounder, isFreelancer } = getUserRoles();
+    
+    // Les administrateurs et fondateurs voient tous les tickets
+    if (isAdmin || isFounder) {
+      return tickets.filter(ticket => {
+        if (activeTab === 'tous') return true;
+        if (activeTab === 'libre') return ticket.status === 'libre';
+        return ticket.status === activeTab;
+      });
     }
-    // Sinon, tickets accessibles à l'utilisateur (hors closed/libre)
-    return tickets.filter(ticket =>
-      ticket.status !== 'closed' &&
-      ticket.status !== 'libre' &&
-      (
-        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
-        (ticket.createdBy && ticket.createdBy._id === user._id)
-      )
-    ).length;
+    
+    // Les freelancers voient :
+    // - dans 'tous' : tous les tickets libres non assignés (assignedTo null/undefined/sans _id) + ceux qui leur sont assignés
+    // - dans 'libre' : tous les tickets libres non assignés
+    // - dans les autres onglets : uniquement les tickets de ce statut qui leur sont assignés
+    if (isFreelancer) {
+      if (activeTab === 'tous') {
+        return tickets.filter(ticket =>
+          (ticket.status === 'libre' && (!ticket.assignedTo || !ticket.assignedTo._id)) ||
+          (ticket.assignedTo && ticket.assignedTo._id === user._id)
+        );
+      }
+      if (activeTab === 'libre') {
+        return tickets.filter(ticket => ticket.status === 'libre' && (!ticket.assignedTo || !ticket.assignedTo._id));
+      }
+      return tickets.filter(ticket => ticket.status === activeTab && ticket.assignedTo && ticket.assignedTo._id === user._id);
+    }
+    
+    // Les utilisateurs normaux ne voient que leurs tickets
+    return tickets.filter(ticket => {
+      if (activeTab === 'tous') {
+        return ticket.createdBy && ticket.createdBy._id === user._id;
+      }
+      return ticket.status === activeTab && ticket.createdBy && ticket.createdBy._id === user._id;
+    });
   };
 
   // Barre d'onglets pour filtrer par statut
@@ -558,20 +642,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           onClick={() => { setActiveTab('libre'); closeContextMenu(); }}
         >
           <div className="flex items-center justify-center h-6">
-            {(user && (
-              (Array.isArray(user.role)
-                ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
-                : typeof user.role === 'string' &&
-                  (user.role.includes('admin') || user.role.includes('fondateur'))
-              )
-            )) ? (
-              <>
-                <Circle className="w-4 h-4 mr-2" />
-                {translateStatus('libre')}
-              </>
-            ) : (
-              <Clock className={`w-5 h-5 ${activeTab === 'libre' ? 'text-white' : 'text-[#5865F2]'}`} />
-            )}
+            <Clock className={`w-5 h-5 ${activeTab === 'libre' ? 'text-white' : 'text-[#5865F2]'}`} />
           </div>
         </button>
         <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] rounded-full bg-[#5865F2] text-white border-2 border-[#2F3136] z-30">
@@ -667,124 +738,13 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     </div>
   );
 
-  // Filtrage des tickets selon l'onglet actif et l'assignation
-  const getFilteredTickets = () => {
-    if (!user) return [];
-    // Mode administration : filtrage par statut mais pas par assigné
-    if (
-      showAdminView &&
-      (
-        (Array.isArray(user.role)
-          ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
-          : typeof user.role === 'string' &&
-            (user.role.includes('admin') || user.role.includes('fondateur'))
-        )
-      )
-    ) {
-      if (activeTab === 'tous') {
-        return tickets;
-      }
-      if (activeTab === 'libre') {
-        return tickets.filter(ticket => ticket.status === 'libre');
-      }
-      return tickets.filter(ticket => ticket.status === activeTab);
-    }
-    // Mode normal : filtrage par statut ET par assigné
-    if (activeTab === 'tous') {
-      return tickets.filter(ticket => 
-        ticket.status === 'libre' || 
-        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
-        (ticket.createdBy && ticket.createdBy._id === user._id)
-      );
-    }
-    if (activeTab === 'libre') {
-      return tickets.filter(ticket => ticket.status === 'libre');
-    }
-    return tickets.filter(ticket => 
-      ticket.status === activeTab && 
-      (
-        (ticket.assignedTo && ticket.assignedTo._id === user._id) ||
-        (ticket.createdBy && ticket.createdBy._id === user._id)
-      )
-    );
-  };
-
-  // Ajout de la fonction pour faire le diagnostic
-  const doDiagnostic = async (ticket: Ticket) => {
-    try {
-      setUpdateLoading(prev => ({ ...prev, [ticket._id]: true }));
-      const token = localStorage.getItem('authToken');
-      if (!token || !user) {
-        setError('Non authentifié');
-        return;
-      }
-      const response = await fetch(`http://localhost:3001/api/tickets/${ticket._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ 
-          status: 'diagnostic', 
-          assignedTo: user._id 
-        })
-      });
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'assignation du ticket');
-      }
-      const data = await response.json();
-      // Mettre à jour l'état local du ticket avec les données complètes du serveur
-      setTickets(prevTickets => prevTickets.map(t => t._id === ticket._id ? data.ticket : t));
-      // Mettre à jour l'onglet actif pour afficher le nouvel état
-      setActiveTab('diagnostic');
-      closeContextMenu();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-    } finally {
-      setUpdateLoading(prev => ({ ...prev, [ticket._id]: false }));
-    }
-  };
-
-  // Quand la checkbox change, je sauvegarde dans le localStorage
-  const handleAdminViewChange = (checked: boolean) => {
-    setShowAdminView(checked);
-    localStorage.setItem('showAdminView', checked ? 'true' : 'false');
-    closeContextMenu();
-  };
-
-  // Remettre la page à 1 si le filtre change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [sortField, sortDirection, activeTab, tickets]);
-
-  if (loading) {
-    return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-md p-4 my-4">
-        <div className="flex items-center">
-          <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-          <span className="text-red-500">{error}</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (tickets.length === 0) {
-    return <div className="text-center py-4 text-gray-300">Aucun ticket trouvé</div>;
-  }
-
   // Rendu en mode tableau
   const renderTableView = () => {
-    const filteredTickets = getFilteredTickets();
-    const sortedTickets = sortTickets(filteredTickets);
+    const sortedTickets = getFilteredTickets();
     const totalTickets = sortedTickets.length;
     const totalPages = Math.ceil(totalTickets / ticketsPerPage);
     const paginatedTickets = sortedTickets.slice((currentPage - 1) * ticketsPerPage, currentPage * ticketsPerPage);
     
-    // Helper pour afficher l'icône de tri
     const renderSortIcon = (field: SortField) => {
       if (sortField !== field) return null;
       return sortDirection === 'asc' ? 
@@ -799,7 +759,10 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         <table className="min-w-full bg-[#2F3136] rounded-md overflow-hidden">
           <thead className="bg-[#202225]">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]" onClick={() => handleSortClick('status')}>
+              <th 
+                className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-[#36393F]"
+                onClick={() => handleSortClick('status')}
+              >
                 <div className="flex items-center">
                   <span>Statut</span>
                   {renderSortIcon('status')}
@@ -841,11 +804,9 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   {renderSortIcon('createdAt')}
                 </div>
               </th>
-              {showAdminView && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                  Assigné à
-                </th>
-              )}
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                Assigné à
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#202225]">
@@ -872,11 +833,9 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-300">{formatDate(ticket.createdAt)}</td>
-                {showAdminView && (
-                  <td className="px-4 py-3 text-sm text-gray-300">
-                    {ticket.assignedTo ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}` : <span className="text-gray-500">-</span>}
-                  </td>
-                )}
+                <td className="px-4 py-3 text-sm text-gray-300">
+                  {ticket.assignedTo ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}` : <span className="text-gray-500">-</span>}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -890,13 +849,14 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     );
   };
 
-  // Rendu en mode carte (vue actuelle)
+  // Rendu en mode carte
   const renderCardView = () => {
     const filteredTickets = getFilteredTickets();
     const sortedTickets = sortTickets(filteredTickets);
     const totalTickets = sortedTickets.length;
     const totalPages = Math.ceil(totalTickets / ticketsPerPage);
     const paginatedTickets = sortedTickets.slice((currentPage - 1) * ticketsPerPage, currentPage * ticketsPerPage);
+    
     return (
       <>
         <div className="space-y-4">
@@ -984,137 +944,45 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     );
   };
 
-  const contextMenuElement = contextMenu && (() => {
-    const ticket = tickets.find(t => t._id === contextMenu.ticketId);
-    if (!ticket) return null;
-    // Ajout du log pour debug
-    if (user && ticket) {
-      // Gestion des rôles multiples (tableau ou string)
-      const roles = Array.isArray(user.role) ? user.role : (typeof user.role === 'string' ? user.role.split(',') : []);
-      console.log('[DEBUG CONTEXT MENU] user.role:', user.role, 'roles:', roles, 'user._id:', user._id, 'ticket.assignedTo?._id:', ticket.assignedTo?._id, 'ticket.status:', ticket.status);
-      const isFounder = roles.includes('fondateur');
-      const isFreelancer = roles.some(r => r.includes('freelancer'));
-      const canDiagnostic = isFounder || (isFreelancer && ticket.assignedTo && ticket.assignedTo._id === user._id);
-      console.log('[DEBUG CONTEXT MENU] canDiagnostic:', canDiagnostic);
+  // Remettre la page à 1 si le filtre change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortField, sortDirection, activeTab, tickets]);
+
+  // Fonction pour compter le nombre total de tickets en cours
+  const getTotalOpenTickets = () => {
+    if (!user) return 0;
+    
+    const { isAdmin, isFounder, isFreelancer } = getUserRoles();
+    
+    if (isFounder || isAdmin) {
+      return tickets.filter(ticket =>
+        ticket.status !== 'closed' &&
+        ticket.status !== 'libre'
+      ).length;
     }
-    return (
-      <div
-        ref={contextMenuRef}
-        className="fixed z-[999] bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
-        style={{ top: contextMenu.y, left: contextMenu.x }}
-        tabIndex={0}
-        onBlur={closeContextMenu}
-        onContextMenu={e => e.preventDefault()}
-      >
-        <a
-          href="#"
-          className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
-          onClick={e => { e.preventDefault(); setModalTicket(ticket); setShowTicketModal(true); closeContextMenu(); }}
-        >
-          <ExternalLink className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
-          Voir le ticket
-        </a>
-        {ticket.status === 'libre' && user && (() => {
-          const roles = Array.isArray(user.role) ? user.role : (typeof user.role === 'string' ? user.role.split(',') : []);
-          const isFounder = roles.includes('fondateur');
-          const isFreelancer = roles.some(r => r.includes('freelancer'));
-          return isFounder || (isFreelancer && ticket.assignedTo && ticket.assignedTo._id === user._id);
-        })() && (
-          <button
-            className="flex items-center w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-[#36393F]"
-            onClick={() => { doDiagnostic(ticket); closeContextMenu(); }}
-            disabled={updateLoading[ticket._id]}
-          >
-            <CheckCircle className="w-4 h-4 mr-2 text-blue-400 flex-shrink-0" />
-            Faire le diagnostic
-          </button>
-        )}
-        {ticket.status === 'diagnostic' && user && (() => {
-          const roles = Array.isArray(user.role) ? user.role : (typeof user.role === 'string' ? user.role.split(',') : []);
-          const isFounder = roles.includes('fondateur');
-          const isFreelancer = roles.some(r => r.includes('freelancer'));
-          return isFounder || (isFreelancer && ticket.assignedTo && ticket.assignedTo._id === user._id);
-        })() && (
-          <>
-            <button
-              className="flex items-center w-full text-left px-4 py-2 text-sm text-cyan-400 hover:bg-[#36393F]"
-              onClick={() => { updateTicketStatus(ticket._id, 'online'); closeContextMenu(); }}
-              disabled={updateLoading[ticket._id]}
-            >
-              <MessageCircle className="w-4 h-4 mr-2 text-cyan-400 flex-shrink-0" />
-              Intervention en ligne
-            </button>
-            <button
-              className="flex items-center w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-[#36393F]"
-              onClick={() => { updateTicketStatus(ticket._id, 'onsite'); closeContextMenu(); }}
-              disabled={updateLoading[ticket._id]}
-            >
-              <User className="w-4 h-4 mr-2 text-purple-400 flex-shrink-0" />
-              Intervention à domicile
-            </button>
-          </>
-        )}
-        {(ticket.status === 'online' || ticket.status === 'onsite') && user && (() => {
-          const roles = Array.isArray(user.role) ? user.role : (typeof user.role === 'string' ? user.role.split(',') : []);
-          const isFounder = roles.includes('fondateur');
-          const isFreelancer = roles.some(r => r.includes('freelancer'));
-          return isFounder || (isFreelancer && ticket.assignedTo && ticket.assignedTo._id === user._id);
-        })() && (
-          <>
-            <button
-              className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
-              onClick={() => { updateTicketStatus(ticket._id, 'failed'); closeContextMenu(); }}
-              disabled={updateLoading[ticket._id]}
-            >
-              <X className="w-4 h-4 mr-2 text-red-400 flex-shrink-0" />
-              Échec du ticket
-            </button>
-            <button
-              className="flex items-center w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-[#36393F]"
-              onClick={() => { updateTicketStatus(ticket._id, 'resolved'); closeContextMenu(); }}
-              disabled={updateLoading[ticket._id]}
-            >
-              <CheckCircle className="w-4 h-4 mr-2 text-green-400 flex-shrink-0" />
-              Ticket résolu
-            </button>
-          </>
-        )}
-        {(ticket.status === 'resolved' || ticket.status === 'failed') && user && user.role === 'user' && (activeTab === 'resolved' || activeTab === 'failed') && (
-          <button
-            className="flex items-center w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-[#36393F]"
-            onClick={() => { setCloseModalTicket(ticket); setShowCloseModal(true); closeContextMenu(); }}
-          >
-            <CheckCircle className="w-4 h-4 mr-2 text-green-400 flex-shrink-0" />
-            Fermer le ticket
-          </button>
-        )}
-        {showAdminView && ticket.assignedTo && (
-          <button
-            className="flex items-center w-full text-left px-4 py-2 text-sm text-indigo-400 hover:bg-[#36393F]"
-            onClick={() => { setModalFreelancer(ticket.assignedTo); setShowFreelancerModal(true); closeContextMenu(); }}
-          >
-            <UserCheck className="w-4 h-4 mr-2 text-indigo-400 flex-shrink-0" />
-            Voir le freelancer
-          </button>
-        )}
-        {showAdminView && user && (
-          <button
-            className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
-            onClick={() => { deleteTicket(ticket._id); closeContextMenu(); }}
-          >
-            <Trash2 className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
-            Supprimer le ticket
-          </button>
-        )}
-      </div>
-    );
-  })();
+    
+    if (isFreelancer) {
+      return tickets.filter(ticket =>
+        ticket.status !== 'closed' &&
+        ticket.status !== 'libre' &&
+        ticket.assignedTo && 
+        ticket.assignedTo._id === user._id
+      ).length;
+    }
+    
+    return tickets.filter(ticket =>
+      ticket.status !== 'closed' &&
+      ticket.status !== 'libre' &&
+      ticket.createdBy && 
+      ticket.createdBy._id === user._id
+    ).length;
+  };
 
   // Composant modale pour afficher les détails d'un ticket
   const TicketDetailsModal: React.FC<{ ticket: Ticket | null; isOpen: boolean; onClose: () => void }> = ({ ticket, isOpen, onClose }) => {
     if (!ticket) return null;
     
-    // Vérifier les permissions pour les actions
     const canDoDiagnostic = () => {
       if (!user || !ticket) return false;
       const roles = Array.isArray(user.role) ? user.role : (typeof user.role === 'string' ? user.role.split(',') : []);
@@ -1139,7 +1007,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     
     const canDeleteTicket = () => {
       if (!user || !ticket) return false;
-      return showAdminView && (user.role === 'admin' || user.role === 'fondateur');
+      return user.role === 'admin' || user.role === 'fondateur';
     };
     
     return (
@@ -1153,7 +1021,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-200">Sous-catégorie : {ticket.subcategory}</span>
             )}
           </div>
-          {/* Nouveau bloc designé pour la description et les infos principales */}
           <div className="bg-[#23272A] rounded-lg p-5 mb-6 shadow-sm">
             <div className="mb-4">
               <h4 className="flex items-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
@@ -1213,7 +1080,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             )}
           </div>
           
-          {/* Section des boutons d'action */}
           <div className="flex flex-wrap gap-2">
             {canDoDiagnostic() && (
               <button
@@ -1278,16 +1144,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
               </button>
             )}
             
-            {showAdminView && ticket.assignedTo && (
-              <button
-                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md flex items-center text-sm"
-                onClick={() => { setModalFreelancer(ticket.assignedTo); setShowFreelancerModal(true); onClose(); }}
-              >
-                <UserCheck className="w-4 h-4 mr-2" />
-                Voir le freelancer
-              </button>
-            )}
-            
             {canDeleteTicket() && (
               <button
                 className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center text-sm"
@@ -1304,7 +1160,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             )}
           </div>
           
-          {/* Section Audit Trail */}
           {ticket.auditTrail && ticket.auditTrail.length > 0 && (
             <div className="bg-[#36393F] border border-[#202225] rounded-md p-5">
               <div className="flex items-center mb-4">
@@ -1351,158 +1206,169 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     );
   };
 
-  if (showCloseModal && closeModalTicket) {
+  // Fonction pour vérifier les permissions d'action sur un ticket
+  const canPerformAction = (ticket: Ticket, action: 'diagnostic' | 'status' | 'delete') => {
+    if (!user) return false;
+    
+    const { isAdmin, isFounder, isFreelancer } = getUserRoles();
+    
+    // Les fondateurs et admins peuvent tout faire
+    if (isFounder || isAdmin) return true;
+    
+    // Les freelancers peuvent faire des actions sur les tickets libres et leurs tickets assignés
+    if (isFreelancer) {
+      if (action === 'delete') return false; // Les freelancers ne peuvent pas supprimer
+      return ticket.status === 'libre' || (ticket.assignedTo && ticket.assignedTo._id === user._id);
+    }
+    
+    // Les utilisateurs standards ne peuvent rien faire sur les tickets
+    return false;
+  };
+
+  // Menu contextuel
+  const contextMenuElement = contextMenu && (() => {
+    const ticket = tickets.find(t => t._id === contextMenu.ticketId);
+    if (!ticket) return null;
+
+    const canDoDiagnostic = canPerformAction(ticket, 'diagnostic');
+    const canChangeStatus = canPerformAction(ticket, 'status');
+    const canDelete = canPerformAction(ticket, 'delete');
+
     return (
-      <Modal isOpen={showCloseModal} onClose={() => setShowCloseModal(false)} title="Clôturer le ticket" maxWidth="sm">
-        <div className="space-y-4">
-          {/* Affichage du statut du ticket et message de paiement */}
-          <div className="bg-[#36393F] p-4 rounded-md">
-            <div className="flex items-center mb-2">
-              {closeModalTicket.status === 'resolved' ? (
-                <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
-              ) : (
-                <X className="w-5 h-5 text-red-400 mr-2" />
-              )}
-              <span className="text-white font-medium">
-                {closeModalTicket.status === 'resolved' ? 'Ticket résolu' : 'Ticket en échec'}
-              </span>
-            </div>
-            <p className="text-gray-300 text-sm">
-              {closeModalTicket.status === 'resolved' 
-                ? 'Vous serez débité du montant correspondant à la prestation.'
-                : 'Vous ne serez pas débité car le ticket est en échec.'}
-            </p>
-          </div>
-
-          {/* Affichage des informations du freelancer */}
-          {closeModalTicket.assignedTo && (
-            <div className="flex items-center space-x-4 bg-[#36393F] p-4 rounded-md">
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#23272A]">
-                {closeModalTicket.assignedTo.profileImage ? (
-                  <img 
-                    src={closeModalTicket.assignedTo.profileImage} 
-                    alt={`${closeModalTicket.assignedTo.firstName} ${closeModalTicket.assignedTo.lastName}`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <User className="w-6 h-6" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <h4 className="text-white font-medium">
-                  {closeModalTicket.assignedTo.firstName} {closeModalTicket.assignedTo.lastName}
-                </h4>
-                <p className="text-gray-400 text-sm">Freelancer</p>
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Décrivez la prestation réalisée</label>
-            <textarea
-              className="w-full bg-[#23272A] text-white rounded-md p-2 min-h-[80px] border border-[#36393F]"
-              value={closeDescription}
-              onChange={e => setCloseDescription(e.target.value)}
-              placeholder="Votre retour sur la prestation..."
-            />
-          </div>
-
-          {closeModalTicket.assignedTo && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Notez le freelancer</label>
-              <div className="flex items-center space-x-2">
-                {[1,2,3,4,5].map(star => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setCloseRating(star)}
-                    className="focus:outline-none"
-                  >
-                    <svg className={`w-7 h-7 ${closeRating >= star ? 'text-yellow-400' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.454a1 1 0 00-1.175 0l-3.38 2.454c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z" />
-                    </svg>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 mt-4">
+      <div
+        ref={contextMenuRef}
+        className="fixed z-[999] bg-[#2F3136] border border-[#202225] rounded-md shadow-lg py-2 w-56"
+        style={{ top: contextMenu.y, left: contextMenu.x }}
+        tabIndex={0}
+        onBlur={closeContextMenu}
+        onContextMenu={e => e.preventDefault()}
+      >
+        <a
+          href="#"
+          className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-[#36393F]"
+          onClick={e => { e.preventDefault(); setModalTicket(ticket); setShowTicketModal(true); closeContextMenu(); }}
+        >
+          <ExternalLink className="w-4 h-4 mr-2 text-[#5865F2] flex-shrink-0" />
+          Voir le ticket
+        </a>
+        
+        {canDoDiagnostic && ticket.status === 'libre' && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-[#36393F]"
+            onClick={() => { doDiagnostic(ticket); closeContextMenu(); }}
+            disabled={updateLoading[ticket._id]}
+          >
+            <CheckCircle className="w-4 h-4 mr-2 text-blue-400 flex-shrink-0" />
+            Faire le diagnostic
+          </button>
+        )}
+        
+        {canChangeStatus && ticket.status === 'diagnostic' && (
+          <>
             <button
-              className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
-              onClick={() => {
-                setShowCloseModal(false);
-                setCloseDescription('');
-                setCloseRating(5);
-              }}
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-cyan-400 hover:bg-[#36393F]"
+              onClick={() => { updateTicketStatus(ticket._id, 'online'); closeContextMenu(); }}
+              disabled={updateLoading[ticket._id]}
             >
-              Annuler
+              <MessageCircle className="w-4 h-4 mr-2 text-cyan-400 flex-shrink-0" />
+              Intervention en ligne
             </button>
             <button
-              className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
-              onClick={async () => {
-                try {
-                  const token = localStorage.getItem('authToken');
-                  if (!token) throw new Error('Non authentifié');
-                  const response = await fetch(`http://localhost:3001/api/tickets/${closeModalTicket._id}`, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ 
-                      status: 'closed',
-                      skipFeedback: true
-                    })
-                  });
-                  if (!response.ok) throw new Error('Erreur lors de la clôture du ticket');
-                  setShowCloseModal(false);
-                  setCloseDescription('');
-                  setCloseRating(5);
-                  fetchTickets();
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : 'Erreur lors de la clôture du ticket');
-                }
-              }}
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-[#36393F]"
+              onClick={() => { updateTicketStatus(ticket._id, 'onsite'); closeContextMenu(); }}
+              disabled={updateLoading[ticket._id]}
             >
-              Passer sans avis
+              <User className="w-4 h-4 mr-2 text-purple-400 flex-shrink-0" />
+              Intervention à domicile
+            </button>
+          </>
+        )}
+        
+        {canChangeStatus && (ticket.status === 'online' || ticket.status === 'onsite') && (
+          <>
+            <button
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+              onClick={() => { updateTicketStatus(ticket._id, 'failed'); closeContextMenu(); }}
+              disabled={updateLoading[ticket._id]}
+            >
+              <X className="w-4 h-4 mr-2 text-red-400 flex-shrink-0" />
+              Échec du ticket
             </button>
             <button
-              className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-              onClick={async () => {
-                try {
-                  const token = localStorage.getItem('authToken');
-                  if (!token) throw new Error('Non authentifié');
-                  const response = await fetch(`http://localhost:3001/api/tickets/${closeModalTicket._id}`, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ 
-                      status: 'closed',
-                      description: closeDescription, 
-                      rating: closeModalTicket.assignedTo ? closeRating : undefined
-                    })
-                  });
-                  if (!response.ok) throw new Error('Erreur lors de la clôture du ticket');
-                  setShowCloseModal(false);
-                  setCloseDescription('');
-                  setCloseRating(5);
-                  fetchTickets();
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : 'Erreur lors de la clôture du ticket');
-                }
-              }}
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-[#36393F]"
+              onClick={() => { updateTicketStatus(ticket._id, 'resolved'); closeContextMenu(); }}
+              disabled={updateLoading[ticket._id]}
             >
-              Valider
+              <CheckCircle className="w-4 h-4 mr-2 text-green-400 flex-shrink-0" />
+              Ticket résolu
             </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        )}
+        
+        {canDelete && (
+          <button
+            className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+            onClick={() => { deleteTicket(ticket._id); closeContextMenu(); }}
+          >
+            <Trash2 className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+            Supprimer le ticket
+          </button>
+        )}
+      </div>
     );
+  })();
+
+  // Fonction pour faire le diagnostic
+  const doDiagnostic = async (ticket: Ticket) => {
+    try {
+      setUpdateLoading(prev => ({ ...prev, [ticket._id]: true }));
+      const token = localStorage.getItem('authToken');
+      if (!token || !user) {
+        setError('Non authentifié');
+        return;
+      }
+      const response = await fetch(`http://localhost:3001/api/tickets/${ticket._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          status: 'diagnostic', 
+          assignedTo: user._id 
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'assignation du ticket');
+      }
+      const data = await response.json();
+      setTickets(prevTickets => prevTickets.map(t => t._id === ticket._id ? data.ticket : t));
+      setActiveTab('diagnostic');
+      closeContextMenu();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setUpdateLoading(prev => ({ ...prev, [ticket._id]: false }));
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-500/10 border border-red-500/20 rounded-md p-4 my-4">
+        <div className="flex items-center">
+          <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
+          <span className="text-red-500">{error}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (tickets.length === 0) {
+    return <div className="text-center py-4 text-gray-300">Aucun ticket trouvé</div>;
   }
 
   return (
@@ -1529,28 +1395,9 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             Tickets en cours : {getTotalOpenTickets()}
           </div>
         )}
-        {user && (
-          (Array.isArray(user.role)
-            ? user.role.some(r => r.includes('admin') || r.includes('fondateur'))
-            : typeof user.role === 'string' &&
-              (user.role.includes('admin') || user.role.includes('fondateur'))
-          ) && (
-            <div className="flex justify-end">
-              <label className="flex items-center cursor-pointer select-none">
-                <span className="mr-2 text-sm font-medium text-red-400">Administration</span>
-                <input
-                  type="checkbox"
-                  checked={showAdminView}
-                  onChange={e => handleAdminViewChange(e.target.checked)}
-                  className="form-checkbox h-5 w-5 text-red-500 rounded focus:ring-0 border-gray-400 bg-[#23272A]"
-                />
-              </label>
-            </div>
-          )
-        )}
       </div>
     </div>
   );
 };
 
-export default TicketList; 
+export default TicketList;
