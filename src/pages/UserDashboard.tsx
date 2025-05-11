@@ -936,12 +936,9 @@ const UserDashboard = () => {
                       <h4 className="font-medium text-gray-300">Méthode de paiement</h4>
                     </div>
                     <div className="pl-8 flex items-center">
-                      <div className="bg-white p-2 rounded mr-2 flex items-center justify-center">
-                        <img src="/icons/cb.svg" alt="CB" className="w-12 h-8 object-contain" />
-                      </div>
-                      <p className="text-white">Carte se terminant par 4242</p>
+                      {/* Affichage conditionnel de la carte, à adapter plus tard */}
+                      <p className="text-gray-400 italic">Aucune carte enregistrée</p>
                     </div>
-                    <p className="text-gray-400 pl-8 text-sm">Expire le 12/25</p>
                     
                     <div className="pl-8 mt-4">
                       <button 
