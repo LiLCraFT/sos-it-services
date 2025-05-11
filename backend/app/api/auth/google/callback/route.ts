@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
         email: userInfo.email,
         firstName: userInfo.given_name || userInfo.name || '',
         lastName: userInfo.family_name || '',
-        profileImage: userInfo.picture,
+        profileImage: '/api/default-image',
         role: 'user',
         clientType: 'Particulier',
         subscriptionType: 'none',
@@ -45,7 +45,6 @@ export async function GET(req: NextRequest) {
     } else {
       user.firstName = userInfo.given_name || user.firstName;
       user.lastName = userInfo.family_name || user.lastName;
-      user.profileImage = userInfo.picture || user.profileImage;
       await user.save();
     }
 
