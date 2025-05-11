@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { X, Users } from 'lucide-react';
+import { X, CreditCard } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -69,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="bg-[#5865F2] p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Users className="w-6 h-6 text-white mr-2" />
+              <CreditCard className="w-6 h-6 text-white mr-2" />
               <h3 className="text-2xl font-bold text-white">{title}</h3>
             </div>
             <button

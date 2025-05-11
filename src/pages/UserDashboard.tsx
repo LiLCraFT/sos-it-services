@@ -838,7 +838,13 @@ const UserDashboard = () => {
                     </div>
 
                     <button
-                      onClick={() => setShowCreateTicket(true)}
+                      onClick={() => {
+                        if (!user?.hasPaymentMethod) {
+                          setShowPaymentModal(true);
+                        } else {
+                          setShowCreateTicket(true);
+                        }
+                      }}
                       className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none flex items-center"
                     >
                       <Ticket className="w-4 h-4 mr-2" />
@@ -846,6 +852,42 @@ const UserDashboard = () => {
                     </button>
                   </div>
                 </div>
+
+                {showPaymentModal && (
+                  <Modal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} title="Méthode de paiement requise" maxWidth="md">
+                    <p className="text-gray-300 mb-2">
+                      Pour créer un ticket, vous devez d'abord ajouter une méthode de paiement à votre compte.
+                    </p>
+                    {(!user?.role || (user?.role !== 'admin' && user?.role !== 'fondateur' && user?.role !== 'freelancer' && user?.role !== 'freelancer_admin')) && (
+                      <div className="flex justify-center my-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
+                          <Crown className="w-3 h-3 mr-1" />
+                          {user?.subscriptionType === 'solo' ? 'Plan Solo' : user?.subscriptionType === 'family' ? 'Plan Famille' : 'A la carte'}
+                        </span>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400 mb-4">
+                      Aucune somme ne sera débitée tant que les différents problèmes ne seront pas résolus.
+                    </p>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setShowPaymentModal(false)}
+                        className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowPaymentModal(false);
+                          window.location.href = '/dashboard?tab=subscription';
+                        }}
+                        className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+                      >
+                        Ajouter une carte
+                      </button>
+                    </div>
+                  </Modal>
+                )}
 
                 {showCreateTicket ? (
                   <CreateTicketForm 
