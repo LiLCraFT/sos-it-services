@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Save } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
@@ -8,6 +8,7 @@ import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import { SiVisa } from 'react-icons/si';
 import FreelancerList from '../components/FreelancerList';
 import UserList from '../components/UserList';
+import { Modal } from '../components/ui/Modal';
 
 // URL de l'image par défaut
 const DEFAULT_IMAGE = '/images/default-profile.png';
@@ -605,6 +606,8 @@ const UserDashboard = () => {
     }
   }, []);
 
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
@@ -939,12 +942,89 @@ const UserDashboard = () => {
                     <p className="text-gray-400 pl-8 text-sm">Expire le 12/25</p>
                     
                     <div className="pl-8 mt-4">
-                      <button className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none">
+                      <button 
+                        onClick={() => setShowPaymentModal(true)}
+                        className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+                      >
                         Modifier le mode de paiement
                       </button>
                     </div>
                   </div>
                 </div>
+
+                {/* Modal de paiement */}
+                <Modal
+                  isOpen={showPaymentModal}
+                  onClose={() => setShowPaymentModal(false)}
+                  title="Modifier le mode de paiement"
+                  maxWidth="md"
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Numéro de carte
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="4242 4242 4242 4242"
+                        className="w-full bg-[#36393F] text-white rounded-md border-0 py-2 px-3 shadow-sm focus:ring-2 focus:ring-[#5865F2] focus:outline-none"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                          Date d'expiration
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="MM/AA"
+                          className="w-full bg-[#36393F] text-white rounded-md border-0 py-2 px-3 shadow-sm focus:ring-2 focus:ring-[#5865F2] focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                          CVC
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="123"
+                          className="w-full bg-[#36393F] text-white rounded-md border-0 py-2 px-3 shadow-sm focus:ring-2 focus:ring-[#5865F2] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Nom sur la carte
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="John Doe"
+                        className="w-full bg-[#36393F] text-white rounded-md border-0 py-2 px-3 shadow-sm focus:ring-2 focus:ring-[#5865F2] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <button
+                      onClick={() => setShowPaymentModal(false)}
+                      className="px-4 py-2 text-sm text-gray-300 hover:text-white bg-[#36393F] rounded-md hover:bg-[#40444b] transition-colors"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Logique de mise à jour du paiement
+                        setShowPaymentModal(false);
+                      }}
+                      className="px-4 py-2 text-sm text-white bg-[#5865F2] rounded-md hover:bg-[#4752C4] transition-colors flex items-center"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Enregistrer
+                    </button>
+                  </div>
+                </Modal>
               </>
             )}
             
