@@ -7,6 +7,17 @@ import RegisterModal from './RegisterModal';
 import { useAuth } from '../contexts/AuthContext';
 import { Link as RouterLink } from 'react-router-dom';
 
+// Fonction pour construire l'URL de l'image
+const getImageUrl = (path: string | null | undefined): string => {
+  if (!path) {
+    return 'http://localhost:3001/api/default-image';
+  }
+  if (path.startsWith('http')) {
+    return path;
+  }
+  return `http://localhost:3001${path}`;
+};
+
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -230,17 +241,31 @@ const Navbar: React.FC = () => {
                 </a>
                 <div className="relative" ref={userMenuRef}>
                   <button 
-                    className={`${isAuthenticated ? 'bg-[#5865F2]' : 'bg-[#4E5058]'} hover:bg-opacity-90 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center`}
+                    className="flex items-center justify-center p-1 rounded-full hover:bg-[#36393F] transition-colors"
                     aria-label={isAuthenticated ? 'Menu utilisateur' : 'Se connecter'}
                     onClick={handleUserButtonClick}
                   >
                     {isAuthenticated ? (
-                      <>
-                        <User className="h-5 w-5" />
-                        <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-                      </>
+                      user?.profileImage ? (
+                        <img 
+                          src={getImageUrl(user.profileImage)} 
+                          alt={`${user.firstName} ${user.lastName}`}
+                          className="h-8 w-8 rounded-full object-cover"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.src = 'http://localhost:3001/api/default-image';
+                          }}
+                          key={user.profileImage}
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-[#5865F2] flex items-center justify-center">
+                          <User className="h-5 w-5 text-white" />
+                        </div>
+                      )
                     ) : (
-                      <User className="h-5 w-5" />
+                      <div className="h-8 w-8 rounded-full bg-[#4E5058] flex items-center justify-center">
+                        <User className="h-5 w-5 text-white" />
+                      </div>
                     )}
                   </button>
                   
