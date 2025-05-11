@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from './ui/Modal';
 import { User, Mail, Phone, MapPin, Calendar, Shield, Save, Edit } from 'lucide-react';
 
@@ -26,8 +26,22 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
+  const [imageUrl, setImageUrl] = useState<string>('');
   const [imageError, setImageError] = useState(false);
   const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
+
+  useEffect(() => {
+    if (user.profileImage) {
+      if (user.profileImage.startsWith('http')) {
+        setImageUrl(user.profileImage);
+      } else {
+        setImageUrl(`http://localhost:3001${user.profileImage}`);
+      }
+    } else {
+      setImageUrl('http://localhost:3001/api/default-image');
+    }
+    setImageError(false);
+  }, [user.profileImage]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -37,23 +51,17 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
     });
   };
 
-  // Fonction pour construire l'URL de l'image
-  const getImageUrl = (path: string | null | undefined): string => {
-    if (!path || imageError) return '/images/default-profile.png';
-    
-    if (path.startsWith('http')) {
-      return path;
+  const handleImageError = () => {
+    if (!imageError) {
+      setImageError(true);
+      setImageUrl('http://localhost:3001/api/default-image');
     }
-    
-    if (path.startsWith('/')) {
-      return `http://localhost:3001${path}`;
-    }
-    
-    return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
   };
 
   // Helper pour afficher les tags de rôle
   const renderRoleTags = (role: string, user: UserDetailsModalProps['user']) => {
+    if (!user) return null;
+    
     switch(role) {
       case 'fondateur':
         return (
@@ -139,15 +147,12 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
         <div className="flex items-center space-x-4">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-[#202225]">
             <img
-              src={user?.profileImage ? `http://localhost:3001${user.profileImage}` : '/images/default-profile.png'}
-              alt={`${user?.firstName} ${user?.lastName}`}
+              src={imageUrl}
+              alt={`${user.firstName} ${user.lastName}`}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                if (target.src !== '/images/default-profile.png') {
-                  target.src = '/images/default-profile.png';
-                }
-              }}
+              onError={handleImageError}
+              crossOrigin="anonymous"
+              key={imageUrl}
             />
           </div>
           <div>
