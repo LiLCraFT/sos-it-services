@@ -3,6 +3,7 @@ import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, C
 import { useAuth } from '../contexts/AuthContext';
 import UserDetailsModal from './UserDetailsModal';
 import Pagination from './ui/Pagination';
+import { getImageUrl } from '../utils/imageUtils';
 
 type UserData = {
   _id: string;
@@ -478,102 +479,6 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     setSelectedUser(users.find(user => user._id === userId) || null);
   };
 
-  // Fonction pour construire l'URL de l'image
-  const getImageUrl = (path: string | null | undefined, userId: string): string => {
-    if (!path || imageError[userId]) return '/images/default-profile.png';
-    
-    if (path.startsWith('http')) {
-      return path;
-    }
-    
-    if (path.startsWith('/')) {
-      return `http://localhost:3001${path}`;
-    }
-    
-    return `http://localhost:3001/api/static?path=${encodeURIComponent(path)}`;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-48">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5865F2]"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-500/10 text-red-400 rounded-md">
-        <p>{error}</p>
-        <button 
-          onClick={fetchUsers} 
-          className="mt-2 px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4]"
-        >
-          Réessayer
-        </button>
-      </div>
-    );
-  }
-
-  const filteredUsers = getFilteredUsers();
-
-  if (filteredUsers.length === 0) {
-    return (
-      <div>
-        {renderFilters()}
-        <div className="p-4 bg-[#36393F] rounded-md text-center">
-          <p className="text-gray-300">Aucun utilisateur trouvé.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Helper pour afficher les tags de rôle
-  const renderRoleTags = (role: string, user: UserData) => {
-    switch(role) {
-      case 'fondateur':
-        return (
-          <div className="flex space-x-1">
-            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
-              Fondateur
-            </span>
-            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400">
-              Admin
-            </span>
-          </div>
-        );
-      case 'admin':
-        return (
-          <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400">
-            Admin
-          </span>
-        );
-      case 'freelancer_admin':
-        return (
-          <div className="flex space-x-1">
-            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-500">
-              Freelancer
-            </span>
-            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400">
-              Admin
-            </span>
-          </div>
-        );
-      case 'freelancer':
-        return (
-          <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-500">
-            Freelancer
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#5865F2]/20 text-[#5865F2]">
-            {user.clientType || 'Utilisateur'}
-          </span>
-        );
-    }
-  };
-
   const renderStatus = (user: UserData) => (
     <div className="flex items-center justify-center space-x-2">
       {user.isEmailVerified ? (
@@ -769,10 +674,11 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-[#202225]">
                   <img
-                    src={getImageUrl(user.profileImage, user._id)}
+                    src={getImageUrl(user.profileImage)}
                     alt={`${user.firstName} ${user.lastName}`}
                     className="w-full h-full object-cover"
                     onError={() => setImageError(prev => ({ ...prev, [user._id]: true }))}
+                    key={user.profileImage}
                   />
                 </div>
                 <div>
@@ -948,6 +854,87 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
         </div>
       </div>
     );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5865F2]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-500/10 text-red-400 rounded-md">
+        <p>{error}</p>
+        <button 
+          onClick={fetchUsers} 
+          className="mt-2 px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4]"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
+  const filteredUsers = getFilteredUsers();
+
+  if (filteredUsers.length === 0) {
+    return (
+      <div>
+        {renderFilters()}
+        <div className="p-4 bg-[#36393F] rounded-md text-center">
+          <p className="text-gray-300">Aucun utilisateur trouvé.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper pour afficher les tags de rôle
+  const renderRoleTags = (role: string, user: UserData) => {
+    switch(role) {
+      case 'fondateur':
+        return (
+          <div className="flex space-x-1">
+            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
+              Fondateur
+            </span>
+            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400">
+              Admin
+            </span>
+          </div>
+        );
+      case 'admin':
+        return (
+          <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400">
+            Admin
+          </span>
+        );
+      case 'freelancer_admin':
+        return (
+          <div className="flex space-x-1">
+            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-500">
+              Freelancer
+            </span>
+            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400">
+              Admin
+            </span>
+          </div>
+        );
+      case 'freelancer':
+        return (
+          <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-500">
+            Freelancer
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#5865F2]/20 text-[#5865F2]">
+            {user.clientType || 'Utilisateur'}
+          </span>
+        );
+    }
   };
 
   return (

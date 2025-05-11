@@ -56,9 +56,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             });
             
             if (response.ok) {
-              const data = await response.json();
-              console.log('Réponse du backend /api/auth/verify:', data);
-              setUser(data.user);
+              // Token valide, récupérer le profil complet
+              const meRes = await fetch(`${API_URL}/api/users/me`, {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              });
+              if (meRes.ok) {
+                const userData = await meRes.json();
+                setUser(userData);
+                localStorage.setItem('user', JSON.stringify(userData));
+              } else {
+                // Si la récupération du profil échoue, fallback sur le token
+                const data = await response.json();
+                setUser(data.user);
+              }
             } else {
               // Token invalide ou expiré
               throw new Error("Session expirée");
@@ -109,8 +121,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       localStorage.setItem('authToken', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setUser(data.user);
+      // Récupérer le profil complet après login
+      const meRes = await fetch(`${API_URL}/api/users/me`, {
+        headers: {
+          Authorization: `Bearer ${data.token}`
+        }
+      });
+      if (meRes.ok) {
+        const userData = await meRes.json();
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      } else {
+        setUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
     } catch (error) {
       console.error('Erreur de connexion:', error);
       throw error;

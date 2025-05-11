@@ -6,17 +6,7 @@ import LoginForm from './LoginForm';
 import RegisterModal from './RegisterModal';
 import { useAuth } from '../contexts/AuthContext';
 import { Link as RouterLink } from 'react-router-dom';
-
-// Fonction pour construire l'URL de l'image
-const getImageUrl = (path: string | null | undefined): string => {
-  if (!path) {
-    return 'http://localhost:3001/api/default-image';
-  }
-  if (path.startsWith('http')) {
-    return path;
-  }
-  return `http://localhost:3001${path}`;
-};
+import { getImageUrl } from '../utils/imageUtils';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -166,6 +156,9 @@ const Navbar: React.FC = () => {
       [index]: !prev[index]
     }));
   };
+
+  // Log temporaire pour debug
+  console.log('Navbar user:', user);
 
   return (
     <>

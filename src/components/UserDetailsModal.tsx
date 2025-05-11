@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './ui/Modal';
 import { User, Mail, Phone, MapPin, Calendar, Shield, Save, Edit } from 'lucide-react';
+import { getImageUrl } from '../utils/imageUtils';
 
 interface UserDetailsModalProps {
   isOpen: boolean;
@@ -26,22 +27,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
-  const [imageUrl, setImageUrl] = useState<string>('');
   const [imageError, setImageError] = useState(false);
   const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
 
-  useEffect(() => {
-    if (user.profileImage) {
-      if (user.profileImage.startsWith('http')) {
-        setImageUrl(user.profileImage);
-      } else {
-        setImageUrl(`http://localhost:3001${user.profileImage}`);
-      }
-    } else {
-      setImageUrl('http://localhost:3001/api/default-image');
+  const handleImageError = () => {
+    if (!imageError) {
+      setImageError(true);
     }
-    setImageError(false);
-  }, [user.profileImage]);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -49,13 +42,6 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  const handleImageError = () => {
-    if (!imageError) {
-      setImageError(true);
-      setImageUrl('http://localhost:3001/api/default-image');
-    }
   };
 
   // Helper pour afficher les tags de rôle
@@ -147,12 +133,12 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
         <div className="flex items-center space-x-4">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-[#202225]">
             <img
-              src={imageUrl}
+              src={getImageUrl(user.profileImage)}
               alt={`${user.firstName} ${user.lastName}`}
               className="w-full h-full object-cover"
               onError={handleImageError}
               crossOrigin="anonymous"
-              key={imageUrl}
+              key={user.profileImage}
             />
           </div>
           <div>
