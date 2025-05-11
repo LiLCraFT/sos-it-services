@@ -30,6 +30,12 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
       return DEFAULT_IMAGE;
     }
     
+    // Si l'URL est une image Google, retourner l'image par défaut
+    if (path.includes('googleusercontent.com')) {
+      console.log('Image Google détectée, retourne image par défaut');
+      return DEFAULT_IMAGE;
+    }
+    
     // Si l'URL commence par http, c'est déjà une URL complète
     if (path.startsWith('http')) {
       console.log('URL complète détectée:', path);
