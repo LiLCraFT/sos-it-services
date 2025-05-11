@@ -11,6 +11,7 @@ import UserList from '../components/UserList';
 import { Modal } from '../components/ui/Modal';
 import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { Visa, Mastercard, Amex } from 'react-payment-logos/dist/flat-rounded';
+import PaymentSettings from '../pages/PaymentSettings';
 
 // URL de l'image par défaut
 const DEFAULT_IMAGE = '/images/default-profile.png';

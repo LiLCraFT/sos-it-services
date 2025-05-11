@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertTriangle, Upload, X, Image, FileText, Paperclip } from 'lucide-react';
+import { AlertTriangle, Upload, X, Image, FileText, Paperclip, CreditCard, Crown } from 'lucide-react';
 
 interface User {
   _id: string;
   firstName: string;
   lastName: string;
   email: string;
+  hasPaymentMethod?: boolean;
+  role?: string;
+  clientType?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  birthDate?: string;
+  profileImage?: string;
+  subscriptionType?: "none" | "solo" | "family";
 }
 
 interface CreateTicketFormProps {
@@ -27,6 +36,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
   const [error, setError] = useState<string | null>(null);
   const [fetchingUsers, setFetchingUsers] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Catégories principales de dépannage informatique
@@ -169,97 +179,58 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title.trim() || !description.trim() || !category) {
-      setError('Veuillez remplir tous les champs obligatoires');
+    setError(null);
+
+    // Vérifier si l'utilisateur a une méthode de paiement
+    if (!user?.hasPaymentMethod) {
+      setShowPaymentModal(true);
       return;
     }
-    
+
+    setLoading(true);
     try {
-      setLoading(true);
-      const token = localStorage.getItem('authToken');
-      
-      if (!token) {
-        setError('Non authentifié');
-        return;
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('category', category);
+      formData.append('description', description);
+      formData.append('priority', priority);
+      if (targetUser) {
+        formData.append('targetUser', targetUser);
       }
       
-      // Utiliser FormData si des fichiers sont attachés
-      if (attachments.length > 0) {
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('description', description);
-        formData.append('priority', priority);
-        formData.append('category', category);
-        formData.append('subcategory', subcategory || 'Non spécifié');
-        
-        // Si ce n'est pas un utilisateur normal et qu'un utilisateur cible est sélectionné
-        if (user?.role !== 'user' && targetUser) {
-          formData.append('targetUser', targetUser);
-        }
-        
-        // Ajouter les fichiers attachés
-        attachments.forEach(file => {
-          formData.append('attachments', file);
-        });
-        
-        const response = await fetch('http://localhost:3001/api/tickets', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          body: formData
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Erreur lors de la création du ticket');
-        }
-      } else {
-        // Sans attachements, utiliser JSON comme avant
-        const ticketData: any = {
-          title,
-          description,
-          priority,
-          category,
-          subcategory: subcategory || 'Non spécifié',
-        };
-        
-        // Si ce n'est pas un utilisateur normal et qu'un utilisateur cible est sélectionné
-        if (user?.role !== 'user' && targetUser) {
-          ticketData.targetUser = targetUser;
-        }
-        
-        const response = await fetch('http://localhost:3001/api/tickets', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(ticketData)
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Erreur lors de la création du ticket');
-        }
+      attachments.forEach((file) => {
+        formData.append('attachments', file);
+      });
+
+      const response = await fetch('http://localhost:3001/api/tickets', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Erreur lors de la création du ticket');
       }
-      
-      // Réinitialiser le formulaire
-      setTitle('');
-      setCategory('');
-      setSubcategory('');
-      setDescription('');
-      setPriority('medium');
-      setTargetUser('');
-      setAttachments([]);
-      
-      // Informer le parent que le ticket a été créé
+
       onTicketCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Helper pour afficher le nom lisible de l'abonnement
+  const getSubscriptionName = () => {
+    if (!user?.subscriptionType) return '';
+    switch(user.subscriptionType) {
+      case 'solo': return 'Plan Solo';
+      case 'family': return 'Plan Famille';
+      case 'none':
+      default: return 'A la carte';
     }
   };
 
@@ -272,6 +243,49 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
           <div className="flex items-center">
             <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
             <span className="text-red-500 text-sm">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#36393F] rounded-lg p-6 max-w-md w-full">
+            <div className="flex items-center mb-4">
+              <CreditCard className="w-6 h-6 text-[#5865F2] mr-2" />
+              <h3 className="text-xl font-semibold text-white">Méthode de paiement requise</h3>
+            </div>
+            <p className="text-gray-300 mb-2">
+              Pour créer un ticket, vous devez d'abord ajouter une méthode de paiement à votre compte.
+            </p>
+            {/* Tag d'abonnement harmonisé */}
+            {(!user?.role || (user?.role !== 'admin' && user?.role !== 'fondateur' && user?.role !== 'freelancer' && user?.role !== 'freelancer_admin')) && (
+              <div className="flex justify-center my-4">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
+                  <Crown className="w-3 h-3 mr-1" />
+                  {getSubscriptionName() || (user?.subscriptionType === 'solo' ? 'Plan Solo' : user?.subscriptionType === 'family' ? 'Plan Famille' : 'A la carte')}
+                </span>
+              </div>
+            )}
+            <p className="text-xs text-gray-400 mb-4">
+              Aucune somme ne sera débitée tant que les différents problèmes ne seront pas résolus.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  window.location.href = '/dashboard?tab=subscription';
+                }}
+                className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+              >
+                Ajouter une carte
+              </button>
+            </div>
           </div>
         </div>
       )}

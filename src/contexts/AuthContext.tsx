@@ -13,6 +13,7 @@ interface User {
   profileImage: string;
   subscriptionType: "none" | "solo" | "family";
   clientType: "Particulier" | "Professionnel" | "Freelancer";
+  hasPaymentMethod?: boolean;
 }
 
 interface AuthContextType {

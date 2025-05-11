@@ -1,0 +1,190 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { CreditCard, Trash2, Plus } from 'lucide-react';
+import PaymentMethodForm from '../components/PaymentMethodForm';
+
+interface PaymentMethod {
+  id: string;
+  last4: string;
+  brand: string;
+  expMonth: number;
+  expYear: number;
+  isDefault: boolean;
+}
+
+const PaymentSettings: React.FC = () => {
+  const { user } = useAuth();
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const fetchPaymentMethods = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/payment/methods', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la récupération des méthodes de paiement');
+      }
+
+      const data = await response.json();
+      setPaymentMethods(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPaymentMethods();
+  }, []);
+
+  const handleDeleteMethod = async (methodId: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette méthode de paiement ?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3001/api/payment/methods/${methodId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la suppression de la méthode de paiement');
+      }
+
+      setPaymentMethods(methods => methods.filter(method => method.id !== methodId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    }
+  };
+
+  const handleSetDefault = async (methodId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/payment/methods/${methodId}/default`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la modification de la méthode par défaut');
+      }
+
+      setPaymentMethods(methods =>
+        methods.map(method => ({
+          ...method,
+          isDefault: method.id === methodId,
+        }))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    }
+  };
+
+  const handlePaymentMethodAdded = () => {
+    setShowAddForm(false);
+    fetchPaymentMethods();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-white">Chargement...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-white">Méthodes de paiement</h1>
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="flex items-center px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Ajouter une carte
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3 mb-4">
+          <div className="flex items-center">
+            <CreditCard className="w-5 h-5 text-red-500 mr-2" />
+            <span className="text-red-500 text-sm">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {showAddForm && (
+        <div className="mb-6">
+          <PaymentMethodForm
+            onSuccess={handlePaymentMethodAdded}
+            onCancel={() => setShowAddForm(false)}
+          />
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {paymentMethods.map((method) => (
+          <div
+            key={method.id}
+            className="bg-[#36393F] rounded-lg p-4 flex items-center justify-between"
+          >
+            <div className="flex items-center">
+              <CreditCard className="w-6 h-6 text-[#5865F2] mr-3" />
+              <div>
+                <div className="text-white font-medium">
+                  {method.brand.charAt(0).toUpperCase() + method.brand.slice(1)} •••• {method.last4}
+                </div>
+                <div className="text-gray-400 text-sm">
+                  Expire {method.expMonth.toString().padStart(2, '0')}/{method.expYear}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              {!method.isDefault && (
+                <button
+                  onClick={() => handleSetDefault(method.id)}
+                  className="text-[#5865F2] hover:text-[#4752C4] text-sm"
+                >
+                  Définir par défaut
+                </button>
+              )}
+              {method.isDefault && (
+                <span className="text-[#5865F2] text-sm">Par défaut</span>
+              )}
+              <button
+                onClick={() => handleDeleteMethod(method.id)}
+                className="text-red-500 hover:text-red-400"
+                disabled={method.isDefault}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {paymentMethods.length === 0 && !showAddForm && (
+          <div className="text-center py-8">
+            <CreditCard className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+            <p className="text-gray-400">Aucune méthode de paiement enregistrée</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default PaymentSettings; 
