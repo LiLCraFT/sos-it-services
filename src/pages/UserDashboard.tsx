@@ -824,39 +824,45 @@ const UserDashboard = () => {
                 </div>
 
                 {showPaymentModal && (
-                  <Modal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} title="Méthode de paiement requise" maxWidth="md">
-                    <p className="text-gray-300 mb-2">
-                      Pour créer un ticket, vous devez d'abord ajouter une méthode de paiement à votre compte.
-                    </p>
-                    {(!user?.role || (user?.role !== 'admin' && user?.role !== 'fondateur' && user?.role !== 'freelancer' && user?.role !== 'freelancer_admin')) && (
-                      <div className="flex justify-center my-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
-                          <Crown className="w-3 h-3 mr-1" />
-                          {user?.subscriptionType === 'solo' ? 'Plan Solo' : user?.subscriptionType === 'family' ? 'Plan Famille' : 'A la carte'}
-                        </span>
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-[#36393F] rounded-lg p-6 max-w-md w-full">
+                      <div className="flex items-center mb-4">
+                        <CreditCard className="w-6 h-6 text-[#5865F2] mr-2" />
+                        <h3 className="text-xl font-semibold text-white">Méthode de paiement requise</h3>
                       </div>
-                    )}
-                    <p className="text-xs text-gray-400 mb-4">
-                      Aucune somme ne sera débitée tant que les différents problèmes ne seront pas résolus.
-                    </p>
-                    <div className="flex justify-end space-x-3">
-                      <button
-                        onClick={() => setShowPaymentModal(false)}
-                        className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
-                      >
-                        Annuler
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowPaymentModal(false);
-                          navigate('/dashboard?tab=subscription');
-                        }}
-                        className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
-                      >
-                        Ajouter une carte
-                      </button>
+                      <p className="text-gray-300 mb-2">
+                        Pour souscrire à un abonnement payant, vous devez d'abord ajouter une méthode de paiement à votre compte.
+                      </p>
+                      {(!user?.role || (user?.role !== 'admin' && user?.role !== 'fondateur' && user?.role !== 'freelancer' && user?.role !== 'freelancer_admin')) && (
+                        <div className="flex justify-center my-4">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
+                            <Crown className="w-3 h-3 mr-1" />
+                            {user?.subscriptionType === 'solo' ? 'Plan Solo' : user?.subscriptionType === 'family' ? 'Plan Famille' : 'A la carte'}
+                          </span>
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-400 mb-4">
+                        Aucune somme ne sera débitée tant que l'abonnement n'est pas activé.
+                      </p>
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          onClick={() => setShowPaymentModal(false)}
+                          className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowPaymentModal(false);
+                            navigate('/dashboard?tab=subscription');
+                          }}
+                          className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+                        >
+                          Ajouter une carte
+                        </button>
+                      </div>
                     </div>
-                  </Modal>
+                  </div>
                 )}
 
                 {showCreateTicket ? (
@@ -928,7 +934,14 @@ const UserDashboard = () => {
                       <select
                         className="px-4 py-2 bg-[#36393F] text-white rounded-md border border-[#5865F2] focus:outline-none mr-2"
                         value={subscriptionType}
-                        onChange={e => setSubscriptionType(e.target.value as "none" | "solo" | "family")}
+                        onChange={e => {
+                          const value = e.target.value as 'none' | 'solo' | 'family';
+                          if ((value === 'solo' || value === 'family') && !user?.hasPaymentMethod) {
+                            setShowPaymentModal(true);
+                            return;
+                          }
+                          setSubscriptionType(value);
+                        }}
                       >
                         <option value="none">A la carte - 0€ / mois</option>
                         <option value="solo">Solo - 29,99€ / mois (1 personne)</option>
