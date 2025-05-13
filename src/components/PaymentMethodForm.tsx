@@ -1,27 +1,86 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { AlertTriangle, CreditCard } from 'lucide-react';
+/// <reference types="vite/client" />
 
-interface PaymentMethodFormProps {
+import React, { useState } from 'react';
+import { CreditCard, AlertTriangle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
+
+// Utiliser la clé publique depuis les variables d'environnement
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
+console.log('Stripe Public Key:', import.meta.env.VITE_STRIPE_PUBLIC_KEY); // Debug log
+
+interface rmProps {
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ onSuccess, onCancel }) => {
+const PaymentForm = ({ onSuccess, onCancel }: PaymentMethodFormProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvc, setCvc] = useState('');
   const [cardholderName, setCardholderName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [cardError, setCardError] = useState<string | null>(null);
+
+  const stripe = useStripe();
+  const elements = useElements();
+
+  // Validation du nom
+  const validateName = (name: string) => {
+    if (!name.trim()) return "Le nom sur la carte est requis.";
+    return null;
+  };
+
+  // Validation du champ carte (Stripe gère la plupart des cas)
+  const handleCardChange = (event: any) => {
+    if (event.error) {
+      setCardError(event.error.message);
+    } else {
+      setCardError(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Validation manuelle
+    const nameErr = validateName(cardholderName);
+    setNameError(nameErr);
+    if (nameErr || cardError) return;
+
     setLoading(true);
 
+    if (!stripe || !elements) {
+      setError('Erreur de configuration Stripe');
+      setLoading(false);
+      return;
+    }
+
     try {
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        throw new Error('Élément de carte non trouvé');
+      }
+
+      const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+        billing_details: {
+          name: cardholderName,
+        },
+      });
+
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
+
       const response = await fetch('http://localhost:3001/api/payment/methods', {
         method: 'POST',
         headers: {
@@ -29,10 +88,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ onSuccess, onCanc
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
-          cardNumber,
-          expiryDate,
-          cvc,
-          cardholderName,
+          paymentMethodId: paymentMethod.id,
         }),
       });
 
@@ -53,7 +109,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ onSuccess, onCanc
     <div className="bg-[#36393F] rounded-lg p-6">
       <div className="flex items-center mb-4">
         <CreditCard className="w-6 h-6 text-[#5865F2] mr-2" />
-        <h3 className="text-xl font-semibold text-white">Ajouter une méthode de paiement</h3>
+        <h3 className="text-xl font-semibold text-white">Modifier le mode de paiement</h3>
       </div>
 
       {error && (
@@ -75,60 +131,40 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ onSuccess, onCanc
             id="cardholderName"
             value={cardholderName}
             onChange={(e) => setCardholderName(e.target.value)}
-            className="w-full bg-[#2F3136] text-white rounded-md border border-[#202225] p-2 focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
+            className={`w-full bg-[#2F3136] text-white rounded-md border ${nameError ? 'border-red-500' : 'border-[#202225]'} p-2 focus:outline-none focus:ring-2 focus:ring-[#5865F2]`}
             placeholder="Jean Dupont"
             required
           />
+          {nameError && <div className="text-red-500 text-xs mt-1">{nameError}</div>}
         </div>
 
         <div>
-          <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-300 mb-1">
-            Numéro de carte*
+          <label className="block text-sm font-medium text-gray-300 mb-1">
+            Détails de la carte*
           </label>
-          <input
-            type="text"
-            id="cardNumber"
-            value={cardNumber}
-            onChange={(e) => setCardNumber(e.target.value)}
-            className="w-full bg-[#2F3136] text-white rounded-md border border-[#202225] p-2 focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
-            placeholder="4242 4242 4242 4242"
-            required
-            maxLength={19}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-300 mb-1">
-              Date d'expiration*
-            </label>
-            <input
-              type="text"
-              id="expiryDate"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              className="w-full bg-[#2F3136] text-white rounded-md border border-[#202225] p-2 focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
-              placeholder="MM/AA"
-              required
-              maxLength={5}
+          <div className={`w-full bg-[#2F3136] text-white rounded-md border ${cardError ? 'border-red-500' : 'border-[#202225]'} p-2`}>
+            <CardElement
+              onChange={handleCardChange}
+              options={{
+                style: {
+                  base: {
+                    color: '#fff',
+                    fontFamily: '"Inter", sans-serif',
+                    fontSmoothing: 'antialiased',
+                    fontSize: '16px',
+                    '::placeholder': {
+                      color: '#aab7c4',
+                    },
+                  },
+                  invalid: {
+                    color: '#fa755a',
+                    iconColor: '#fa755a',
+                  },
+                },
+              }}
             />
           </div>
-
-          <div>
-            <label htmlFor="cvc" className="block text-sm font-medium text-gray-300 mb-1">
-              CVC*
-            </label>
-            <input
-              type="text"
-              id="cvc"
-              value={cvc}
-              onChange={(e) => setCvc(e.target.value)}
-              className="w-full bg-[#2F3136] text-white rounded-md border border-[#202225] p-2 focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
-              placeholder="123"
-              required
-              maxLength={3}
-            />
-          </div>
+          {cardError && <div className="text-red-500 text-xs mt-1">{cardError}</div>}
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
@@ -143,13 +179,21 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ onSuccess, onCanc
           <button
             type="submit"
             className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none disabled:opacity-50"
-            disabled={loading}
+            disabled={loading || !stripe || !!nameError || !!cardError}
           >
-            {loading ? 'Ajout en cours...' : 'Ajouter la carte'}
+            {loading ? 'Enregistrement...' : 'Enregistrer'}
           </button>
         </div>
       </form>
     </div>
+  );
+};
+
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = (props) => {
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentForm {...props} />
+    </Elements>
   );
 };
 
