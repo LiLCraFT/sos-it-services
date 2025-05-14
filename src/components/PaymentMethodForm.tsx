@@ -15,7 +15,7 @@ import {
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
 console.log('Stripe Public Key:', import.meta.env.VITE_STRIPE_PUBLIC_KEY); // Debug log
 
-interface rmProps {
+interface PaymentMethodFormProps {
   onSuccess: () => void;
   onCancel: () => void;
 }

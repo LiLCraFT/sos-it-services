@@ -1,17 +1,12 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Save, Wrench, UserPlus } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Save, Wrench, Plus, UserPlus, CheckCircle, Play } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
-import CreateTicketForm from '../components/CreateTicketForm';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
-import { SiVisa } from 'react-icons/si';
 import FreelancerList from '../components/FreelancerList';
 import UserList from '../components/UserList';
 import { Modal } from '../components/ui/Modal';
-import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
-import { Visa, Mastercard, Amex } from 'react-payment-logos/dist/flat-rounded';
-import PaymentSettings from '../pages/PaymentSettings';
 import PaymentMethodForm from '../components/PaymentMethodForm';
 
 // URL de l'image par défaut
@@ -28,7 +23,7 @@ type AddressOption = {
 type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'birthDate';
 
 // Définition des onglets disponibles
-type TabId = 'profile' | 'dashboard' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices' | 'preferences' | 'ticket_database';
+type TabId = 'profile' | 'dashboard' | 'users' | 'freelancers' | 'ticket_database' | 'preferences' | 'subscription' | 'invoices';
 
 // Structure pour un onglet du dashboard
 type TabConfig = {
@@ -100,45 +95,41 @@ const UserDashboard = () => {
     },
     {
       id: 'users',
-      label: 'Les utilisateurs',
+      label: 'Utilisateurs',
       icon: <Users className="w-5 h-5" />,
       roles: ['fondateur', 'admin', 'freelancer_admin'],
     },
     {
       id: 'freelancers',
-      label: 'Les freelancers',
+      label: 'Freelancers',
       icon: <Users className="w-5 h-5" />,
       roles: ['fondateur', 'admin', 'freelancer_admin'],
     },
     {
-      id: 'tickets',
-      label: 'Mes tickets',
-      icon: <Ticket className="w-5 h-5" />,
-      excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'],
-    },
-    {
       id: 'ticket_database',
-      label: 'Base de tickets',
+      label: 'Tickets',
       icon: <Database className="w-5 h-5" />,
       roles: ['fondateur', 'admin', 'freelancer', 'freelancer_admin'],
     },
     {
+      id: 'preferences',
+      label: 'Paramètres',
+      icon: <Settings className="w-5 h-5" />,
+      // Accessible à tous
+    },
+    {
       id: 'subscription',
-      label: 'Mon abonnement',
-      icon: <CreditCard className="w-5 h-5" />,
-      excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'],
+      label: 'Abonnement',
+      icon: <Crown className="w-5 h-5" />,
+      // Accessible à tous sauf freelancers et administrateurs de freelancers
+      excludeRoles: ['freelancer', 'freelancer_admin']
     },
     {
       id: 'invoices',
-      label: 'Mes factures',
+      label: 'Factures',
       icon: <FileText className="w-5 h-5" />,
-      excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'],
-    },
-    {
-      id: 'preferences',
-      label: 'Préférences',
-      icon: <Settings className="w-5 h-5" />,
-      // Accessible à tous
+      // Accessible à tous sauf freelancers et administrateurs de freelancers
+      excludeRoles: ['freelancer', 'freelancer_admin']
     }
   ];
   
@@ -857,7 +848,7 @@ const UserDashboard = () => {
                         <h4 className="text-2xl font-bold text-white mt-1">95%</h4>
                       </div>
                       <div className="bg-[#5865F2]/10 p-3 rounded-full group-hover:bg-[#5865F2]/20 transition-colors">
-                        <Check className="w-8 h-8 text-[#5865F2]" />
+                        <CheckCircle className="w-8 h-8 text-[#5865F2]" />
                       </div>
                     </div>
                     <div className="mt-2">
@@ -909,7 +900,7 @@ const UserDashboard = () => {
                   </div>
                 </div>
 
-                {/* Activité récente */}
+                {/* Activité récente avec avatars */}
                 <div className="bg-[#36393F] rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-white font-semibold">Activité récente</h4>
@@ -933,104 +924,102 @@ const UserDashboard = () => {
                         <p className="text-gray-300 text-sm">A créé un nouveau ticket <span className="text-[#5865F2]">#1234</span></p>
                       </div>
                     </div>
+                    <div className="flex items-start space-x-4">
+                      <div className="relative">
+                        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                          <User className="w-5 h-5 text-gray-300" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-green-500 p-1 rounded-full">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <p className="text-white font-medium">Sophie Martin</p>
+                          <span className="text-gray-400 text-xs">Il y a 15 min</span>
+                        </div>
+                        <p className="text-gray-300 text-sm">A résolu le ticket <span className="text-[#5865F2]">#1230</span></p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-4">
+                      <div className="relative">
+                        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                          <User className="w-5 h-5 text-gray-300" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-blue-500 p-1 rounded-full">
+                          <UserPlus className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <p className="text-white font-medium">Thomas Bernard</p>
+                          <span className="text-gray-400 text-xs">Il y a 1 heure</span>
+                        </div>
+                        <p className="text-gray-300 text-sm">A rejoint l'équipe en tant que freelancer</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            {activeTab === 'tickets' && (!user?.role || 
-              (user?.role !== 'admin' && 
-               user?.role !== 'fondateur' && 
-               user?.role !== 'freelancer' &&
-               user?.role !== 'freelancer_admin')) && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold text-white">Mes tickets</h3>
-                  <div className="flex items-center space-x-3">
-                    {/* Switcher pour basculer entre les modes d'affichage */}
-                    <div className="inline-flex items-center bg-[#36393F] rounded-md mr-3">
-                      <button 
-                        onClick={() => setViewMode('cards')} 
-                        className={`px-3 py-2 rounded-l-md flex items-center text-sm ${viewMode === 'cards' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#36393F]'}`}
-                      >
-                        <Grid className="w-4 h-4 mr-2" />
-                        Cartes
-                      </button>
-                      <button 
-                        onClick={() => setViewMode('table')} 
-                        className={`px-3 py-2 rounded-r-md flex items-center text-sm ${viewMode === 'table' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#36393F]'}`}
-                      >
-                        <List className="w-4 h-4 mr-2" />
-                        Tableau
-                      </button>
-                    </div>
 
-                    <button
-                      onClick={() => {
-                        if (!user?.hasPaymentMethod) {
-                          setShowPaymentModal(true);
-                        } else {
-                          setShowCreateTicket(true);
-                        }
-                      }}
-                      className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none flex items-center"
-                    >
-                      <Ticket className="w-4 h-4 mr-2" />
-                      Créer un ticket
+                {/* Tickets récents et urgents */}
+                <div className="bg-[#36393F] rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-white font-semibold">Tickets à traiter en priorité</h4>
+                    <button className="text-[#5865F2] text-sm hover:underline" onClick={() => setActiveTab('ticket_database')}>
+                      Voir tous les tickets
                     </button>
                   </div>
-                </div>
-
-                {showPaymentModal && (
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-[#36393F] rounded-lg p-6 max-w-md w-full">
-                      <div className="flex items-center mb-4">
-                        <CreditCard className="w-6 h-6 text-[#5865F2] mr-2" />
-                        <h3 className="text-xl font-semibold text-white">Méthode de paiement requise</h3>
-                      </div>
-                      <p className="text-gray-300 mb-2">
-                        Pour souscrire à un abonnement payant, vous devez d'abord ajouter une méthode de paiement à votre compte.
-                      </p>
-                      {(!user?.role || (user?.role !== 'admin' && user?.role !== 'fondateur' && user?.role !== 'freelancer' && user?.role !== 'freelancer_admin')) && (
-                        <div className="flex justify-center my-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
-                            <Crown className="w-3 h-3 mr-1" />
-                            {user?.subscriptionType === 'solo' ? 'Plan Solo' : user?.subscriptionType === 'family' ? 'Plan Famille' : 'A la carte'}
-                          </span>
+                  <div className="space-y-3">
+                    <div className="bg-[#2F3136] p-3 rounded-md hover:bg-[#34373C] transition-colors cursor-pointer group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          <span className="text-white font-medium">Problème réseau urgent</span>
+                          <span className="text-gray-400 text-xs">#1235</span>
+                          <span className="bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded">Haute priorité</span>
                         </div>
-                      )}
-                      <p className="text-xs text-gray-400 mb-4">
-                        Aucune somme ne sera débitée tant que l'abonnement n'est pas activé.
-                      </p>
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          onClick={() => setShowPaymentModal(false)}
-                          className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowPaymentModal(false);
-                            navigate('/dashboard?tab=subscription');
-                          }}
-                          className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
-                        >
-                          Ajouter une carte
-                        </button>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-400 text-xs">Il y a 1h</span>
+                          <button className="text-[#5865F2] opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Play className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-[#2F3136] p-3 rounded-md hover:bg-[#34373C] transition-colors cursor-pointer group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <span className="text-white font-medium">Maintenance serveur</span>
+                          <span className="text-gray-400 text-xs">#1232</span>
+                          <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-0.5 rounded">Moyenne priorité</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-400 text-xs">Il y a 2h</span>
+                          <button className="text-[#5865F2] opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Play className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-[#2F3136] p-3 rounded-md hover:bg-[#34373C] transition-colors cursor-pointer group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-white font-medium">Mise à jour logicielle</span>
+                          <span className="text-gray-400 text-xs">#1228</span>
+                          <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded">Basse priorité</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-400 text-xs">Il y a 5h</span>
+                          <button className="text-[#5865F2] opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Play className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
-
-                {showCreateTicket ? (
-                  <CreateTicketForm 
-                    onTicketCreated={handleTicketCreated} 
-                    onCancel={() => setShowCreateTicket(false)} 
-                  />
-                ) : (
-                  <TicketList viewMode={viewMode} />
-                )}
+                </div>
               </div>
             )}
             
@@ -1062,11 +1051,7 @@ const UserDashboard = () => {
               </>
             )}
             
-            {activeTab === 'subscription' && (!user?.role || 
-              (user?.role !== 'admin' && 
-               user?.role !== 'fondateur' && 
-               user?.role !== 'freelancer' &&
-               user?.role !== 'freelancer_admin')) && (
+            {activeTab === 'subscription' && (
               <>
                 <h3 className="text-xl font-semibold text-white mb-6">Mon abonnement</h3>
                 <div className="space-y-6">
