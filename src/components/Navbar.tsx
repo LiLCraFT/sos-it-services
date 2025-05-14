@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut, Ticket, CreditCard, FileText, Crown, Users, Database } from 'lucide-react';
+import { Menu, X, Monitor, Wrench, Globe, Server, Settings, ChevronDown, User, LogOut, Ticket, CreditCard, FileText, Crown, Users, Database, Grid } from 'lucide-react';
 import { Link } from './ui/Link';
 import { Modal } from './ui/Modal';
 import LoginForm from './LoginForm';
@@ -323,6 +323,14 @@ const Navbar: React.FC = () => {
                         {(user?.role === 'fondateur' || user?.role === 'admin' || user?.role === 'freelancer_admin') && (
                           <>
                             <RouterLink
+                              to="/mon-espace?tab=dashboard"
+                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
+                              onClick={() => setIsUserMenuOpen(false)}
+                            >
+                              <Grid className="w-5 h-5 mr-2" />
+                              <span>Tableau de bord</span>
+                            </RouterLink>
+                            <RouterLink
                               to="/mon-espace?tab=users"
                               className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
                               onClick={() => setIsUserMenuOpen(false)}
@@ -486,6 +494,14 @@ const Navbar: React.FC = () => {
                 </RouterLink>
                 {(user?.role === 'fondateur' || user?.role === 'admin' || user?.role === 'freelancer_admin') && (
                   <>
+                    <RouterLink
+                      to="/mon-espace?tab=dashboard"
+                      className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Grid className="h-5 w-5 mr-2" />
+                      <span>Tableau de bord</span>
+                    </RouterLink>
                     <RouterLink
                       to="/mon-espace?tab=users"
                       className="bg-[#5865F2]/10 text-[#5865F2] flex items-center px-3 py-2 rounded-md text-base font-medium w-full"
