@@ -16,6 +16,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "backend/routes", "backend/app/api/payments/payment.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

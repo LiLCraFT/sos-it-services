@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const paymentRoutes = require('./routes/payment');
+const paymentRoutes = require('./app/api/payments/payment');
 
 // Charger les variables d'environnement
 dotenv.config();
