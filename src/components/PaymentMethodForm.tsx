@@ -81,11 +81,11 @@ const PaymentForm = ({ onSuccess, onCancel }: PaymentMethodFormProps) => {
         throw new Error(stripeError.message);
       }
 
-      const response = await fetch('http://localhost:3001/api/payment/methods', {
+      const response = await fetch('http://localhost:3001/api/payments/methods', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
           paymentMethodId: paymentMethod.id,
