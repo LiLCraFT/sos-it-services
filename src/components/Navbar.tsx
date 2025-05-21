@@ -8,6 +8,88 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link as RouterLink } from 'react-router-dom';
 import { getImageUrl } from '../utils/imageUtils';
 
+// Types pour la configuration des onglets
+type TabId = 'profile' | 'dashboard' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices' | 'preferences' | 'ticket_database';
+
+type TabConfig = {
+  id: TabId;
+  label: string;
+  icon: React.ReactNode;
+  roles?: string[];
+  excludeRoles?: string[];
+};
+
+// Configuration des onglets du dashboard
+const tabConfigs: TabConfig[] = [
+  {
+    id: 'profile',
+    label: 'Mon profil',
+    icon: <User className="w-5 h-5" />,
+  },
+  {
+    id: 'dashboard',
+    label: 'Tableau de bord',
+    icon: <Grid className="w-5 h-5" />,
+    roles: ['fondateur', 'admin', 'freelancer_admin'],
+  },
+  {
+    id: 'users',
+    label: 'Les utilisateurs',
+    icon: <Users className="w-5 h-5" />,
+    roles: ['fondateur', 'admin', 'freelancer_admin'],
+  },
+  {
+    id: 'freelancers',
+    label: 'Les freelancers',
+    icon: <Users className="w-5 h-5" />,
+    roles: ['fondateur', 'admin', 'freelancer_admin'],
+  },
+  {
+    id: 'tickets',
+    label: 'Mes tickets',
+    icon: <Ticket className="w-5 h-5" />,
+    excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'],
+  },
+  {
+    id: 'ticket_database',
+    label: 'Base de tickets',
+    icon: <Database className="w-5 h-5" />,
+    roles: ['fondateur', 'admin', 'freelancer', 'freelancer_admin'],
+  },
+  {
+    id: 'subscription',
+    label: 'Mon abonnement',
+    icon: <CreditCard className="w-5 h-5" />,
+    excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'],
+  },
+  {
+    id: 'invoices',
+    label: 'Mes factures',
+    icon: <FileText className="w-5 h-5" />,
+    excludeRoles: ['admin', 'fondateur', 'freelancer', 'freelancer_admin'],
+  },
+  {
+    id: 'preferences',
+    label: 'Préférences',
+    icon: <Settings className="w-5 h-5" />,
+  }
+];
+
+// Fonction helper pour vérifier si un utilisateur a accès à un onglet
+const canAccessTab = (tab: TabConfig, userRole?: string): boolean => {
+  if (!userRole) return !tab.roles && !tab.excludeRoles;
+  
+  if (tab.roles && tab.roles.length > 0) {
+    return tab.roles.includes(userRole);
+  }
+  
+  if (tab.excludeRoles && tab.excludeRoles.length > 0) {
+    return !tab.excludeRoles.includes(userRole);
+  }
+  
+  return true;
+};
+
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -269,136 +351,25 @@ const Navbar: React.FC = () => {
                           Connecté en tant que<br />
                           <div className="flex flex-col mt-1">
                             <span className="font-semibold text-white mb-1">{user?.firstName} {user?.lastName}</span>
-                            <div className="flex flex-nowrap items-center gap-1 whitespace-nowrap overflow-x-auto">
-                              {user?.role === 'fondateur' ? (
-                                <>
-                                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/20 text-red-400">
-                                    Fondateur
-                                  </span>
-                                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
-                                    Admin
-                                  </span>
-                                </>
-                              ) : user?.role === 'freelancer_admin' ? (
-                                <>
-                                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
-                                    Freelancer
-                                  </span>
-                                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
-                                    Admin
-                                  </span>
-                                </>
-                              ) : (
-                                <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
-                                  user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
-                                  user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
-                                  'bg-[#5865F2]/20 text-[#5865F2]'
-                                }`}>
-                                  {user?.role === 'admin' ? 'Admin' :
-                                   user?.role === 'freelancer' ? 'Freelancer' :
-                                   user?.clientType || 'Utilisateur'}
-                                </span>
-                              )}
-                              {/* Tag d'abonnement - visible uniquement pour les utilisateurs standards */}
-                              {(!user?.role || 
-                                (user?.role !== 'admin' && 
-                                 user?.role !== 'fondateur' && 
-                                 user?.role !== 'freelancer' &&
-                                 user?.role !== 'freelancer_admin')) && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
-                                    <Crown className="w-3 h-3 mr-1" />
-                                    {getSubscriptionName()}
-                                  </span>
-                                )}
-                            </div>
+                            <span className="text-xs text-gray-400">{user?.email}</span>
                           </div>
                         </div>
-                        <RouterLink
-                          to="/mon-espace"
-                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <User className="w-5 h-5 mr-2" />
-                          <span>Mon profil</span>
-                        </RouterLink>
-                        {(user?.role === 'fondateur' || user?.role === 'admin' || user?.role === 'freelancer_admin') && (
-                          <>
+                        
+                        {/* Générer les liens de navigation dynamiquement */}
+                        {tabConfigs
+                          .filter(tab => canAccessTab(tab, user?.role))
+                          .map(tab => (
                             <RouterLink
-                              to="/mon-espace?tab=dashboard"
+                              key={tab.id}
+                              to={`/mon-espace?tab=${tab.id}`}
                               className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
                               onClick={() => setIsUserMenuOpen(false)}
                             >
-                              <Grid className="w-5 h-5 mr-2" />
-                              <span>Tableau de bord</span>
+                              {tab.icon}
+                              <span className="ml-2">{tab.label}</span>
                             </RouterLink>
-                            <RouterLink
-                              to="/mon-espace?tab=users"
-                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                              onClick={() => setIsUserMenuOpen(false)}
-                            >
-                              <Users className="w-5 h-5 mr-2" />
-                              <span>Les utilisateurs</span>
-                            </RouterLink>
-                            <RouterLink
-                              to="/mon-espace?tab=freelancers"
-                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                              onClick={() => setIsUserMenuOpen(false)}
-                            >
-                              <Users className="w-5 h-5 mr-2" />
-                              <span>Les freelancers</span>
-                            </RouterLink>
-                          </>
-                        )}
-                        {(user?.role === 'fondateur' || user?.role === 'admin' || user?.role === 'freelancer' || user?.role === 'freelancer_admin') && (
-                          <RouterLink
-                            to="/mon-espace?tab=ticket_database"
-                            className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                            onClick={() => setIsUserMenuOpen(false)}
-                          >
-                            <Database className="w-5 h-5 mr-2" />
-                            <span>Base de tickets</span>
-                          </RouterLink>
-                        )}
-                        {(!user?.role || 
-                          (user?.role !== 'admin' && 
-                           user?.role !== 'fondateur' && 
-                           user?.role !== 'freelancer' &&
-                           user?.role !== 'freelancer_admin')) && (
-                          <>
-                            <RouterLink
-                              to="/mon-espace?tab=tickets"
-                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                              onClick={() => setIsUserMenuOpen(false)}
-                            >
-                              <Ticket className="w-5 h-5 mr-2" />
-                              <span>Mes tickets</span>
-                            </RouterLink>
-                            <RouterLink
-                              to="/mon-espace?tab=subscription"
-                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                              onClick={() => setIsUserMenuOpen(false)}
-                            >
-                              <CreditCard className="w-5 h-5 mr-2" />
-                              <span>Mon abonnement</span>
-                            </RouterLink>
-                            <RouterLink
-                              to="/mon-espace?tab=invoices"
-                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                              onClick={() => setIsUserMenuOpen(false)}
-                            >
-                              <FileText className="w-5 h-5 mr-2" />
-                              <span>Mes factures</span>
-                            </RouterLink>
-                          </>
-                        )}
-                        <RouterLink
-                          to="/mon-espace?tab=preferences"
-                          className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#5865F2] transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Settings className="w-5 h-5 mr-2" />
-                          <span>Préférences</span>
-                        </RouterLink>
+                          ))}
+                        
                         <button
                           className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full text-left"
                           onClick={() => {
