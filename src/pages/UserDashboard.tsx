@@ -604,46 +604,6 @@ const UserDashboard = () => {
     }
   }, []);
 
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-
-  // Ajout du state local pour la carte
-  const [paymentMethod, setPaymentMethod] = useState<{
-    brand: string;
-    last4: string;
-    expMonth: number;
-    expYear: number;
-    isDefault?: boolean;
-  } | null>(null);
-
-  console.log("user dans UserDashboard:", user);
-  console.log("user?.hasPaymentMethod:", user?.hasPaymentMethod);
-
-  useEffect(() => {
-    // On fetch TOUJOURS pour debug
-    const fetchPaymentMethod = async () => {
-      try {
-        const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-        const response = await fetch('http://localhost:3001/api/payments/methods', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Réponse API /api/payments/methods:', data);
-          setPaymentMethod(data[0] || null);
-        } else {
-          setPaymentMethod(null);
-        }
-      } catch (e) {
-        setPaymentMethod(null);
-      }
-    };
-    fetchPaymentMethod();
-  }, []);
-
-  console.log('paymentMethod state:', paymentMethod);
-
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
@@ -1022,13 +982,7 @@ const UserDashboard = () => {
                     </div>
 
                     <button
-                      onClick={() => {
-                        if (!user?.hasPaymentMethod) {
-                          setShowPaymentModal(true);
-                        } else {
-                          setShowCreateTicket(true);
-                        }
-                      }}
+                      onClick={() => setShowCreateTicket(true)}
                       className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none flex items-center"
                     >
                       <Ticket className="w-4 h-4 mr-2" />
@@ -1036,48 +990,6 @@ const UserDashboard = () => {
                     </button>
                   </div>
                 </div>
-
-                {showPaymentModal && (
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-[#36393F] rounded-lg p-6 max-w-md w-full">
-                      <div className="flex items-center mb-4">
-                        <CreditCard className="w-6 h-6 text-[#5865F2] mr-2" />
-                        <h3 className="text-xl font-semibold text-white">Méthode de paiement requise</h3>
-                      </div>
-                      <p className="text-gray-300 mb-2">
-                        Pour souscrire à un abonnement payant, vous devez d'abord ajouter une méthode de paiement à votre compte.
-                      </p>
-                      {(!user?.role || (user?.role !== 'admin' && user?.role !== 'fondateur' && user?.role !== 'freelancer' && user?.role !== 'freelancer_admin')) && (
-                        <div className="flex justify-center my-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
-                            <Crown className="w-3 h-3 mr-1" />
-                            {user?.subscriptionType === 'solo' ? 'Plan Solo' : user?.subscriptionType === 'family' ? 'Plan Famille' : 'A la carte'}
-                          </span>
-                        </div>
-                      )}
-                      <p className="text-xs text-gray-400 mb-4">
-                        Aucune somme ne sera débitée tant que l'abonnement n'est pas activé.
-                      </p>
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          onClick={() => setShowPaymentModal(false)}
-                          className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowPaymentModal(false);
-                            navigate('/dashboard?tab=subscription');
-                          }}
-                          className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
-                        >
-                          Ajouter une carte
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {showCreateTicket ? (
                   <CreateTicketForm 
@@ -1138,12 +1050,9 @@ const UserDashboard = () => {
                         Actif
                       </span>
                     </div>
-                    {/* Suppression de l'ancien affichage du titre */}
-                    {/* <p className="text-white pl-8 mt-2">{getSubscriptionName()}</p> */}
                     <p className="text-gray-400 pl-8 text-sm">
                       {subscriptionType !== "none" ? "Abonnement sans engagement" : "Pas d'abonnement en cours"}
                     </p>
-
                     <div className="pl-8 mt-4">
                       <select
                         className="px-4 py-2 bg-[#36393F] text-white rounded-md border border-[#5865F2] focus:outline-none mr-2"
@@ -1151,7 +1060,7 @@ const UserDashboard = () => {
                         onChange={e => {
                           const value = e.target.value as 'none' | 'solo' | 'family';
                           if ((value === 'solo' || value === 'family') && !user?.hasPaymentMethod) {
-                            setShowPaymentModal(true);
+                            // setShowPaymentModal(true); // à activer si tu veux un modal
                             return;
                           }
                           setSubscriptionType(value);
@@ -1167,7 +1076,6 @@ const UserDashboard = () => {
                         </button>
                       )}
                     </div>
-                    {/* Lien vers la page de dépannage informatique */}
                     <div className="absolute bottom-4 right-4">
                       <a
                         href="/depannage-informatique"
@@ -1180,44 +1088,8 @@ const UserDashboard = () => {
                       </a>
                     </div>
                   </div>
-                  
-                  <div className="p-4 bg-[#36393F] rounded-md">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <CreditCard className="w-5 h-5 text-gray-400" />
-                      <h4 className="font-medium text-gray-300">Méthode de paiement</h4>
-                    </div>
-                    <div className="pl-8 flex items-center">
-                      {/* Affichage conditionnel de la carte */}
-                      {paymentMethod ? (
-                        <PaymentMethodCard method={paymentMethod} />
-                      ) : (
-                        <p className="text-gray-400 italic">Aucune carte enregistrée</p>
-                      )}
-                    </div>
-                    
-                    <div className="pl-8 mt-4">
-                      <button 
-                        onClick={() => setShowPaymentModal(true)}
-                        className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
-                      >
-                        Modifier le mode de paiement
-                      </button>
-                    </div>
-                  </div>
+                  <PaymentSettings />
                 </div>
-
-                {/* Modal de paiement */}
-                <Modal
-                  isOpen={showPaymentModal}
-                  onClose={() => setShowPaymentModal(false)}
-                  title="Modifier le mode de paiement"
-                  maxWidth="md"
-                >
-                  <PaymentMethodForm
-                    onSuccess={() => setShowPaymentModal(false)}
-                    onCancel={() => setShowPaymentModal(false)}
-                  />
-                </Modal>
               </>
             )}
             
