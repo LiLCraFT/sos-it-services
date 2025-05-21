@@ -262,6 +262,7 @@ const Navbar: React.FC = () => {
                   {isAuthenticated && (
                     <div 
                       className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#2F3136] ring-1 ring-black ring-opacity-5 transition-all duration-200 ${isUserMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                      style={{ minWidth: 'max-content', maxWidth: '90vw', overflowX: 'auto' }}
                     >
                       <div className="py-1">
                         <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-700">
