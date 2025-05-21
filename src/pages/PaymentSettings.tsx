@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Trash2, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
 import PaymentMethodForm from '../components/PaymentMethodForm';
+import { Visa, Mastercard, Amex } from 'react-payment-logos/dist/flat';
 
 interface PaymentMethod {
   id: string;
@@ -128,6 +129,24 @@ const PaymentSettings: React.FC = () => {
     }
   }, [success]);
 
+  // Trier les cartes pour mettre la carte par défaut en premier
+  const sortedPaymentMethods = [...paymentMethods].sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+
+  // Fonction pour retourner l'icône de la carte
+  const getCardIcon = (brand: string) => {
+    switch (brand.toLowerCase()) {
+      case 'visa':
+        return <Visa style={{ width: 32, height: 32 }} />;
+      case 'mastercard':
+        return <Mastercard style={{ width: 32, height: 32 }} />;
+      case 'amex':
+      case 'american express':
+        return <Amex style={{ width: 32, height: 32 }} />;
+      default:
+        return <CreditCard className="w-6 h-6 text-[#5865F2] mr-3" />;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -177,13 +196,13 @@ const PaymentSettings: React.FC = () => {
       )}
 
       <div className="space-y-4">
-        {paymentMethods.map((method) => (
+        {sortedPaymentMethods.map((method) => (
           <div
             key={method.id}
-            className="bg-[#36393F] rounded-lg p-4 flex items-center justify-between hover:bg-[#40444B] transition-colors"
+            className={`bg-[#36393F] rounded-lg p-4 flex items-center justify-between hover:bg-[#40444B] transition-colors${method.isDefault ? ' border-2 border-[#5865F2]' : ''}`}
           >
             <div className="flex items-center">
-              <CreditCard className="w-6 h-6 text-[#5865F2] mr-3" />
+              <span className="mr-3">{getCardIcon(method.brand)}</span>
               <div>
                 <div className="text-white font-medium">
                   {method.brand.charAt(0).toUpperCase() + method.brand.slice(1)} •••• {method.last4}
