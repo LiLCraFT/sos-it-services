@@ -113,9 +113,11 @@ export async function POST(req: NextRequest) {
     // Génération du token JWT
     const token = jwt.sign(
       {
+        _id: user._id,
         userId: user._id,
         email: user.email,
         role: user.role,
+        stripeCustomerId: user.stripeCustomerId || null,
       },
       JWT_SECRET,
       { expiresIn: '24h' }
@@ -132,6 +134,7 @@ export async function POST(req: NextRequest) {
       birthDate: user.birthDate,
       city: user.city,
       role: user.role,
+      stripeCustomerId: user.stripeCustomerId || null,
     };
     
     return NextResponse.json(

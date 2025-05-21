@@ -29,6 +29,7 @@ export interface IUser extends Document {
   emailVerificationToken: string;
   emailVerificationTokenExpires: Date;
   rating?: number;
+  stripeCustomerId?: string;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -127,7 +128,11 @@ const UserSchema = new Schema<IUser>(
       default: 0,
       min: 0,
       max: 5
-    }
+    },
+    stripeCustomerId: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

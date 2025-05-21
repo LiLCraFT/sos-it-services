@@ -41,6 +41,24 @@ type TabConfig = {
   excludeRoles?: string[];
 };
 
+// Ajout du composant réutilisable PaymentMethodCard
+const PaymentMethodCard = ({ method }: { method: { brand: string; last4: string; expMonth: number; expYear: number; isDefault?: boolean } }) => (
+  <div className="flex items-center">
+    <CreditCard className="w-6 h-6 text-[#5865F2] mr-3" />
+    <div>
+      <div className="text-white font-medium">
+        {method.brand.charAt(0).toUpperCase() + method.brand.slice(1)} •••• {method.last4}
+      </div>
+      <div className="text-gray-400 text-sm">
+        Expire {method.expMonth.toString().padStart(2, '0')}/{method.expYear}
+      </div>
+      {method.isDefault && (
+        <span className="ml-2 px-2 py-1 bg-[#5865F2] text-white text-xs rounded">Par défaut</span>
+      )}
+    </div>
+  </div>
+);
+
 const UserDashboard = () => {
   const { user, isAuthenticated, isLoading, logout, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -588,6 +606,44 @@ const UserDashboard = () => {
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+  // Ajout du state local pour la carte
+  const [paymentMethod, setPaymentMethod] = useState<{
+    brand: string;
+    last4: string;
+    expMonth: number;
+    expYear: number;
+    isDefault?: boolean;
+  } | null>(null);
+
+  console.log("user dans UserDashboard:", user);
+  console.log("user?.hasPaymentMethod:", user?.hasPaymentMethod);
+
+  useEffect(() => {
+    // On fetch TOUJOURS pour debug
+    const fetchPaymentMethod = async () => {
+      try {
+        const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+        const response = await fetch('http://localhost:3001/api/payments/methods', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Réponse API /api/payments/methods:', data);
+          setPaymentMethod(data[0] || null);
+        } else {
+          setPaymentMethod(null);
+        }
+      } catch (e) {
+        setPaymentMethod(null);
+      }
+    };
+    fetchPaymentMethod();
+  }, []);
+
+  console.log('paymentMethod state:', paymentMethod);
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
@@ -1131,8 +1187,12 @@ const UserDashboard = () => {
                       <h4 className="font-medium text-gray-300">Méthode de paiement</h4>
                     </div>
                     <div className="pl-8 flex items-center">
-                      {/* Affichage conditionnel de la carte, à adapter plus tard */}
-                      <p className="text-gray-400 italic">Aucune carte enregistrée</p>
+                      {/* Affichage conditionnel de la carte */}
+                      {paymentMethod ? (
+                        <PaymentMethodCard method={paymentMethod} />
+                      ) : (
+                        <p className="text-gray-400 italic">Aucune carte enregistrée</p>
+                      )}
                     </div>
                     
                     <div className="pl-8 mt-4">

@@ -21,7 +21,7 @@ const PaymentSettings: React.FC = () => {
 
   const fetchPaymentMethods = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/payment/methods', {
+      const response = await fetch('http://localhost:3001/api/payments/methods', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -41,8 +41,19 @@ const PaymentSettings: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log("useEffect PaymentSettings");
     fetchPaymentMethods();
   }, []);
+
+  useEffect(() => {
+    console.log("paymentMethods:", paymentMethods);
+  }, [paymentMethods]);
+
+  useEffect(() => {
+    if (error) {
+      console.error("PaymentSettings error:", error);
+    }
+  }, [error]);
 
   const handleDeleteMethod = async (methodId: string) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette méthode de paiement ?')) {
@@ -50,7 +61,7 @@ const PaymentSettings: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3001/api/payment/methods/${methodId}`, {
+      const response = await fetch(`http://localhost:3001/api/payments/methods/${methodId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -69,7 +80,7 @@ const PaymentSettings: React.FC = () => {
 
   const handleSetDefault = async (methodId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/payment/methods/${methodId}/default`, {
+      const response = await fetch(`http://localhost:3001/api/payments/methods/${methodId}/default`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -163,7 +174,7 @@ const PaymentSettings: React.FC = () => {
                 </button>
               )}
               {method.isDefault && (
-                <span className="text-[#5865F2] text-sm">Par défaut</span>
+                <span className="ml-2 px-2 py-1 bg-[#5865F2] text-white text-xs rounded">Par défaut</span>
               )}
               <button
                 onClick={() => handleDeleteMethod(method.id)}
