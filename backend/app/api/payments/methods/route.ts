@@ -132,6 +132,12 @@ export async function POST(request: Request) {
       });
     }
 
+    // PATCH: Mettre à jour le champ hasPaymentMethod dans la base utilisateur
+    await mongoose.connection.collection('users').updateOne(
+      { _id: new mongoose.Types.ObjectId(user._id) },
+      { $set: { hasPaymentMethod: paymentMethods.data.length > 0 } }
+    );
+
     return NextResponse.json({
       message: 'Méthode de paiement ajoutée avec succès',
       stripeCustomerId
@@ -215,7 +221,17 @@ export async function DELETE(request: Request) {
     }
     const stripeCustomerId = user.stripeCustomerId;
     await stripe.paymentMethods.detach(methodId);
-    // Optionnel: si tu veux vérifier que la carte par défaut n'est pas supprimée, ajoute une vérification ici
+
+    // PATCH: Relister les cartes et mettre à jour hasPaymentMethod
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: stripeCustomerId,
+      type: 'card',
+    });
+    await mongoose.connection.collection('users').updateOne(
+      { _id: new mongoose.Types.ObjectId(user._id) },
+      { $set: { hasPaymentMethod: paymentMethods.data.length > 0 } }
+    );
+
     return NextResponse.json({ message: 'Méthode supprimée' });
   } catch (error) {
     return NextResponse.json({ message: 'Erreur suppression' }, { status: 500 });

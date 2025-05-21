@@ -1,21 +1,16 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Save, Wrench, UserPlus } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Wrench, UserPlus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
-import { SiVisa } from 'react-icons/si';
 import FreelancerList from '../components/FreelancerList';
 import UserList from '../components/UserList';
 import { Modal } from '../components/ui/Modal';
-import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
-import { Visa, Mastercard, Amex } from 'react-payment-logos/dist/flat-rounded';
 import PaymentSettings from '../pages/PaymentSettings';
-import PaymentMethodForm from '../components/PaymentMethodForm';
 
 // URL de l'image par défaut
-const DEFAULT_IMAGE = '/images/default-profile.png';
 
 type AddressOption = {
   value: {
@@ -42,22 +37,6 @@ type TabConfig = {
 };
 
 // Ajout du composant réutilisable PaymentMethodCard
-const PaymentMethodCard = ({ method }: { method: { brand: string; last4: string; expMonth: number; expYear: number; isDefault?: boolean } }) => (
-  <div className="flex items-center">
-    <CreditCard className="w-6 h-6 text-[#5865F2] mr-3" />
-    <div>
-      <div className="text-white font-medium">
-        {method.brand.charAt(0).toUpperCase() + method.brand.slice(1)} •••• {method.last4}
-      </div>
-      <div className="text-gray-400 text-sm">
-        Expire {method.expMonth.toString().padStart(2, '0')}/{method.expYear}
-      </div>
-      {method.isDefault && (
-        <span className="ml-2 px-2 py-1 bg-[#5865F2] text-white text-xs rounded">Par défaut</span>
-      )}
-    </div>
-  </div>
-);
 
 const UserDashboard = () => {
   const { user, isAuthenticated, isLoading, logout, updateUser } = useAuth();
@@ -66,6 +45,7 @@ const UserDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
     // Récupérer le mode d'affichage depuis le localStorage ou utiliser 'cards' par défaut
     const savedViewMode = localStorage.getItem('ticketViewMode');
@@ -247,16 +227,6 @@ const UserDashboard = () => {
   };
 
   // Traduction des types de profil
-  const translateRole = (role: string | undefined) => {
-    if (!role) return 'Utilisateur';
-    
-    switch (role) {
-      case 'admin': return 'Administrateur';
-      case 'fondateur': return 'Fondateur';
-      case 'freelancer': return 'Freelancer';
-      default: return 'Utilisateur';
-    }
-  };
 
   // Fonction pour construire l'URL de l'image
   const getImageUrl = (path: string | null | undefined): string => {
@@ -982,7 +952,13 @@ const UserDashboard = () => {
                     </div>
 
                     <button
-                      onClick={() => setShowCreateTicket(true)}
+                      onClick={() => {
+                        if (!user?.hasPaymentMethod) {
+                          setShowPaymentModal(true);
+                        } else {
+                          setShowCreateTicket(true);
+                        }
+                      }}
                       className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none flex items-center"
                     >
                       <Ticket className="w-4 h-4 mr-2" />
@@ -990,6 +966,46 @@ const UserDashboard = () => {
                     </button>
                   </div>
                 </div>
+
+                {showPaymentModal && (
+                  <Modal
+                    isOpen={showPaymentModal}
+                    onClose={() => setShowPaymentModal(false)}
+                    title="Méthode de paiement requise"
+                  >
+                    <div className="flex flex-col items-center mb-2">
+                      <span className="text-white font-medium">{user?.firstName} {user?.lastName}</span>
+                      <span className="text-gray-400 text-sm mb-1">{user?.email}</span>
+                      {(!user?.role || (user?.role !== 'admin' && user?.role !== 'fondateur' && user?.role !== 'freelancer' && user?.role !== 'freelancer_admin')) && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400 mt-1 mb-2">
+                          <Crown className="w-3 h-3 mr-1" />
+                          {user?.subscriptionType === 'solo' ? 'Plan Solo' : user?.subscriptionType === 'family' ? 'Plan Famille' : 'A la carte'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-gray-300 mb-4 text-center">
+                      Pour créer un ticket, vous devez d'abord ajouter une méthode de paiement à votre compte.<br />
+                      <span className="text-xs text-gray-500">Aucune somme ne sera débitée tant que les différents problèmes ne seront pas résolus.</span>
+                    </div>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setShowPaymentModal(false)}
+                        className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowPaymentModal(false);
+                          setActiveTab('subscription');
+                        }}
+                        className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+                      >
+                        Ajouter une carte
+                      </button>
+                    </div>
+                  </Modal>
+                )}
 
                 {showCreateTicket ? (
                   <CreateTicketForm 

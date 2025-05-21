@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Trash2, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
 import PaymentMethodForm from '../components/PaymentMethodForm';
 import { Visa, Mastercard, Amex } from 'react-payment-logos/dist/flat';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PaymentMethod {
   id: string;
@@ -20,6 +21,7 @@ const PaymentSettings: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isSettingDefault, setIsSettingDefault] = useState<string | null>(null);
+  const { updateUser } = useAuth();
 
   const fetchPaymentMethods = async () => {
     try {
@@ -48,6 +50,22 @@ const PaymentSettings: React.FC = () => {
     fetchPaymentMethods();
   }, []);
 
+  const refreshUserHasPaymentMethod = async () => {
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) return;
+    const response = await fetch('http://localhost:3001/api/users/me', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (response.ok) {
+      const userData = await response.json();
+      if (userData && typeof userData.hasPaymentMethod !== 'undefined') {
+        updateUser({ hasPaymentMethod: userData.hasPaymentMethod });
+      } else if (userData && userData.user && typeof userData.user.hasPaymentMethod !== 'undefined') {
+        updateUser({ hasPaymentMethod: userData.user.hasPaymentMethod });
+      }
+    }
+  };
+
   const handleDeleteMethod = async (methodId: string) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette méthode de paiement ?')) {
       return;
@@ -72,6 +90,7 @@ const PaymentSettings: React.FC = () => {
 
       setPaymentMethods(methods => methods.filter(method => method.id !== methodId));
       setSuccess('Méthode de paiement supprimée avec succès');
+      await refreshUserHasPaymentMethod();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
@@ -113,10 +132,11 @@ const PaymentSettings: React.FC = () => {
     }
   };
 
-  const handlePaymentMethodAdded = () => {
+  const handlePaymentMethodAdded = async () => {
     setShowAddForm(false);
     setSuccess('Nouvelle méthode de paiement ajoutée avec succès');
-    fetchPaymentMethods();
+    await fetchPaymentMethods();
+    await refreshUserHasPaymentMethod();
   };
 
   // Effacer les messages de succès après 5 secondes
