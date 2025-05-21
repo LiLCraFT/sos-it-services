@@ -200,4 +200,48 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const user = await verifyToken(request);
+    if (!user) {
+      return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
+    }
+    const url = new URL(request.url);
+    const methodId = url.searchParams.get('id');
+    if (!methodId) {
+      return NextResponse.json({ message: 'ID requis' }, { status: 400 });
+    }
+    const stripeCustomerId = user.stripeCustomerId;
+    await stripe.paymentMethods.detach(methodId);
+    // Optionnel: si tu veux vérifier que la carte par défaut n'est pas supprimée, ajoute une vérification ici
+    return NextResponse.json({ message: 'Méthode supprimée' });
+  } catch (error) {
+    return NextResponse.json({ message: 'Erreur suppression' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const user = await verifyToken(request);
+    if (!user) {
+      return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
+    }
+    const body = await request.json();
+    const { methodId } = body;
+    if (!methodId) {
+      return NextResponse.json({ message: 'ID requis' }, { status: 400 });
+    }
+    const stripeCustomerId = user.stripeCustomerId;
+    if (!stripeCustomerId) {
+      return NextResponse.json({ message: 'stripeCustomerId manquant' }, { status: 400 });
+    }
+    await stripe.customers.update(stripeCustomerId, {
+      invoice_settings: { default_payment_method: methodId }
+    });
+    return NextResponse.json({ message: 'Carte par défaut mise à jour' });
+  } catch (error) {
+    return NextResponse.json({ message: 'Erreur changement carte par défaut' }, { status: 500 });
+  }
 } 

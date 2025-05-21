@@ -58,7 +58,7 @@ const PaymentSettings: React.FC = () => {
       setSuccess(null);
 
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/api/payments/methods/${methodId}`, {
+      const response = await fetch(`http://localhost:3001/api/payments/methods?id=${methodId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -85,11 +85,13 @@ const PaymentSettings: React.FC = () => {
       setSuccess(null);
 
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/api/payments/methods/${methodId}/default`, {
-        method: 'POST',
+      const response = await fetch('http://localhost:3001/api/payments/methods', {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ methodId })
       });
 
       if (!response.ok) {
