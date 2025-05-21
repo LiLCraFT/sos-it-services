@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { CreditCard, Trash2, Plus } from 'lucide-react';
+import { CreditCard, Trash2, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
 import PaymentMethodForm from '../components/PaymentMethodForm';
 
 interface PaymentMethod {
@@ -13,14 +12,17 @@ interface PaymentMethod {
 }
 
 const PaymentSettings: React.FC = () => {
-  const { user } = useAuth();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isSettingDefault, setIsSettingDefault] = useState<string | null>(null);
 
   const fetchPaymentMethods = async () => {
     try {
+      setError(null);
       const response = await fetch('http://localhost:3001/api/payments/methods', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -41,19 +43,8 @@ const PaymentSettings: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log("useEffect PaymentSettings");
     fetchPaymentMethods();
   }, []);
-
-  useEffect(() => {
-    console.log("paymentMethods:", paymentMethods);
-  }, [paymentMethods]);
-
-  useEffect(() => {
-    if (error) {
-      console.error("PaymentSettings error:", error);
-    }
-  }, [error]);
 
   const handleDeleteMethod = async (methodId: string) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette méthode de paiement ?')) {
@@ -61,6 +52,10 @@ const PaymentSettings: React.FC = () => {
     }
 
     try {
+      setIsDeleting(methodId);
+      setError(null);
+      setSuccess(null);
+
       const response = await fetch(`http://localhost:3001/api/payments/methods/${methodId}`, {
         method: 'DELETE',
         headers: {
@@ -73,13 +68,20 @@ const PaymentSettings: React.FC = () => {
       }
 
       setPaymentMethods(methods => methods.filter(method => method.id !== methodId));
+      setSuccess('Méthode de paiement supprimée avec succès');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setIsDeleting(null);
     }
   };
 
   const handleSetDefault = async (methodId: string) => {
     try {
+      setIsSettingDefault(methodId);
+      setError(null);
+      setSuccess(null);
+
       const response = await fetch(`http://localhost:3001/api/payments/methods/${methodId}/default`, {
         method: 'POST',
         headers: {
@@ -97,15 +99,29 @@ const PaymentSettings: React.FC = () => {
           isDefault: method.id === methodId,
         }))
       );
+      setSuccess('Méthode de paiement par défaut mise à jour');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setIsSettingDefault(null);
     }
   };
 
   const handlePaymentMethodAdded = () => {
     setShowAddForm(false);
+    setSuccess('Nouvelle méthode de paiement ajoutée avec succès');
     fetchPaymentMethods();
   };
+
+  // Effacer les messages de succès après 5 secondes
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   if (loading) {
     return (
@@ -121,7 +137,7 @@ const PaymentSettings: React.FC = () => {
         <h1 className="text-2xl font-semibold text-white">Méthodes de paiement</h1>
         <button
           onClick={() => setShowAddForm(true)}
-          className="flex items-center px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+          className="flex items-center px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
           Ajouter une carte
@@ -131,8 +147,17 @@ const PaymentSettings: React.FC = () => {
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3 mb-4">
           <div className="flex items-center">
-            <CreditCard className="w-5 h-5 text-red-500 mr-2" />
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
             <span className="text-red-500 text-sm">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-500/10 border border-green-500/20 rounded-md p-3 mb-4">
+          <div className="flex items-center">
+            <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" />
+            <span className="text-green-500 text-sm">{success}</span>
           </div>
         </div>
       )}
@@ -150,7 +175,7 @@ const PaymentSettings: React.FC = () => {
         {paymentMethods.map((method) => (
           <div
             key={method.id}
-            className="bg-[#36393F] rounded-lg p-4 flex items-center justify-between"
+            className="bg-[#36393F] rounded-lg p-4 flex items-center justify-between hover:bg-[#40444B] transition-colors"
           >
             <div className="flex items-center">
               <CreditCard className="w-6 h-6 text-[#5865F2] mr-3" />
@@ -168,9 +193,10 @@ const PaymentSettings: React.FC = () => {
               {!method.isDefault && (
                 <button
                   onClick={() => handleSetDefault(method.id)}
-                  className="text-[#5865F2] hover:text-[#4752C4] text-sm"
+                  className="text-[#5865F2] hover:text-[#4752C4] text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSettingDefault === method.id}
                 >
-                  Définir par défaut
+                  {isSettingDefault === method.id ? 'Mise à jour...' : 'Définir par défaut'}
                 </button>
               )}
               {method.isDefault && (
@@ -178,10 +204,15 @@ const PaymentSettings: React.FC = () => {
               )}
               <button
                 onClick={() => handleDeleteMethod(method.id)}
-                className="text-red-500 hover:text-red-400"
-                disabled={method.isDefault}
+                className="text-red-500 hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={method.isDefault || isDeleting === method.id}
+                title={method.isDefault ? "Impossible de supprimer la carte par défaut" : "Supprimer cette carte"}
               >
-                <Trash2 className="w-4 h-4" />
+                {isDeleting === method.id ? (
+                  <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -191,6 +222,12 @@ const PaymentSettings: React.FC = () => {
           <div className="text-center py-8">
             <CreditCard className="w-12 h-12 text-gray-500 mx-auto mb-3" />
             <p className="text-gray-400">Aucune méthode de paiement enregistrée</p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="mt-4 text-[#5865F2] hover:text-[#4752C4] transition-colors"
+            >
+              Ajouter votre première carte
+            </button>
           </div>
         )}
       </div>

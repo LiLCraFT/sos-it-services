@@ -1,16 +1,12 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Percent, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Save, Wrench, Plus, UserPlus, CheckCircle, Play } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, FileText, Crown, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Wrench, UserPlus, CheckCircle, Play } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import FreelancerList from '../components/FreelancerList';
 import UserList from '../components/UserList';
-import { Modal } from '../components/ui/Modal';
-import PaymentMethodForm from '../components/PaymentMethodForm';
-
-// URL de l'image par défaut
-const DEFAULT_IMAGE = '/images/default-profile.png';
+import PaymentSettings from '../pages/PaymentSettings';
 
 type AddressOption = {
   value: {
@@ -41,8 +37,6 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [uploading, setUploading] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
     // Récupérer le mode d'affichage depuis le localStorage ou utiliser 'cards' par défaut
     const savedViewMode = localStorage.getItem('ticketViewMode');
@@ -62,7 +56,6 @@ const UserDashboard = () => {
   const [addressOption, setAddressOption] = useState<AddressOption | null>(null);
   const [postalCode, setPostalCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [imageError, setImageError] = useState(false);
   
   // Récupérer le paramètre tab de l'URL
   const queryParams = new URLSearchParams(location.search);
@@ -196,15 +189,14 @@ const UserDashboard = () => {
   // Initialiser l'image de profil une seule fois au chargement
   useEffect(() => {
     if (user?.profileImage) {
-      setProfileImage(user.profileImage);
-      setImageError(false);
+      // setImageError(false);
     }
   }, [user?.profileImage]); // Dépendance à user.profileImage pour réinitialiser en cas de changement
 
   // Forcer le rechargement de l'image quand l'utilisateur change
   useEffect(() => {
     if (user) {
-      setImageError(false);
+      // setImageError(false);
     }
   }, [user]);
 
@@ -217,18 +209,6 @@ const UserDashboard = () => {
       month: '2-digit',
       year: 'numeric'
     });
-  };
-
-  // Traduction des types de profil
-  const translateRole = (role: string | undefined) => {
-    if (!role) return 'Utilisateur';
-    
-    switch (role) {
-      case 'admin': return 'Administrateur';
-      case 'fondateur': return 'Fondateur';
-      case 'freelancer': return 'Freelancer';
-      default: return 'Utilisateur';
-    }
   };
 
   // Fonction pour construire l'URL de l'image
@@ -256,7 +236,6 @@ const UserDashboard = () => {
 
     try {
       setUploading(true);
-      setImageError(false);
       
       const formData = new FormData();
       formData.append('image', file);
@@ -277,7 +256,6 @@ const UserDashboard = () => {
       console.log('Upload response:', data); // Log pour déboguer
       
       if (data.profileImage) {
-        setProfileImage(data.profileImage);
         updateUser({ ...user, profileImage: data.profileImage });
       }
       
@@ -287,12 +265,6 @@ const UserDashboard = () => {
     } finally {
       setUploading(false);
     }
-  };
-
-  // Gérer la création de ticket
-  const handleTicketCreated = () => {
-    setShowCreateTicket(false);
-    // Refetch tickets if needed
   };
 
   // Commencer l'édition d'un champ
@@ -577,8 +549,6 @@ const UserDashboard = () => {
     }
   }, []);
 
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
       <div className="bg-[#2F3136] rounded-lg shadow-xl overflow-hidden">
@@ -604,13 +574,13 @@ const UserDashboard = () => {
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       console.log('Image load error:', e);
-                      setImageError(true);
+                      // setImageError(false);
                       const img = e.target as HTMLImageElement;
                       img.src = 'http://localhost:3001/api/default-image';
                     }}
                     onLoad={() => {
                       console.log('Image loaded successfully');
-                      setImageError(false);
+                      // setImageError(false);
                     }}
                     crossOrigin="anonymous"
                     key={user?.profileImage || 'default'}
@@ -863,19 +833,7 @@ const UserDashboard = () => {
 
                 {/* Raccourcis rapides */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="p-4 bg-gradient-to-r from-[#5865F2] to-[#7289DA] rounded-lg shadow-lg hover:from-[#4752C4] hover:to-[#5865F2] transition-colors cursor-pointer" onClick={() => setShowCreateTicket(true)}>
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-white/20 p-3 rounded-full">
-                        <Ticket className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-white font-semibold">Créer un ticket</h3>
-                        <p className="text-white/80 text-sm">Nouveau ticket de support</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-gradient-to-r from-[#FF6B6B] to-[#FF8E8E] rounded-lg shadow-lg hover:from-[#FF5151] hover:to-[#FF7373] transition-colors cursor-pointer" onClick={() => setActiveTab('users')}>
+                  <div className="p-4 bg-gradient-to-r from-[#5865F2] to-[#7289DA] rounded-lg shadow-lg hover:from-[#4752C4] hover:to-[#5865F2] transition-colors cursor-pointer" onClick={() => setActiveTab('users')}>
                     <div className="flex items-center space-x-3">
                       <div className="bg-white/20 p-3 rounded-full">
                         <UserPlus className="w-6 h-6 text-white" />
@@ -1080,7 +1038,6 @@ const UserDashboard = () => {
                         onChange={e => {
                           const value = e.target.value as 'none' | 'solo' | 'family';
                           if ((value === 'solo' || value === 'family') && !user?.hasPaymentMethod) {
-                            setShowPaymentModal(true);
                             return;
                           }
                           setSubscriptionType(value);
@@ -1109,40 +1066,8 @@ const UserDashboard = () => {
                       </a>
                     </div>
                   </div>
-                  
-                  <div className="p-4 bg-[#36393F] rounded-md">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <CreditCard className="w-5 h-5 text-gray-400" />
-                      <h4 className="font-medium text-gray-300">Méthode de paiement</h4>
-                    </div>
-                    <div className="pl-8 flex items-center">
-                      {/* Affichage conditionnel de la carte, à adapter plus tard */}
-                      <p className="text-gray-400 italic">Aucune carte enregistrée</p>
-                    </div>
-                    
-                    <div className="pl-8 mt-4">
-                      <button 
-                        onClick={() => setShowPaymentModal(true)}
-                        className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
-                      >
-                        Modifier le mode de paiement
-                      </button>
-                    </div>
-                  </div>
+                  <PaymentSettings />
                 </div>
-
-                {/* Modal de paiement */}
-                <Modal
-                  isOpen={showPaymentModal}
-                  onClose={() => setShowPaymentModal(false)}
-                  title="Modifier le mode de paiement"
-                  maxWidth="md"
-                >
-                  <PaymentMethodForm
-                    onSuccess={() => setShowPaymentModal(false)}
-                    onCancel={() => setShowPaymentModal(false)}
-                  />
-                </Modal>
               </>
             )}
             
