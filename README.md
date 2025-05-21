@@ -7,6 +7,8 @@ Plateforme moderne pour la gestion de services informatiques d'assistance et de 
 - `src/` - Code source du frontend React/Vite
 - `backend/` - Code source du backend Next.js (API)
 - `public/` - Ressources statiques du frontend
+- `scripts/` - Scripts utilitaires
+- `.cert/` - Certificats SSL (si nécessaire)
 
 ## 🚀 Démarrage rapide
 
@@ -35,16 +37,8 @@ cp .env.example .env.local
 # Initialiser la base de données avec des données de test
 node scripts/init-db.js
 
-# Démarrer l'application en mode développement (deux options)
-# Option 1: Démarrer frontend et backend en une seule commande
-npm run dev:all
-
-# Option 2: Démarrer séparément dans deux terminaux
-# Terminal 1 (Frontend)
+# Démarrer l'application en mode développement
 npm run dev
-
-# Terminal 2 (Backend)
-cd backend && npm run dev
 ```
 
 Le frontend sera accessible sur http://localhost:3000
@@ -61,7 +55,7 @@ npm install
 
 2. Lancez le serveur de développement frontend:
 ```bash
-npm run dev
+npm run dev:frontend
 ```
 
 ### Backend (Next.js)
@@ -101,12 +95,15 @@ node scripts/init-db.js
 
 6. Lancez le serveur de développement backend:
 ```bash
-npm run dev
+npm run dev:backend
 ```
 
 ## 🔒 Authentification
 
-L'authentification utilise JSON Web Tokens (JWT). Le frontend communique avec l'API via un contexte d'authentification React.
+L'authentification utilise NextAuth.js avec support pour :
+- Authentification par email/mot de passe
+- Authentification Google
+- JWT pour la gestion des sessions
 
 ### Points d'API disponibles
 
@@ -128,17 +125,18 @@ L'authentification utilise JSON Web Tokens (JWT). Le frontend communique avec l'
 
 - React 18.3
 - TypeScript 5.5
-- Vite 5.4
+- Vite 6.3
 - TailwindCSS 3.4
 - Lucide React (icônes)
-- React Router
-- Axios
+- React Router 7.5
+- Stripe.js 7.3
+- React Google Places Autocomplete
 
 ### Backend
 
 - Next.js 14.2
 - MongoDB & Mongoose
-- JWT pour l'authentification
+- NextAuth.js
 - Express middleware
 - TypeScript
 - Swagger pour la documentation API
@@ -184,9 +182,6 @@ npm run dev:frontend
 
 # Démarrer uniquement le backend
 npm run dev:backend
-
-# Autre façon de démarrer le frontend et le backend (équivalent à dev:all)
-npm run dev
 
 # Construire le frontend pour la production
 npm run build
