@@ -30,6 +30,7 @@ export interface IUser extends Document {
   emailVerificationTokenExpires: Date;
   rating?: number;
   stripeCustomerId?: string;
+  hasPaymentMethod: boolean;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -132,6 +133,10 @@ const UserSchema = new Schema<IUser>(
     stripeCustomerId: {
       type: String,
       default: null,
+    },
+    hasPaymentMethod: {
+      type: Boolean,
+      default: false,
     },
   },
   {
