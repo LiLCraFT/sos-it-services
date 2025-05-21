@@ -2,7 +2,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Stripe = require('stripe');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RMW2qChoJAgnj1rvMtK9RjQsi7S1G0yAeQqLiQc2ZtO3eV58PA6fk5SYrZaH6ZfYCrglOTG1M8YtHfVGyARENr700vfOJ8qiy');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sos-it-services';
 
