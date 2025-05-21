@@ -5,23 +5,93 @@ alwaysApply: false
 ---
 # Cursor Rules
 
-## Whenever you need a React component
+## API Integration Requirements
 
-1. Carefully consider the component's purpose, functionality, and design
+1. All new features MUST use the backend API for data operations:
+   - Data fetching must be done through API endpoints
+   - Data saving must be done through API endpoints
+   - No direct database access from frontend
+   - Use proper error handling for API calls
 
-2. Think slowly, step by step, and outline your reasoning
+2. API Integration Steps:
+   - Define required API endpoints in backend first
+   - Create API service functions in frontend
+   - Implement proper loading and error states
+   - Use TypeScript interfaces for API responses
 
-3. Check if a similar component already exists in any of the following locations
-   1. packages/ui/src/components
-   2. apps/spa/src/components
+## Component Development Rules
 
-4. If it doesn't exist, generate a detailed prompt for the component, including:
-   - Component name and purpose
-   - Desired props and their types
-   - Any specific styling or behavior requirements
-   - Mention of using Tailwind CSS for styling
-   - Request for TypeScript usage
+1. MANDATORY: Always check and use existing components first:
+   - Search in packages/ui/src/components
+   - Search in apps/spa/src/components
+   - Only create new components if explicitly requested by the user
+   - Document why existing components cannot be used if creating new ones
 
-Example prompt template:
+2. When using existing components:
+   - Review the component's documentation and props
+   - Ensure proper TypeScript typing
+   - Follow the component's usage patterns
+   - Report any issues or missing features
+
+3. Component Modularity Rules:
+   - NEVER write inline JSX/TSX code in pages or complex components
+   - Break down complex UI into smaller, reusable components
+   - Each component should have a single responsibility
+   - Use composition over inheritance
+   - Keep components pure and stateless when possible
+   - Extract repeated patterns into separate components
+   - Use proper component organization:
+     ```
+     components/
+       ├── FeatureName/
+       │   ├── index.ts
+       │   ├── ComponentName.tsx
+       │   ├── SubComponent.tsx
+       │   └── types.ts
+     ```
+
+4. If a new component is explicitly requested:
+   - Carefully consider the component's purpose, functionality, and design
+   - Think slowly, step by step, and outline your reasoning
+   - Generate a detailed prompt including:
+     - Component name and purpose
+     - Desired props and their types
+     - Any specific styling or behavior requirements
+     - Mention of using Tailwind CSS for styling
+     - Request for TypeScript usage
+
+Example prompt template for new components:
 "Create a React component named {ComponentName} using TypeScript and Tailwind CSS. It should {description of functionality}. Props should include {list of props with types}. The component should {any specific styling or behavior notes}. Please provide the full component code."
+
+## Code Cleanup Rules
+
+1. Unused Components and Files:
+   - MANDATORY: Identify and remove unused components:
+     - After feature completion
+     - After UI redesigns
+     - When switching to new component libraries
+   - Before deletion, verify:
+     - No imports in other components
+     - No usage in routes
+     - No dependencies in other features
+   - Document removed components in commit message
+   - Update component documentation
+
+2. Asset Management:
+   - Remove unused:
+     - Images
+     - Styles
+     - Test files
+     - Mock data
+   - Clean up after:
+     - Design changes
+     - Feature removal
+     - Library updates
+
+3. Regular Maintenance:
+   - Audit component usage
+   - Remove dead code
+   - Clean up CSS/SCSS
+   - Update documentation
+   - Maintain clean git history
 
