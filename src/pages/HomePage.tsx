@@ -3,6 +3,8 @@ import Pricing from '../components/Pricing';
 import Team from '../components/Team';
 import Faq from '../components/Faq';
 import TrustpilotWidget from '../components/TrustpilotWidget';
+import { Chatbot } from "../components/Chatbot";
+
 
 const HomePage = () => (
   <>
@@ -14,6 +16,8 @@ const HomePage = () => (
     <Team />
     <div className="section-divider"></div>
     <Faq />
+    <Chatbot />
+
   </>
 );
 
