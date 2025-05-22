@@ -13,7 +13,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onClick }) => {
       </div>
       <button
         onClick={onClick}
-        className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary to-blue-400 border-2 border-white/40 shadow-2xl flex items-center justify-center transition-transform duration-300 hover:scale-110 hover:shadow-3xl focus:outline-none"
+        className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary to-violet-500 border-2 border-white/40 shadow-2xl flex items-center justify-center transition-transform duration-300 hover:scale-110 hover:shadow-3xl focus:outline-none"
         aria-label="Ouvrir le chatbot"
       >
         <img 
