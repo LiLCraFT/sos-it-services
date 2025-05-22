@@ -65,7 +65,6 @@ export async function middleware(request: NextRequest) {
   
   // Vérifie si c'est une route de ressource statique (images, etc.)
   if (isStaticResourceRoute(path)) {
-    console.log('Accès à une ressource statique:', path);
     response = NextResponse.next();
   }
   // Vérifie si la route est publique

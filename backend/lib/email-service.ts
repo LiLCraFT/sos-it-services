@@ -12,7 +12,6 @@ const transporter = nodemailer.createTransport({
 
 export const sendVerificationEmail = async (email: string, token: string) => {
   if (process.env.SKIP_EMAIL_VERIFICATION === 'true') {
-    console.log(`[DEBUG] Email de vérification ignoré pour ${email} (SKIP_EMAIL_VERIFICATION=true)`);
     return;
   }
 
@@ -34,14 +33,12 @@ export const sendVerificationEmail = async (email: string, token: string) => {
   try {
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('Error sending verification email:', error);
     throw new Error('Erreur lors de l\'envoi de l\'email de vérification');
   }
 };
 
 export const sendAdminVerificationEmail = async (email: string, token: string) => {
   if (process.env.SKIP_EMAIL_VERIFICATION === 'true') {
-    console.log(`[DEBUG] Email de vérification admin ignoré pour ${email} (SKIP_EMAIL_VERIFICATION=true)`);
     return;
   }
 
@@ -64,7 +61,6 @@ export const sendAdminVerificationEmail = async (email: string, token: string) =
   try {
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('Error sending admin verification email:', error);
     throw new Error('Erreur lors de l\'envoi de l\'email de vérification');
   }
 }; 
