@@ -4,6 +4,7 @@ Application web de gestion de services informatiques professionnels.
 
 ## Architecture du Projet
 
+### Frontend
 ```
 src/
 ├── components/     # Composants réutilisables
@@ -15,42 +16,33 @@ src/
 └── utils/         # Utilitaires et helpers
 ```
 
+### Backend
+```
+backend/
+├── src/
+│   ├── config/         # Configuration de l'application
+│   ├── controllers/    # Contrôleurs des routes
+│   ├── middleware/     # Middleware personnalisés
+│   ├── models/         # Modèles de données
+│   ├── routes/         # Définition des routes
+│   ├── services/       # Logique métier
+│   ├── types/          # Types TypeScript
+│   └── utils/          # Utilitaires
+├── tests/              # Tests unitaires et d'intégration
+└── prisma/             # Schéma et migrations Prisma
+```
+
 ## Règles de Développement
 
-### 1. Organisation des Routes
-- Toutes les routes doivent être définies dans `src/routes/index.tsx`
-- Utiliser les constantes de routes définies dans `src/config/app.ts`
-- Les routes protégées doivent utiliser le composant `PrivateRoute`
-- Éviter la duplication de routes
+### Frontend
+- Voir [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md) pour les règles frontend
 
-### 2. Structure des Composants
-- Les composants réutilisables vont dans `src/components/`
-- Les pages complètes vont dans `src/pages/`
-- Utiliser le `MainLayout` pour toutes les pages
-- Les composants doivent être des fonctions nommées (pas de fonctions anonymes)
-
-### 3. Gestion de l'État
-- Utiliser les Contextes React pour l'état global
-- Les contextes doivent être dans `src/contexts/`
-- Éviter le prop drilling
-
-### 4. Styles
-- Utiliser Tailwind CSS pour le styling
-- Suivre la convention de nommage des classes Tailwind
-- Éviter les styles inline
-
-### 5. Sécurité
-- Toutes les routes protégées doivent passer par `PrivateRoute`
-- Gérer les tokens d'authentification via `TokenHandler`
-- Ne jamais exposer les clés API dans le code
-
-### 6. Configuration
-- Centraliser la configuration dans `src/config/`
-- Utiliser les constantes pour les valeurs réutilisables
-- Documenter les changements de configuration
+### Backend
+- Voir [BACKEND_RULES.md](./BACKEND_RULES.md) pour les règles backend
 
 ## Installation
 
+### Frontend
 ```bash
 # Installation des dépendances
 npm install
@@ -62,13 +54,46 @@ npm run dev
 npm run build
 ```
 
+### Backend
+```bash
+# Aller dans le dossier backend
+cd backend
+
+# Installation des dépendances
+npm install
+
+# Configuration de l'environnement
+cp .env.example .env
+# Modifier le fichier .env avec vos configurations
+
+# Migration de la base de données
+npx prisma migrate dev
+
+# Démarrage en développement
+npm run dev
+
+# Build pour production
+npm run build
+```
+
 ## Technologies Utilisées
 
+### Frontend
 - React
 - TypeScript
 - React Router
 - Tailwind CSS
 - Context API
+
+### Backend
+- Node.js
+- Express
+- TypeScript
+- Prisma (ORM)
+- PostgreSQL
+- JWT pour l'authentification
+- Zod pour la validation
+- Jest pour les tests
 
 ## Fonctionnalités
 
@@ -78,6 +103,27 @@ npm run build
 - Gestion des tickets de support
 - Services de dépannage informatique
 - Création de sites web
+- API RESTful
+- Documentation Swagger/OpenAPI
+
+## API Endpoints
+
+### Authentification
+- POST /api/auth/register - Inscription
+- POST /api/auth/login - Connexion
+- POST /api/auth/logout - Déconnexion
+- GET /api/auth/me - Informations utilisateur
+
+### Tickets
+- GET /api/tickets - Liste des tickets
+- POST /api/tickets - Création d'un ticket
+- GET /api/tickets/:id - Détails d'un ticket
+- PUT /api/tickets/:id - Mise à jour d'un ticket
+
+### Services
+- GET /api/services - Liste des services
+- GET /api/services/:id - Détails d'un service
+- POST /api/services/:id/book - Réservation d'un service
 
 ## Contribution
 
@@ -86,6 +132,12 @@ npm run build
 3. Commiter vos changements
 4. Pousser vers la branche
 5. Ouvrir une Pull Request
+
+## Documentation
+
+- [Règles de développement Frontend](./DEVELOPMENT_RULES.md)
+- [Règles de développement Backend](./BACKEND_RULES.md)
+- [Documentation API](./docs/api.md)
 
 ## Licence
 
