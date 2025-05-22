@@ -1,198 +1,92 @@
-# SOS-IT-Services
+# SOS IT Services
 
-Plateforme moderne pour la gestion de services informatiques d'assistance et de support technique. Ce projet est composé d'un frontend React/Vite et d'un backend Next.js.
+Application web de gestion de services informatiques professionnels.
 
-## 📋 Structure du projet
+## Architecture du Projet
 
-- `src/` - Code source du frontend React/Vite
-- `backend/` - Code source du backend Next.js (API)
-- `public/` - Ressources statiques du frontend
-- `scripts/` - Scripts utilitaires
-- `.cert/` - Certificats SSL (si nécessaire)
+```
+src/
+├── components/     # Composants réutilisables
+├── contexts/       # Contextes React (Auth, etc.)
+├── layouts/        # Layouts de l'application
+├── pages/         # Pages principales
+├── routes/        # Configuration des routes
+├── config/        # Configuration globale
+└── utils/         # Utilitaires et helpers
+```
 
-## 🚀 Démarrage rapide
+## Règles de Développement
 
-### Prérequis
+### 1. Organisation des Routes
+- Toutes les routes doivent être définies dans `src/routes/index.tsx`
+- Utiliser les constantes de routes définies dans `src/config/app.ts`
+- Les routes protégées doivent utiliser le composant `PrivateRoute`
+- Éviter la duplication de routes
 
-- Node.js (version 18.x ou supérieure)
-- npm (version 9.x ou supérieure)
-- MongoDB (local ou distant)
+### 2. Structure des Composants
+- Les composants réutilisables vont dans `src/components/`
+- Les pages complètes vont dans `src/pages/`
+- Utiliser le `MainLayout` pour toutes les pages
+- Les composants doivent être des fonctions nommées (pas de fonctions anonymes)
 
-### Installation et démarrage complet
+### 3. Gestion de l'État
+- Utiliser les Contextes React pour l'état global
+- Les contextes doivent être dans `src/contexts/`
+- Éviter le prop drilling
+
+### 4. Styles
+- Utiliser Tailwind CSS pour le styling
+- Suivre la convention de nommage des classes Tailwind
+- Éviter les styles inline
+
+### 5. Sécurité
+- Toutes les routes protégées doivent passer par `PrivateRoute`
+- Gérer les tokens d'authentification via `TokenHandler`
+- Ne jamais exposer les clés API dans le code
+
+### 6. Configuration
+- Centraliser la configuration dans `src/config/`
+- Utiliser les constantes pour les valeurs réutilisables
+- Documenter les changements de configuration
+
+## Installation
 
 ```bash
-# Cloner le dépôt
-git clone https://github.com/votre-user/sos-it-services.git
-cd sos-it-services
-
-# Installer les dépendances frontend et backend
+# Installation des dépendances
 npm install
-cd backend && npm install && cd ..
 
-# Configurer la base de données
-cd backend
-cp .env.example .env.local
-# Modifier le fichier .env.local avec vos informations
-
-# Initialiser la base de données avec des données de test
-node scripts/init-db.js
-
-# Démarrer l'application en mode développement
+# Démarrage en développement
 npm run dev
+
+# Build pour production
+npm run build
 ```
 
-Le frontend sera accessible sur http://localhost:3000
-Le backend sera accessible sur http://localhost:3001
+## Technologies Utilisées
 
-## 🔧 Configuration de l'environnement
-
-### Frontend (React/Vite)
-
-1. À la racine du projet, installez les dépendances:
-```bash
-npm install
-```
-
-2. Lancez le serveur de développement frontend:
-```bash
-npm run dev:frontend
-```
-
-### Backend (Next.js)
-
-1. Allez dans le dossier backend:
-```bash
-cd backend
-```
-
-2. Créez un fichier `.env.local` basé sur `.env.example`:
-```bash
-cp .env.example .env.local
-```
-
-3. Modifiez le fichier `.env.local` avec vos informations:
-```
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/sos-it-services
-
-# JWT
-JWT_SECRET=votre_clé_secrète
-JWT_EXPIRES_IN=30d
-
-# App
-API_URL=http://localhost:3001
-```
-
-4. Installez les dépendances:
-```bash
-npm install
-```
-
-5. Initialisez la base de données (optionnel):
-```bash
-node scripts/init-db.js
-```
-
-6. Lancez le serveur de développement backend:
-```bash
-npm run dev:backend
-```
-
-## 🔒 Authentification
-
-L'authentification utilise NextAuth.js avec support pour :
-- Authentification par email/mot de passe
-- Authentification Google
-- JWT pour la gestion des sessions
-
-### Points d'API disponibles
-
-- `POST /api/auth/register` - Inscription d'un nouvel utilisateur
-- `POST /api/auth/login` - Authentification avec email/mot de passe
-- `GET /api/auth/verify` - Vérification de la validité d'un token
-- `POST /api/auth/logout` - Déconnexion (invalidation du token)
-
-### Utilisateurs de test (après initialisation de la BD)
-
-| Email              | Mot de passe | Rôle    |
-|--------------------|--------------|---------|
-| admin@example.com  | admin123     | Admin   |
-| user@example.com   | user123      | User    |
-
-## 💻 Technologies utilisées
-
-### Frontend
-
-- React 18.3
-- TypeScript 5.5
-- Vite 6.3
-- TailwindCSS 3.4
-- Lucide React (icônes)
-- React Router 7.5
-- Stripe.js 7.3
-- React Google Places Autocomplete
-
-### Backend
-
-- Next.js 14.2
-- MongoDB & Mongoose
-- NextAuth.js
-- Express middleware
+- React
 - TypeScript
-- Swagger pour la documentation API
+- React Router
+- Tailwind CSS
+- Context API
 
-## 📝 Documentation
+## Fonctionnalités
 
-- Documentation API: http://localhost:3001/api-docs (disponible après démarrage du backend)
-- README du frontend: [README Frontend](./README.md)
-- README du backend: [README Backend](./backend/README.md)
+- Page d'accueil avec présentation des services
+- Système d'authentification
+- Espace client personnalisé
+- Gestion des tickets de support
+- Services de dépannage informatique
+- Création de sites web
 
-## 🧪 Tests
+## Contribution
 
-```bash
-# Frontend tests
-npm test
+1. Fork le projet
+2. Créer une branche pour votre fonctionnalité
+3. Commiter vos changements
+4. Pousser vers la branche
+5. Ouvrir une Pull Request
 
-# Backend tests
-cd backend && npm test
-```
+## Licence
 
-## 📦 Build pour la production
-
-### Frontend
-```bash
-npm run build
-```
-
-### Backend
-```bash
-cd backend && npm run build
-```
-
-## 📜 Scripts disponibles
-
-Le projet contient plusieurs scripts npm pour faciliter le développement:
-
-```bash
-# Démarrer le frontend et le backend simultanément
-npm run dev:all
-
-# Démarrer uniquement le frontend
-npm run dev:frontend
-
-# Démarrer uniquement le backend
-npm run dev:backend
-
-# Construire le frontend pour la production
-npm run build
-
-# Lancer le linting sur le code frontend
-npm run lint
-
-# Prévisualiser la build de production
-npm run preview
-```
-
-## 📄 Licence
-
-Tous droits réservés.
+Ce projet est sous licence MIT.
