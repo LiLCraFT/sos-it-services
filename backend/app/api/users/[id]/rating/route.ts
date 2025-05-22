@@ -3,17 +3,28 @@ import { dbConnect } from '@/lib/mongodb';
 import User from '@/models/User';
 import Ticket from '@/models/Ticket';
 
+export const dynamic = 'force-dynamic';
+
+// Définir les paramètres statiques pour la route
+export async function generateStaticParams() {
+  return [];
+}
+
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     await dbConnect();
     
-    console.log(`Calcul de la note moyenne pour l'utilisateur ${params.id}`);
+    // Récupérer l'ID depuis l'URL
+    const segments = request.url.split('/');
+    const userId = segments[segments.length - 2];
+    
+    console.log(`Calcul de la note moyenne pour l'utilisateur ${userId}`);
     
     const tickets = await Ticket.find({ 
-      assignedTo: params.id,
+      assignedTo: userId,
       'feedback.rating': { $exists: true }
     });
 
@@ -34,7 +45,7 @@ export async function GET(
     console.log(`Note moyenne calculée: ${averageRating}`);
 
     // Mettre à jour la note moyenne du freelancer
-    await User.findByIdAndUpdate(params.id, { rating: averageRating });
+    await User.findByIdAndUpdate(userId, { rating: averageRating });
     console.log('Note moyenne mise à jour dans la base de données');
 
     return NextResponse.json({ rating: averageRating }, { status: 200 });
