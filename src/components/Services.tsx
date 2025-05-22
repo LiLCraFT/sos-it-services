@@ -31,9 +31,11 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, description }) =
         <h3 className="text-white text-base font-medium leading-tight">{title}</h3>
         {description && <p className="text-gray-400 text-sm">{description}</p>}
         
-        <div className="mt-auto pt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#5865F2] text-sm font-medium flex items-center">
-          <span>En savoir plus</span>
-          <ArrowRight size={14} className="ml-1 transform group-hover:translate-x-1 transition-transform duration-300" />
+        <div className="mt-auto pt-4">
+          <button className="w-full group-hover:bg-gradient-to-r group-hover:from-[#5865F2] group-hover:via-[#4752C4] group-hover:to-[#5865F2] group-hover:text-white text-[#5865F2] bg-gradient-to-r from-[#5865F2]/10 via-[#4752C4]/10 to-[#5865F2]/10 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300 flex items-center justify-center">
+            <span>Demander un devis</span>
+            <ArrowRight size={14} className="ml-1 transform group-hover:translate-x-1 transition-transform duration-300" />
+          </button>
         </div>
       </div>
     </div>
@@ -109,6 +111,22 @@ const Services: React.FC = () => {
               description={service.description}
             />
           ))}
+        </div>
+
+        <div className="mt-16 text-center">
+          <a
+            href="#contact"
+            className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-300 ease-in-out transform hover:scale-105 bg-gradient-to-r from-[#5865F2] via-[#4752C4] to-[#5865F2] rounded-lg shadow-lg hover:shadow-[#5865F2]/50"
+          >
+            <span className="relative z-10 flex items-center">
+              <Wrench className="mr-2 h-5 w-5" />
+              Besoin d'aide ? Contactez-nous
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#4752C4] via-[#5865F2] to-[#4752C4] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </a>
+          <p className="mt-4 text-gray-400 text-sm">
+            Réponse garantie en moins de 30 minutes
+          </p>
         </div>
       </div>
     </section>

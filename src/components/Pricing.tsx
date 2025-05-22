@@ -194,14 +194,14 @@ const Pricing: React.FC = () => {
                   <div className="inline-flex flex-wrap items-center justify-center bg-[#2F3136] rounded-lg p-1 mb-3">
                     <button 
                       onClick={() => setDepannageType('distance')}
-                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-colors ${depannageType === 'distance' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
+                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-all duration-300 ${depannageType === 'distance' ? 'bg-gradient-to-r from-[#5865F2] via-[#4752C4] to-[#5865F2] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
                       <Wifi className="h-4 w-4 mr-1.5" />
                       <span>À distance</span>
                     </button>
                     <button 
                       onClick={() => setDepannageType('domicile')}
-                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-colors ${depannageType === 'domicile' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
+                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-all duration-300 ${depannageType === 'domicile' ? 'bg-gradient-to-r from-[#5865F2] via-[#4752C4] to-[#5865F2] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
                       <Home className="h-4 w-4 mr-1.5" />
                       <span>À domicile</span>
@@ -294,14 +294,14 @@ const Pricing: React.FC = () => {
                   <div className="inline-flex items-center justify-center bg-[#2F3136] rounded-lg p-1 mb-3">
                     <button 
                       onClick={() => setAbonnementType('solo')}
-                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-colors ${abonnementType === 'solo' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
+                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-all duration-300 ${abonnementType === 'solo' ? 'bg-gradient-to-r from-[#5865F2] via-[#4752C4] to-[#5865F2] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
                       <User className="h-4 w-4 mr-1.5" />
                       <span>Solo</span>
                     </button>
                     <button 
                       onClick={() => setAbonnementType('famille')}
-                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-colors ${abonnementType === 'famille' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}`}
+                      className={`flex items-center px-3.5 py-1.5 text-sm rounded-md transition-all duration-300 ${abonnementType === 'famille' ? 'bg-gradient-to-r from-[#5865F2] via-[#4752C4] to-[#5865F2] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
                       <Users className="h-4 w-4 mr-1.5" />
                       <span>Famille</span>
@@ -349,12 +349,12 @@ const Pricing: React.FC = () => {
                 </ul>
               </CardContent>
               
-              <CardFooter className="mt-auto">
+              <CardFooter className="pt-6">
                 <Button 
                   variant="primary"
                   className="w-full group"
                 >
-                  Souscrire
+                  Sélectionner
                   <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">→</span>
                 </Button>
               </CardFooter>

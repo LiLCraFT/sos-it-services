@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
-import { LifeBuoy, ArrowRight, Monitor, Percent, Zap, CreditCard, Settings, Clock, Send, Users, BadgeCheck } from 'lucide-react';
+import { LifeBuoy, ArrowRight, Monitor, Percent, Zap, CreditCard, Settings, Clock, Send, Users, BadgeCheck, Package } from 'lucide-react';
 import { FaApple } from 'react-icons/fa';
 
 const Hero: React.FC = () => {
@@ -202,18 +202,28 @@ const Hero: React.FC = () => {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-md font-medium transition-all duration-200 inline-flex items-center justify-center bg-[#5865F2] text-white hover:bg-opacity-90 px-6 py-3 text-lg"
+                  className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-300 ease-in-out transform hover:scale-105 bg-gradient-to-r from-[#5865F2] via-[#4752C4] to-[#5865F2] rounded-lg shadow-lg hover:shadow-[#5865F2]/50"
                 >
-                  Diagnostic gratuit
+                  <span className="relative z-10 flex flex-col items-center">
+                    <span className="flex items-center">
+                      Diagnostic gratuit
+                    </span>
+                    <span className="text-sm font-normal mt-1 flex items-center text-white/80">
+                      <Clock className="w-3 h-3 mr-1" />
+                      Réponse en 30min garantie
+                    </span>
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#4752C4] via-[#5865F2] to-[#4752C4] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </a>
                 <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-md font-medium transition-all duration-200 inline-flex items-center justify-center border border-white/20 bg-transparent hover:bg-white/10 text-white px-6 py-3 text-lg group"
+                  href="#pricing"
+                  className="group relative inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white transition-all duration-300 ease-in-out transform hover:scale-105 bg-gradient-to-r from-white/5 via-white/10 to-white/5 rounded-md border border-white/20 backdrop-blur-sm"
                 >
-                  Discuter avec un expert
-                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
+                  <span className="relative z-10 flex items-center">
+                    <Package className="mr-2 h-4 w-4" />
+                    Voir les tarifs
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/15 to-white/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </a>
               </div>
               
@@ -406,13 +416,6 @@ const Hero: React.FC = () => {
                >
                  <div className="w-full h-full transform transition-all duration-300 hover:translate-y-[-8px] cursor-pointer">
                    <div className="relative h-full bg-[#5865F2]/10 rounded-xl shadow-lg border-2 border-[#5865F2] p-6 flex flex-col items-center justify-center overflow-hidden">
-                     {/* Badge réponse assurée */}
-                     <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
-                       <div className="bg-[#5865F2] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                         Réponse assurée
-                       </div>
-                     </div>
-                     
                      <div className="flex flex-col items-center mb-3">
                        <div className="bg-[#5865F2]/20 rounded-full p-3 flex-shrink-0 mb-4">
                          <Zap className="w-6 h-6 text-[#5865F2]" />
