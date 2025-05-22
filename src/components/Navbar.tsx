@@ -254,7 +254,11 @@ const Navbar: React.FC = () => {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <RouterLink to="/" className="flex items-center">
-                  <Monitor className="h-8 w-8 text-[#5865F2]" />
+                  <img 
+                    src="/images/logo-image.png" 
+                    alt="SOS IT Services Logo" 
+                    className="h-12 w-auto object-contain"
+                  />
                   <span className="ml-2 text-white font-bold text-xl font-['Bangers'] tracking-wider">SOS IT Services</span>
                 </RouterLink>
               </div>

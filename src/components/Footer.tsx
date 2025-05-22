@@ -34,7 +34,11 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           <div className="lg:col-span-2">
             <div className="flex items-center mb-6">
-              <Monitor className="h-8 w-8 text-[#5865F2]" />
+              <img 
+                src="/images/logo-image.png" 
+                alt="SOS IT Services Logo" 
+                className="h-12 w-auto object-contain"
+              />
               <span className="ml-2 text-white font-bold text-xl font-['Bangers'] tracking-wider">SOS IT Services</span>
             </div>
             <p className="mb-6 text-gray-400">
