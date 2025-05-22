@@ -262,84 +262,89 @@ const Hero: React.FC = () => {
           </div>
           
           {/* iPhone section */}
-          <div className="lg:w-1/2 mt-10 lg:mt-0 relative z-10 p-8 pr-0" style={{ marginRight: "-3%" }}>
-            <div className="relative flex justify-center lg:justify-end xl:justify-center 2xl:justify-end xl:pr-12 2xl:pr-24">
-              {/* iPhone container with halo */}
-              <div className="relative w-[280px] sm:w-[300px] md:w-[320px] lg:translate-x-12 xl:translate-x-0 2xl:translate-x-12">
-                {/* Halo effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#5865F2] to-[#EB459E] rounded-[55px] blur-md opacity-20"></div>
+          <div className="lg:w-1/2 flex justify-end pr-4 sm:pr-6 lg:pr-8 xl:pr-12">
+            {/* iPhone container with halo */}
+            <div 
+              className="relative w-[280px] sm:w-[300px] md:w-[320px]"
+              style={{
+                animation: 'slideIn 1.2s ease-out forwards',
+                transform: 'translateX(-100px)',
+                opacity: 0
+              }}
+            >
+              {/* Halo effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#5865F2] to-[#EB459E] rounded-[55px] blur-md opacity-20"></div>
 
-                {/* iPhone 16 design */}
-                <div className="relative bg-black rounded-[55px] overflow-hidden border-[3px] border-gray-800 shadow-xl 
-                    h-[570px] 
-                    sm:h-[610px] 
-                    md:h-[650px]">
-                  {/* Dynamic Island */}
-                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-[100px] sm:w-[110px] md:w-[120px] h-[30px] sm:h-[32px] md:h-[35px] bg-black rounded-full z-20 flex items-center justify-center">
-                    {/* Camera dot */}
-                    <div className="absolute right-5 sm:right-6 w-[10px] sm:w-[11px] md:w-[12px] h-[10px] sm:h-[11px] md:h-[12px] rounded-full bg-[#1a1a1a] flex items-center justify-center">
-                      <div className="w-[5px] sm:w-[6px] h-[5px] sm:h-[6px] rounded-full bg-[#2a2a2a]">
-                        <div className="w-[2px] sm:w-[3px] h-[2px] sm:h-[3px] rounded-full bg-[#3a3a3a]"></div>
-                      </div>
+              {/* iPhone 16 design */}
+              <div className="relative bg-black rounded-[55px] overflow-hidden border-[3px] border-gray-800 shadow-xl 
+                  h-[570px] 
+                  sm:h-[610px] 
+                  md:h-[650px]">
+                {/* Dynamic Island */}
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-[100px] sm:w-[110px] md:w-[120px] h-[30px] sm:h-[32px] md:h-[35px] bg-black rounded-full z-20 flex items-center justify-center">
+                  {/* Camera dot */}
+                  <div className="absolute right-5 sm:right-6 w-[10px] sm:w-[11px] md:w-[12px] h-[10px] sm:h-[11px] md:h-[12px] rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                    <div className="w-[5px] sm:w-[6px] h-[5px] sm:h-[6px] rounded-full bg-[#2a2a2a]">
+                      <div className="w-[2px] sm:w-[3px] h-[2px] sm:h-[3px] rounded-full bg-[#3a3a3a]"></div>
                     </div>
                   </div>
-                  
-                  {/* Screen content with curved corners */}
-                  <div className="relative h-full bg-gradient-to-b from-[#36393F] to-[#2F3136] rounded-[52px] p-3 sm:p-4">
-                    {/* Header with logo - WhatsApp style */}
-                    <div className="flex items-center justify-between bg-white bg-opacity-5 px-3 py-2 rounded-t-xl mt-12 sm:mt-14 mb-4 pointer-events-none">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 sm:w-10 h-8 sm:h-10 bg-[#5865F2] rounded-full flex items-center justify-center">
-                          <Monitor className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
-                        </div>
-                        <div>
-                          <h2 className="text-white font-semibold text-xs sm:text-sm">SOS IT Services</h2>
-                          <p className="text-gray-400 text-[10px] sm:text-xs">en ligne</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <Monitor className="w-5 h-5 text-gray-400" />
-                        <Settings className="w-5 h-5 text-gray-400" />
-                      </div>
-                    </div>
-
-                    {/* Chat messages - WhatsApp style */}
-                    <div className="space-y-3 sm:space-y-4 pointer-events-none">
-                      {messages.map((message, index) => renderMessage(message, index))}
-                      {renderTypingIndicator()}
-                    </div>
-
-                    {/* Message input - WhatsApp style */}
-                    <div className="absolute bottom-6 sm:bottom-8 left-3 sm:left-4 right-3 sm:right-4">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-white bg-opacity-5 rounded-full p-2 sm:p-3 px-3 sm:px-4 flex items-center flex-grow pointer-events-none">
-                          <input type="text" placeholder="Message" className="bg-transparent text-gray-300 text-xs sm:text-sm w-full focus:outline-none cursor-default" readOnly />
-                        </div>
-                        <a 
-                          href={whatsappUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-[#5865F2] rounded-full p-2 sm:p-3 flex items-center justify-center hover:bg-opacity-90 transition-colors relative z-10"
-                        >
-                          <Send className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                        </a>
-                      </div>
-                    </div>
-
-                    {/* Home indicator */}
-                    <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 pointer-events-none">
-                      <div className="w-[100px] sm:w-[120px] md:w-[140px] h-1 bg-gray-600 rounded-full"></div>
-                    </div>
-                  </div>
-
-                  {/* Side buttons with titanium look */}
-                  <div className="absolute top-[80px] sm:top-[90px] md:top-[100px] -right-[3px] w-[3px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#2a2a2a] rounded-l"></div>
-                  <div className="absolute top-[140px] sm:top-[150px] md:top-[160px] -right-[3px] w-[3px] h-[60px] sm:h-[65px] md:h-[70px] bg-[#2a2a2a] rounded-l"></div>
-                  <div className="absolute top-[80px] sm:top-[90px] md:top-[100px] -left-[3px] w-[3px] h-[30px] sm:h-[32px] md:h-[35px] bg-[#2a2a2a] rounded-r"></div>
-                  
-                  {/* Action button */}
-                  <div className="absolute top-[160px] sm:top-[170px] md:top-[180px] -right-[5px] w-[5px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#2a2a2a] rounded-l"></div>
                 </div>
+                
+                {/* Screen content with curved corners */}
+                <div className="relative h-full bg-gradient-to-b from-[#36393F] to-[#2F3136] rounded-[52px] p-3 sm:p-4">
+                  {/* Header with logo - WhatsApp style */}
+                  <div className="flex items-center justify-between bg-white bg-opacity-5 px-3 py-2 rounded-t-xl mt-12 sm:mt-14 mb-4 pointer-events-none">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 sm:w-10 h-8 sm:h-10 bg-[#5865F2] rounded-full flex items-center justify-center">
+                        <Monitor className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-white font-semibold text-xs sm:text-sm">SOS IT Services</h2>
+                        <p className="text-gray-400 text-[10px] sm:text-xs">en ligne</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Monitor className="w-5 h-5 text-gray-400" />
+                      <Settings className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* Chat messages - WhatsApp style */}
+                  <div className="space-y-3 sm:space-y-4 pointer-events-none">
+                    {messages.map((message, index) => renderMessage(message, index))}
+                    {renderTypingIndicator()}
+                  </div>
+
+                  {/* Message input - WhatsApp style */}
+                  <div className="absolute bottom-6 sm:bottom-8 left-3 sm:left-4 right-3 sm:right-4">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-white bg-opacity-5 rounded-full p-2 sm:p-3 px-3 sm:px-4 flex items-center flex-grow pointer-events-none">
+                        <input type="text" placeholder="Message" className="bg-transparent text-gray-300 text-xs sm:text-sm w-full focus:outline-none cursor-default" readOnly />
+                      </div>
+                      <a 
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[#5865F2] rounded-full p-2 sm:p-3 flex items-center justify-center hover:bg-opacity-90 transition-colors relative z-10"
+                      >
+                        <Send className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Home indicator */}
+                  <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 pointer-events-none">
+                    <div className="w-[100px] sm:w-[120px] md:w-[140px] h-1 bg-gray-600 rounded-full"></div>
+                  </div>
+                </div>
+
+                {/* Side buttons with titanium look */}
+                <div className="absolute top-[80px] sm:top-[90px] md:top-[100px] -right-[3px] w-[3px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#2a2a2a] rounded-l"></div>
+                <div className="absolute top-[140px] sm:top-[150px] md:top-[160px] -right-[3px] w-[3px] h-[60px] sm:h-[65px] md:h-[70px] bg-[#2a2a2a] rounded-l"></div>
+                <div className="absolute top-[80px] sm:top-[90px] md:top-[100px] -left-[3px] w-[3px] h-[30px] sm:h-[32px] md:h-[35px] bg-[#2a2a2a] rounded-r"></div>
+                
+                {/* Action button */}
+                <div className="absolute top-[160px] sm:top-[170px] md:top-[180px] -right-[5px] w-[5px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#2a2a2a] rounded-l"></div>
               </div>
             </div>
           </div>
@@ -483,5 +488,25 @@ const Hero: React.FC = () => {
     </div>
   );
 };
+
+const styles = `
+  @keyframes slideIn {
+    0% {
+      opacity: 0;
+      transform: translateX(-100px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+`;
+
+// Add the styles to the document
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+}
 
 export default Hero;
