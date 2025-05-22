@@ -33,7 +33,6 @@ export async function GET(req: NextRequest) {
     await dbConnect();
     
     const { userId } = getUserFromToken(req);
-    console.log('userId extrait du token:', userId);
 
     if (!userId) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
@@ -41,7 +40,6 @@ export async function GET(req: NextRequest) {
     
     // Vérifier si l'utilisateur est fondateur ou freelancer_admin
     const user = await User.findById(userId);
-    console.log('Utilisateur trouvé en base:', user);
     if (!user || (user.role !== 'fondateur' && user.role !== 'freelancer_admin')) {
       return NextResponse.json({ error: 'Accès restreint aux fondateurs et freelancer_admin' }, { status: 403 });
     }

@@ -8,15 +8,12 @@ export async function GET(
   { params }: { params: { path: string[] } }
 ) {
   try {
-    console.log('-------- API images appelée --------');
     const imagePath = params.path.join('/');
-    console.log('Chemin de l\'image demandée:', imagePath);
     
     // Obtenir le chemin du répertoire courant
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const basePath = path.join(__dirname, '..', '..', '..', '..');
-    console.log('Chemin de base du projet:', basePath);
     
     // Nettoyer le chemin pour éviter la duplication de 'images'
     let cleanPath = imagePath;
@@ -30,25 +27,20 @@ export async function GET(
       path.join(basePath, 'public', 'uploads', cleanPath)
     ];
     
-    console.log('Chemins testés:', possiblePaths);
-    
     // Trouver le premier chemin qui existe
     let fullPath = null;
     for (const p of possiblePaths) {
       if (fs.existsSync(p)) {
         fullPath = p;
-        console.log('Image trouvée dans:', p);
         break;
       }
     }
     
     // Vérifier si le fichier existe
     if (!fullPath) {
-      console.error('Image non trouvée dans aucun des chemins');
       // Retourner l'image par défaut si l'image demandée n'existe pas
       const defaultImagePath = path.join(basePath, 'public', 'images', 'default-profile.png');
       if (fs.existsSync(defaultImagePath)) {
-        console.log('Utilisation de l\'image par défaut:', defaultImagePath);
         const fileBuffer = fs.readFileSync(defaultImagePath);
         return new NextResponse(fileBuffer, {
           status: 200,
@@ -80,7 +72,6 @@ export async function GET(
 
     // Lire le fichier
     const fileBuffer = fs.readFileSync(fullPath);
-    console.log('Image lue avec succès, taille:', fileBuffer.length, 'bytes');
     
     // Déterminer le type MIME en fonction de l'extension
     const extension = path.extname(fullPath).toLowerCase();
@@ -95,8 +86,6 @@ export async function GET(
     } else if (extension === '.svg') {
       contentType = 'image/svg+xml';
     }
-
-    console.log('Type MIME détecté:', contentType);
 
     // Retourner l'image avec les en-têtes appropriés
     const response = new NextResponse(fileBuffer, {
@@ -113,7 +102,6 @@ export async function GET(
 
     return response;
   } catch (error: any) {
-    console.error('Error serving image:', error);
     return NextResponse.json(
       { error: error.message || 'Erreur lors de la récupération de l\'image' },
       { 

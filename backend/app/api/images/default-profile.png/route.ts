@@ -7,12 +7,8 @@ export async function GET(req: NextRequest) {
     // Chemin vers l'image par défaut
     const defaultProfilePath = path.join(process.cwd(), 'public', 'images', 'default-profile.png');
     
-    console.log('Demande de l\'image par défaut');
-    console.log('Chemin complet:', defaultProfilePath);
-    
     // Vérifier si le fichier existe
     if (!fs.existsSync(defaultProfilePath)) {
-      console.error('Image non trouvée:', defaultProfilePath);
       return NextResponse.json(
         { error: 'Image non trouvée' },
         { status: 404 }
@@ -32,8 +28,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Erreur lors du chargement de l\'image par défaut:', error);
-    
     // Fallback vers une image transparente 1x1 pixel si le fichier n'existe pas
     const TRANSPARENT_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
     

@@ -37,15 +37,6 @@ export async function GET(req: NextRequest) {
     }
     
     if (!foundPath) {
-      // Afficher le contenu du dossier uploads/profiles pour débogage
-      const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'profiles');
-      if (fs.existsSync(uploadsDir)) {
-        const files = fs.readdirSync(uploadsDir);
-        files.forEach(file => console.log(`- ${file}`));
-      } else {
-        console.log('Le dossier uploads/profiles n\'existe pas');
-      }
-      
       return NextResponse.json(
         { error: 'Fichier non trouvé' },
         { status: 404 }

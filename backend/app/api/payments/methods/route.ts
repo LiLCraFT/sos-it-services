@@ -63,20 +63,16 @@ async function getOrCreateStripeCustomer(user: User): Promise<string> {
     metadata: { userId: user._id }
   });
 
-  console.log('Avant update, user._id =', user._id, 'customer.id =', customer.id);
   const userId = typeof user._id === 'string' ? new mongoose.Types.ObjectId(user._id) : user._id;
   const updateResult = await mongoose.connection.collection('users').updateOne(
     { _id: userId },
     { $set: { stripeCustomerId: customer.id } }
   );
-  console.log('Résultat updateOne:', updateResult);
   if (updateResult.matchedCount === 0 || updateResult.modifiedCount === 0) {
     console.warn('Aucun document mis à jour pour', userId, user.email);
   }
   const updatedUser = await mongoose.connection.collection('users').findOne({ _id: userId });
-  console.log('User relu après update:', updatedUser);
   if (updatedUser && updatedUser.stripeCustomerId) {
-    console.log('user reçu dans getOrCreateStripeCustomer:', user);
     return updatedUser.stripeCustomerId;
   }
 
@@ -98,7 +94,6 @@ export async function POST(request: Request) {
     const updatedUser = await mongoose.connection.collection('users').findOne({ _id: new mongoose.Types.ObjectId(user._id) });
     if (updatedUser && updatedUser.stripeCustomerId) {
       stripeCustomerId = updatedUser.stripeCustomerId;
-      console.log('stripeCustomerId mis à jour pour', user.email, ':', stripeCustomerId);
     }
 
     const body = await request.json();
