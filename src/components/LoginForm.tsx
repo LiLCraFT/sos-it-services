@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -10,24 +10,22 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const { login, API_URL } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(null);
     setIsLoading(true);
 
     try {
       await login(email, password);
-      if (onSuccess) {
-        onSuccess();
-      }
+      onSuccess?.();
       navigate('/mon-espace');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur de connexion');
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion');
     } finally {
       setIsLoading(false);
     }
@@ -36,20 +34,28 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      console.log('LoginForm: Démarrage de l\'authentification Google...');
+      console.log('LoginForm: API_URL:', API_URL);
+      
       const response = await fetch(`${API_URL}/api/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+      
       if (!response.ok) {
         throw new Error('Erreur lors de la connexion avec Google');
       }
+      
       const data = await response.json();
+      console.log('LoginForm: URL de redirection Google reçue:', data.url);
+      
+      // Rediriger vers l'URL Google
       window.location.href = data.url;
     } catch (err) {
+      console.error('LoginForm: Erreur lors de l\'authentification Google:', err);
       setError(err instanceof Error ? err.message : 'Erreur de connexion avec Google');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -131,7 +137,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
               />
               Google
             </button>
-            <div className="text-center mt-4">
+          </div>
+
+          {onRegisterClick && (
+            <div className="text-center">
               <span className="text-gray-400 text-sm">
                 Pas encore de compte ?{' '}
                 <button
@@ -143,7 +152,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                 </button>
               </span>
             </div>
-          </div>
+          )}
         </form>
       </div>
     </div>

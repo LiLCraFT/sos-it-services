@@ -90,6 +90,8 @@ const canAccessTab = (tab: TabConfig, userRole?: string): boolean => {
   return true;
 };
 
+type SubscriptionType = "none" | "solo" | "family";
+
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -99,7 +101,7 @@ const Navbar: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("none");
+  const [subscriptionType, setSubscriptionType] = useState<SubscriptionType>("none");
   
   const whatsappNumber = "33695358625"; // Remplacez par votre numéro WhatsApp
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
@@ -127,9 +129,8 @@ const Navbar: React.FC = () => {
   }, [userMenuRef]);
 
   useEffect(() => {
-    // Mettre à jour le type d'abonnement quand l'utilisateur est chargé
     if (user && user.subscriptionType) {
-      setSubscriptionType(user.subscriptionType);
+      setSubscriptionType(user.subscriptionType as SubscriptionType);
     } else {
       setSubscriptionType("none");
     }
@@ -205,10 +206,8 @@ const Navbar: React.FC = () => {
 
   const handleUserButtonClick = () => {
     if (isAuthenticated) {
-      // Ouvrir/fermer le menu utilisateur
       setIsUserMenuOpen(!isUserMenuOpen);
     } else {
-      // Si l'utilisateur n'est pas connecté, ouvrir la modal de connexion
       setIsLoginModalOpen(true);
     }
   };

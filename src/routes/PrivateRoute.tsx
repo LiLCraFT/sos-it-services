@@ -1,22 +1,28 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import TokenHandler from '../components/TokenHandler';
+import { Spinner } from '../components/ui/Spinner';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
 }
 
-const PrivateRoute = ({ children }: PrivateRouteProps) => {
-  const { isAuthenticated } = useAuth();
+const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
+  // Always mount the TokenHandler to handle URL tokens
   return (
     <>
       <TokenHandler />
-      {children}
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <Spinner size="lg" />
+        </div>
+      ) : isAuthenticated ? (
+        children
+      ) : (
+        <Navigate to="/" replace />
+      )}
     </>
   );
 };

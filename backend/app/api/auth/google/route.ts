@@ -10,6 +10,22 @@ const client = new OAuth2Client(
 
 export async function POST() {
   try {
+    console.log('Google auth: Début de la génération de l\'URL de redirection');
+    console.log('Google auth: Variables d\'environnement:', {
+      clientId: process.env.GOOGLE_CLIENT_ID ? 'Défini' : 'Non défini',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ? 'Défini' : 'Non défini',
+      redirectUri: process.env.GOOGLE_REDIRECT_URI,
+      nextAuthUrl: process.env.NEXTAUTH_URL
+    });
+
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REDIRECT_URI) {
+      console.error('Google auth: Variables d\'environnement manquantes');
+      return NextResponse.json(
+        { error: 'Configuration Google OAuth incomplète' },
+        { status: 500 }
+      );
+    }
+
     const authUrl = client.generateAuthUrl({
       access_type: 'offline',
       scope: [
@@ -18,9 +34,15 @@ export async function POST() {
       ],
       prompt: 'consent',
     });
+
+    console.log('Google auth: URL de redirection générée:', authUrl);
     return NextResponse.json({ url: authUrl });
   } catch (error) {
-    return NextResponse.json({ error: 'Erreur lors de la génération de l\'URL Google' }, { status: 500 });
+    console.error('Google auth: Erreur lors de la génération de l\'URL:', error);
+    return NextResponse.json(
+      { error: 'Erreur lors de la génération de l\'URL Google' },
+      { status: 500 }
+    );
   }
 }
 
