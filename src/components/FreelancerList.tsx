@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Tooltip from './Tooltip';
 import FreelancerDetailsModal from './FreelancerDetailsModal';
 import Pagination from './ui/Pagination';
+import { Spinner } from './ui/Spinner';
 
 type FreelancerData = {
   _id: string;
@@ -572,7 +573,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   if (loading) {
     return (
       <div className="flex justify-center items-center h-48">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5865F2]"></div>
+        <Spinner size="lg" />
       </div>
     );
   }

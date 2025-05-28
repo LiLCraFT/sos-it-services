@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown, Filter, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Spinner } from './ui/Spinner';
 
 interface Attachment {
   filename: string;
@@ -322,7 +323,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   };
 
   if (loading) {
-    return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
+    return (
+      <div className="flex justify-center items-center h-48">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   if (error) {

@@ -4,6 +4,7 @@ import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Fold
 import { Modal } from './ui/Modal';
 import FreelancerDetailsModal from './FreelancerDetailsModal';
 import Pagination from './ui/Pagination';
+import { Spinner } from './ui/Spinner';
 
 interface Attachment {
   filename: string;
