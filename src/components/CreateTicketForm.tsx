@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { usePaymentMethods } from '../hooks/usePaymentMethods';
-import { AlertTriangle, Upload, X, Image, FileText, Paperclip, CreditCard, Crown } from 'lucide-react';
+import { AlertTriangle, Upload, X, Image, FileText, Paperclip } from 'lucide-react';
 
 interface User {
   _id: string;
   firstName: string;
   lastName: string;
   email: string;
-  hasPaymentMethod?: boolean;
   role?: string;
   clientType?: string;
   phone?: string;
@@ -26,8 +24,6 @@ interface CreateTicketFormProps {
 
 const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, onCancel }) => {
   const { user, isAuthenticated } = useAuth();
-  const { paymentMethods, loading: paymentMethodsLoading, refreshPaymentMethods } = usePaymentMethods();
-  const hasPaymentMethod = paymentMethods.length > 0;
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [subcategory, setSubcategory] = useState('');
@@ -39,7 +35,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
   const [error, setError] = useState<string | null>(null);
   const [fetchingUsers, setFetchingUsers] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Catégories principales de dépannage informatique
@@ -183,16 +178,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    // Rafraîchir les méthodes de paiement avant la vérification
-    await refreshPaymentMethods();
-
-    if (!hasPaymentMethod) {
-      setShowPaymentModal(true);
-      return;
-    }
-
     setLoading(true);
+
     try {
       const formData = new FormData();
       formData.append('title', title);
@@ -207,10 +194,15 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
         formData.append('attachments', file);
       });
 
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
       const response = await fetch('http://localhost:3001/api/tickets', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
@@ -228,17 +220,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
     }
   };
 
-  // Helper pour afficher le nom lisible de l'abonnement
-  const getSubscriptionName = () => {
-    if (!user?.subscriptionType) return '';
-    switch(user.subscriptionType) {
-      case 'solo': return 'Plan Solo';
-      case 'family': return 'Plan Famille';
-      case 'none':
-      default: return 'A la carte';
-    }
-  };
-
   return (
     <div className="bg-[#36393F] rounded-lg p-6">
       <h3 className="text-xl font-semibold text-white mb-4">Créer un nouveau ticket</h3>
@@ -248,49 +229,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
           <div className="flex items-center">
             <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
             <span className="text-red-500 text-sm">{error}</span>
-          </div>
-        </div>
-      )}
-
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#36393F] rounded-lg p-6 max-w-md w-full">
-            <div className="flex items-center mb-4">
-              <CreditCard className="w-6 h-6 text-[#5865F2] mr-2" />
-              <h3 className="text-xl font-semibold text-white">Méthode de paiement requise</h3>
-            </div>
-            <p className="text-gray-300 mb-2">
-              Pour créer un ticket, vous devez d'abord ajouter une méthode de paiement à votre compte.
-            </p>
-            {/* Tag d'abonnement harmonisé */}
-            {(!user?.role || (user?.role !== 'admin' && user?.role !== 'fondateur' && user?.role !== 'freelancer' && user?.role !== 'freelancer_admin')) && (
-              <div className="flex justify-center my-4">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400">
-                  <Crown className="w-3 h-3 mr-1" />
-                  {getSubscriptionName() || (user?.subscriptionType === 'solo' ? 'Plan Solo' : user?.subscriptionType === 'family' ? 'Plan Famille' : 'A la carte')}
-                </span>
-              </div>
-            )}
-            <p className="text-xs text-gray-400 mb-4">
-              Aucune somme ne sera débitée tant que les différents problèmes ne seront pas résolus.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  window.location.href = '/dashboard?tab=subscription';
-                }}
-                className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
-              >
-                Ajouter une carte
-              </button>
-            </div>
           </div>
         </div>
       )}
