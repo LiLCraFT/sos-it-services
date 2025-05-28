@@ -13,6 +13,7 @@ interface User {
   profileImage?: string;
   subscriptionType?: string;
   clientType?: string;
+  hasPaymentMethod?: boolean;
 }
 
 interface AuthContextType {
