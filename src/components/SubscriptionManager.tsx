@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Crown, Wrench } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
+import { ConfirmSubscriptionChangeModal } from './ConfirmSubscriptionChangeModal';
 
 const SubscriptionManager = () => {
   const { user } = useAuth();
@@ -12,6 +13,7 @@ const SubscriptionManager = () => {
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     if (user && user.subscriptionType) {
@@ -69,6 +71,15 @@ const SubscriptionManager = () => {
     }
   };
 
+  const handleValidateClick = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmChange = async () => {
+    setShowConfirmModal(false);
+    await handleSubscriptionChange();
+  };
+
   return (
     <div className="space-y-6">
       <div className="p-4 bg-[#36393F] rounded-md relative">
@@ -116,7 +127,7 @@ const SubscriptionManager = () => {
               return (
                 <div className="inline-flex space-x-2">
                   <button 
-                    onClick={handleSubscriptionChange}
+                    onClick={handleValidateClick}
                     disabled={isLoading}
                     className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -157,6 +168,14 @@ const SubscriptionManager = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 7l-10 10m0 0h7m-7 0V7" /></svg>
           </a>
         </div>
+        <ConfirmSubscriptionChangeModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={handleConfirmChange}
+          currentType={subscriptionType}
+          nextType={tempSubscriptionType}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );
