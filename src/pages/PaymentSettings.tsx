@@ -22,6 +22,7 @@ const PaymentSettings: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isSettingDefault, setIsSettingDefault] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const { updateUser, user } = useAuth();
 
   const fetchPaymentMethods = async () => {
@@ -140,6 +141,26 @@ const PaymentSettings: React.FC = () => {
     await refreshUserHasPaymentMethod();
   };
 
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch('http://localhost:3001/api/subscription/status', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSubscriptionStatus(data.status);
+        }
+      } catch {}
+    };
+    fetchStatus();
+  }, []);
+
+  const isActivationPending = subscriptionStatus === 'incomplete';
+  const isActionDisabled = isActivationPending;
+
   // Effacer les messages de succès après 5 secondes
   useEffect(() => {
     if (success) {
@@ -184,12 +205,22 @@ const PaymentSettings: React.FC = () => {
         <h1 className="text-2xl font-semibold text-white">Méthodes de paiement</h1>
         <button
           onClick={() => setShowAddForm(true)}
-          className="flex items-center px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none transition-colors"
+          disabled={isActionDisabled}
+          className={`flex items-center px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none transition-colors ${isActionDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <Plus className="w-4 h-4 mr-2" />
           Ajouter une carte
         </button>
       </div>
+
+      {isActivationPending && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-md p-3 mb-4">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-yellow-500 mr-2" />
+            <span className="text-yellow-500 text-sm">Les actions sur les méthodes de paiement sont temporairement désactivées pendant l'activation de votre abonnement</span>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3 mb-4">
@@ -218,7 +249,7 @@ const PaymentSettings: React.FC = () => {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className={`space-y-4 ${isActionDisabled ? 'pointer-events-none opacity-50' : ''}`}>
         {sortedPaymentMethods.map((method) => (
           <div
             key={method.id}
@@ -241,7 +272,7 @@ const PaymentSettings: React.FC = () => {
                 <button
                   onClick={() => handleSetDefault(method.id)}
                   className="text-[#5865F2] hover:text-[#4752C4] text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isSettingDefault === method.id}
+                  disabled={isSettingDefault === method.id || isActionDisabled}
                 >
                   {isSettingDefault === method.id ? 'Mise à jour...' : 'Définir par défaut'}
                 </button>
@@ -252,7 +283,7 @@ const PaymentSettings: React.FC = () => {
               <button
                 onClick={() => handleDeleteMethod(method.id)}
                 className="text-red-500 hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={method.isDefault || isDeleting === method.id}
+                disabled={method.isDefault || isDeleting === method.id || isActionDisabled}
                 title={method.isDefault ? "Impossible de supprimer la carte par défaut" : "Supprimer cette carte"}
               >
                 {isDeleting === method.id ? (
@@ -271,7 +302,8 @@ const PaymentSettings: React.FC = () => {
             <p className="text-gray-400">Aucune méthode de paiement enregistrée</p>
             <button
               onClick={() => setShowAddForm(true)}
-              className="mt-4 text-[#5865F2] hover:text-[#4752C4] transition-colors"
+              disabled={isActionDisabled}
+              className={`mt-4 text-[#5865F2] hover:text-[#4752C4] transition-colors ${isActionDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Ajouter votre première carte
             </button>

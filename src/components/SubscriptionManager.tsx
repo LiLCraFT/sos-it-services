@@ -103,7 +103,7 @@ const SubscriptionManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 bg-[#36393F] rounded-md relative">
+      <div className={`p-4 bg-[#36393F] rounded-md relative ${isActivationPending ? 'pointer-events-none opacity-50' : ''}`}>
         <div className="flex items-center space-x-3 mb-2">
           <Wrench className="w-5 h-5 text-gray-400" />
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-500/20 text-purple-400 mr-2">
@@ -175,7 +175,7 @@ const SubscriptionManager = () => {
             }
             return !isNone && (
               <button 
-                className="px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none"
+                className={`px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none ${isActionDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={isActionDisabled}
                 onClick={() => {
                   setTempSubscriptionType('none');
