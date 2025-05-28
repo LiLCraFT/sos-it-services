@@ -14,6 +14,7 @@ const SubscriptionManager = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && user.subscriptionType) {
@@ -24,6 +25,23 @@ const SubscriptionManager = () => {
       setSubscriptionType(safeType);
       setTempSubscriptionType(safeType);
     }
+  }, [user]);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch('http://localhost:3001/api/subscription/status', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSubscriptionStatus(data.status);
+        }
+      } catch {}
+    };
+    fetchStatus();
   }, [user]);
 
   const getSubscriptionName = () => {
@@ -80,6 +98,9 @@ const SubscriptionManager = () => {
     await handleSubscriptionChange();
   };
 
+  const isActivationPending = subscriptionStatus === 'incomplete';
+  const isActionDisabled = isLoading || isActivationPending;
+
   return (
     <div className="space-y-6">
       <div className="p-4 bg-[#36393F] rounded-md relative">
@@ -92,6 +113,11 @@ const SubscriptionManager = () => {
           <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/20 text-green-400">
             Actif
           </span>
+          {isActivationPending && (
+            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500 ml-2">
+              Activation en cours (paiement à finaliser)
+            </span>
+          )}
         </div>
         <p className="text-gray-400 pl-8 text-sm">
           {subscriptionType !== "none" ? "Abonnement sans engagement" : "Pas d'abonnement en cours"}
@@ -115,7 +141,7 @@ const SubscriptionManager = () => {
               setTempSubscriptionType(value);
               setIsChangingSubscription(value !== subscriptionType);
             }}
-            disabled={isLoading}
+            disabled={isActionDisabled}
           >
             <option value="none">A la carte - 0€ / mois</option>
             <option value="solo">Solo - 29,99€ / mois (1 personne)</option>
@@ -128,7 +154,7 @@ const SubscriptionManager = () => {
                 <div className="inline-flex space-x-2">
                   <button 
                     onClick={handleValidateClick}
-                    disabled={isLoading}
+                    disabled={isActionDisabled}
                     className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? 'Chargement...' : 'Valider'}
@@ -139,7 +165,7 @@ const SubscriptionManager = () => {
                       setIsChangingSubscription(false);
                       setError(null);
                     }}
-                    disabled={isLoading}
+                    disabled={isActionDisabled}
                     className="px-4 py-2 bg-transparent border border-gray-500 text-gray-500 rounded-md hover:bg-gray-500/10 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Annuler
@@ -150,7 +176,12 @@ const SubscriptionManager = () => {
             return !isNone && (
               <button 
                 className="px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none"
-                disabled={isLoading}
+                disabled={isActionDisabled}
+                onClick={() => {
+                  setTempSubscriptionType('none');
+                  setIsChangingSubscription(true);
+                  setShowConfirmModal(true);
+                }}
               >
                 Résilier mon abonnement
               </button>
