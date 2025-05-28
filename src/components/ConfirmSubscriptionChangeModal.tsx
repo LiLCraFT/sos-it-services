@@ -1,14 +1,11 @@
 import React from 'react';
-import { Modal } from './ui/Modal';
-import { User, Users, Home } from 'lucide-react';
+import { Home, User, Users } from 'lucide-react';
 
 interface ConfirmSubscriptionChangeModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
   currentType: 'none' | 'solo' | 'family';
-  nextType: 'none' | 'solo' | 'family';
-  isLoading?: boolean;
+  newType: 'none' | 'solo' | 'family';
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 interface SubscriptionDetails {
@@ -59,70 +56,73 @@ const subscriptionDetails: Record<'none' | 'solo' | 'family', SubscriptionDetail
   },
 };
 
-const getLabel = (type: 'none' | 'solo' | 'family') => {
-  return subscriptionDetails[type]?.label || type;
-};
-
 export const ConfirmSubscriptionChangeModal: React.FC<ConfirmSubscriptionChangeModalProps> = ({
-  isOpen,
-  onClose,
-  onConfirm,
   currentType,
-  nextType,
-  isLoading,
+  newType,
+  onConfirm,
+  onCancel,
 }) => {
-  const isDowngrade =
-    (currentType === 'family' && (nextType === 'solo' || nextType === 'none')) ||
-    (currentType === 'solo' && nextType === 'none');
+  const currentDetails = subscriptionDetails[currentType];
+  const newDetails = subscriptionDetails[newType];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={<span>Confirmer le changement d'abonnement</span>} maxWidth="xl">
-      <div className="text-white text-base mb-4">
-        Êtes-vous sûr de vouloir passer de <b>{getLabel(currentType)}</b> à <b>{getLabel(nextType)}</b> ?
-      </div>
-      <div className="flex flex-col md:flex-row gap-6 mb-4">
-        {[{type: currentType, title: 'Abonnement actuel'}, {type: nextType, title: 'Nouvel abonnement'}].map(({type, title}, idx) => (
-          <div
-            key={type}
-            className="flex-1 bg-[#2F3136] rounded-2xl p-6 border-2 border-[#5865F2]/30 shadow-lg flex flex-col min-w-[270px] max-w-[400px] mx-auto"
-          >
-            <div className="flex items-center mb-2">
-              <div className="bg-[#5865F2]/20 rounded-full p-2 mr-2">
-                {subscriptionDetails[type].icon}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-[#36393F] rounded-lg p-6 max-w-2xl w-full">
+        <h3 className="text-xl font-semibold text-white mb-4">Confirmation du changement d'abonnement</h3>
+        
+        <div className="grid grid-cols-2 gap-6">
+          <div className="bg-[#2F3136] rounded-lg p-4">
+            <div className="flex items-center mb-4">
+              {currentDetails.icon}
+              <div className="ml-3">
+                <h4 className="text-white font-medium">{currentDetails.label}</h4>
+                <p className="text-gray-400 text-sm">{currentDetails.price}</p>
               </div>
-              <div className="font-semibold text-white text-base">{title}</div>
             </div>
-            <div className="text-[#5865F2] font-bold text-xl mb-1">{subscriptionDetails[type].label}</div>
-            <div className="text-white font-semibold text-lg mb-3">{subscriptionDetails[type].price}</div>
-            <ul className="list-disc list-inside text-gray-200 text-sm space-y-1 pl-2">
-              {subscriptionDetails[type].features.map((feature, i) => (
-                <li key={i}>{feature}</li>
+            <ul className="space-y-2">
+              {currentDetails.features.map((feature, index) => (
+                <li key={index} className="text-gray-300 text-sm flex items-start">
+                  <span className="text-[#5865F2] mr-2">•</span>
+                  {feature}
+                </li>
               ))}
             </ul>
           </div>
-        ))}
-      </div>
-      {isDowngrade && (
-        <div className="mb-4 text-yellow-400 font-medium">
-          Votre abonnement actuel sera résilié, mais vous bénéficierez du service jusqu'à la fin du mois en cours.
+
+          <div className="bg-[#2F3136] rounded-lg p-4">
+            <div className="flex items-center mb-4">
+              {newDetails.icon}
+              <div className="ml-3">
+                <h4 className="text-white font-medium">{newDetails.label}</h4>
+                <p className="text-gray-400 text-sm">{newDetails.price}</p>
+              </div>
+            </div>
+            <ul className="space-y-2">
+              {newDetails.features.map((feature, index) => (
+                <li key={index} className="text-gray-300 text-sm flex items-start">
+                  <span className="text-[#5865F2] mr-2">•</span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      )}
-      <div className="flex justify-end space-x-2 mt-6">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700 focus:outline-none"
-          disabled={isLoading}
-        >
-          Annuler
-        </button>
-        <button
-          onClick={onConfirm}
-          className="px-4 py-2 rounded bg-[#5865F2] text-white hover:bg-[#4752C4] focus:outline-none disabled:opacity-50"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Changement en cours...' : 'Confirmer'}
-        </button>
+
+        <div className="flex justify-end space-x-3 mt-6">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 bg-[#2F3136] text-gray-300 rounded-md hover:bg-[#202225] focus:outline-none"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+          >
+            Confirmer le changement
+          </button>
+        </div>
       </div>
-    </Modal>
+    </div>
   );
 }; 

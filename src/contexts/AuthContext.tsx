@@ -25,6 +25,7 @@ interface AuthContextType {
   updateUser: (userData: User) => void;
   verifyToken: (token: string) => Promise<User | null>;
   API_URL: string;
+  updatePaymentMethodStatus: (hasPaymentMethod: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -173,6 +174,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
+  const updatePaymentMethodStatus = (hasPaymentMethod: boolean) => {
+    if (user) {
+      const updatedUser = { ...user, hasPaymentMethod };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   // Log de l'état actuel
   console.log('État actuel:', {
     user: user ? 'présent' : 'absent',
@@ -192,6 +201,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         updateUser,
         verifyToken,
         API_URL,
+        updatePaymentMethodStatus,
       }}
     >
       {children}

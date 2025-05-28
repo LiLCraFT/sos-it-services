@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface PaymentMethod {
   id: string;
@@ -12,21 +13,35 @@ export interface PaymentMethod {
 export function usePaymentMethods() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
+  const { updatePaymentMethodStatus } = useAuth();
+  const isInitialized = useRef(false);
 
+  const fetchPaymentMethods = useCallback(async () => {
+    if (loading) return; // Évite les appels multiples pendant le chargement
+    setLoading(true);
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    const response = await fetch('http://localhost:3001/api/payments/methods', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (response.ok) {
+      const methods = await response.json();
+      setPaymentMethods(methods);
+      updatePaymentMethodStatus(methods.length > 0);
+    }
+    setLoading(false);
+  }, [updatePaymentMethodStatus, loading]);
+
+  // Chargement initial uniquement
   useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      setLoading(true);
-      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/payments/methods', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (response.ok) {
-        setPaymentMethods(await response.json());
-      }
-      setLoading(false);
-    };
-    fetchPaymentMethods();
-  }, []);
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      fetchPaymentMethods();
+    }
+  }, [fetchPaymentMethods]);
 
-  return { paymentMethods, loading };
+  return { 
+    paymentMethods, 
+    loading,
+    refreshPaymentMethods: fetchPaymentMethods 
+  };
 } 

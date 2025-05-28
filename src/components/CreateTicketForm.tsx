@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { AlertTriangle, Upload, X, Image, FileText, Paperclip, CreditCard, Crown } from 'lucide-react';
 
 interface User {
@@ -25,6 +26,8 @@ interface CreateTicketFormProps {
 
 const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, onCancel }) => {
   const { user, isAuthenticated } = useAuth();
+  const { paymentMethods, loading: paymentMethodsLoading, refreshPaymentMethods } = usePaymentMethods();
+  const hasPaymentMethod = paymentMethods.length > 0;
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [subcategory, setSubcategory] = useState('');
@@ -181,8 +184,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, on
     e.preventDefault();
     setError(null);
 
-    // Vérifier si l'utilisateur a une méthode de paiement
-    if (!user?.hasPaymentMethod) {
+    // Rafraîchir les méthodes de paiement avant la vérification
+    await refreshPaymentMethods();
+
+    if (!hasPaymentMethod) {
       setShowPaymentModal(true);
       return;
     }

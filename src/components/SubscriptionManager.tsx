@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Crown, Wrench } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
@@ -6,8 +6,7 @@ import { ConfirmSubscriptionChangeModal } from './ConfirmSubscriptionChangeModal
 
 const SubscriptionManager = () => {
   const { user } = useAuth();
-  const { paymentMethods } = usePaymentMethods();
-  const hasPaymentMethod = paymentMethods.length > 0;
+  const { paymentMethods, refreshPaymentMethods } = usePaymentMethods();
   const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("none");
   const [tempSubscriptionType, setTempSubscriptionType] = useState<"none" | "solo" | "family">("none");
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
@@ -42,7 +41,7 @@ const SubscriptionManager = () => {
       } catch {}
     };
     fetchStatus();
-  }, [user]);
+  }, []);
 
   const getSubscriptionName = () => {
     switch(subscriptionType) {
@@ -53,15 +52,17 @@ const SubscriptionManager = () => {
     }
   };
 
-  const handleSubscriptionChange = async () => {
+  const handleSubscriptionChange = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Vérifier si l'utilisateur a une méthode de paiement pour les abonnements payants
-      if ((tempSubscriptionType === 'solo' || tempSubscriptionType === 'family') && !hasPaymentMethod) {
-        setError("Vous devez ajouter une méthode de paiement avant de souscrire à un abonnement");
-        return;
+      if (tempSubscriptionType === 'solo' || tempSubscriptionType === 'family') {
+        await refreshPaymentMethods();
+        if (paymentMethods.length === 0) {
+          setError("Vous devez ajouter une méthode de paiement avant de souscrire à un abonnement");
+          return;
+        }
       }
 
       const response = await fetch('http://localhost:3001/api/subscription/change', {
@@ -87,16 +88,29 @@ const SubscriptionManager = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tempSubscriptionType, paymentMethods.length, refreshPaymentMethods]);
 
-  const handleValidateClick = () => {
+  const handleValidateClick = useCallback(() => {
     setShowConfirmModal(true);
-  };
+  }, []);
 
-  const handleConfirmChange = async () => {
+  const handleConfirmChange = useCallback(async () => {
     setShowConfirmModal(false);
     await handleSubscriptionChange();
-  };
+  }, [handleSubscriptionChange]);
+
+  const handleSubscriptionTypeChange = useCallback(async (value: 'none' | 'solo' | 'family') => {
+    if (value === 'solo' || value === 'family') {
+      await refreshPaymentMethods();
+      if (paymentMethods.length === 0) {
+        setError("Vous devez ajouter une méthode de paiement avant de souscrire à un abonnement");
+        return;
+      }
+    }
+    setError(null);
+    setTempSubscriptionType(value);
+    setIsChangingSubscription(value !== subscriptionType);
+  }, [subscriptionType, paymentMethods.length, refreshPaymentMethods]);
 
   const isActivationPending = subscriptionStatus === 'incomplete';
   const isActionDisabled = isLoading || isActivationPending;
@@ -131,16 +145,7 @@ const SubscriptionManager = () => {
           <select
             className="px-4 py-2 bg-[#36393F] text-white rounded-md border border-[#5865F2] focus:outline-none mr-2"
             value={tempSubscriptionType}
-            onChange={e => {
-              const value = e.target.value as 'none' | 'solo' | 'family';
-              if ((value === 'solo' || value === 'family') && !hasPaymentMethod) {
-                setError("Vous devez ajouter une méthode de paiement avant de souscrire à un abonnement");
-                return;
-              }
-              setError(null);
-              setTempSubscriptionType(value);
-              setIsChangingSubscription(value !== subscriptionType);
-            }}
+            onChange={(e) => handleSubscriptionTypeChange(e.target.value as 'none' | 'solo' | 'family')}
             disabled={isActionDisabled}
           >
             <option value="none">A la carte - 0€ / mois</option>
@@ -199,15 +204,20 @@ const SubscriptionManager = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 7l-10 10m0 0h7m-7 0V7" /></svg>
           </a>
         </div>
-        <ConfirmSubscriptionChangeModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={handleConfirmChange}
-          currentType={subscriptionType}
-          nextType={tempSubscriptionType}
-          isLoading={isLoading}
-        />
       </div>
+
+      {showConfirmModal && (
+        <ConfirmSubscriptionChangeModal
+          currentType={subscriptionType}
+          newType={tempSubscriptionType}
+          onConfirm={handleConfirmChange}
+          onCancel={() => {
+            setShowConfirmModal(false);
+            setTempSubscriptionType(subscriptionType);
+            setIsChangingSubscription(false);
+          }}
+        />
+      )}
     </div>
   );
 };
