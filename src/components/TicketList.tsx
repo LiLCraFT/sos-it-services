@@ -5,6 +5,7 @@ import { Modal } from './ui/Modal';
 import FreelancerDetailsModal from './FreelancerDetailsModal';
 import Pagination from './ui/Pagination';
 import { Spinner } from './ui/Spinner';
+import AppointmentScheduler from './AppointmentScheduler';
 
 interface Attachment {
   filename: string;
@@ -53,6 +54,11 @@ interface Ticket {
     lastName: string;
     email: string;
   };
+  appointment?: {
+    date: string;
+    startTime: string;
+    endTime: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -98,6 +104,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const [closeModalTicket, setCloseModalTicket] = useState<Ticket | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 10;
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [selectedTicketForAppointment, setSelectedTicketForAppointment] = useState<Ticket | null>(null);
 
   const fetchTickets = async () => {
     try {
@@ -650,6 +658,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           {getTicketCount('libre')}
         </span>
       </div>
+
+      {/* Premier groupe : Diagnostic/En ligne/À domicile */}
       <div className="relative flex items-end px-2 py-1 bg-[#23272A] rounded-lg border-2 border-[#5865F2] mr-2">
         <div className="relative inline-block">
           <button
@@ -693,6 +703,10 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             {getTicketCount('onsite')}
           </span>
         </div>
+      </div>
+
+      {/* Deuxième groupe : Échec/Résolu */}
+      <div className="relative flex items-end px-2 py-1 bg-[#23272A] rounded-lg border-2 border-[#5865F2] mr-2">
         <div className="relative inline-block">
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'failed' ? 'bg-[#5865F2] text-white' : 'text-gray-300 hover:bg-[#444]'}`}
@@ -722,6 +736,7 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           </span>
         </div>
       </div>
+
       <div className="relative inline-block">
         <button
           className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${activeTab === 'closed' ? 'bg-[#5865F2] text-white' : 'bg-[#36393F] text-gray-300 hover:bg-[#444]'}`}
@@ -805,9 +820,11 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   {renderSortIcon('createdAt')}
                 </div>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Assigné à
-              </th>
+              {(activeTab === 'diagnostic' || activeTab === 'online' || activeTab === 'onsite') && (
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                  RDV
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#202225]">
@@ -834,9 +851,21 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-300">{formatDate(ticket.createdAt)}</td>
-                <td className="px-4 py-3 text-sm text-gray-300">
-                  {ticket.assignedTo ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}` : <span className="text-gray-500">-</span>}
-                </td>
+                {(activeTab === 'diagnostic' || activeTab === 'online' || activeTab === 'onsite') && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 text-center">
+                    {ticket.assignedTo && (
+                      <button
+                        onClick={() => {
+                          setSelectedTicketForAppointment(ticket);
+                          setShowAppointmentModal(true);
+                        }}
+                        className="flex items-center justify-center w-full text-[#5865F2] hover:text-[#4752C4]"
+                      >
+                        <Calendar className={`w-5 h-5 ${!ticket.appointment ? 'animate-pulse' : ''}`} />
+                      </button>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -1117,19 +1146,30 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
             {(ticket.status === 'online' || ticket.status === 'onsite') && canChangeStatus() && (
               <>
                 <button
-                  className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center text-sm"
-                  onClick={() => { updateTicketStatus(ticket._id, 'failed'); onClose(); }}
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-[#36393F]"
+                  onClick={() => { 
+                    setSelectedTicketForAppointment(ticket);
+                    setShowAppointmentModal(true);
+                    closeContextMenu();
+                  }}
                   disabled={updateLoading[ticket._id]}
                 >
-                  <X className="w-4 h-4 mr-2" />
+                  <Calendar className={`w-5 h-5 ${!ticket.appointment ? 'animate-pulse' : ''}`} />
+                </button>
+                <button
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
+                  onClick={() => { updateTicketStatus(ticket._id, 'failed'); closeContextMenu(); }}
+                  disabled={updateLoading[ticket._id]}
+                >
+                  <X className="w-4 h-4 mr-2 text-red-400 flex-shrink-0" />
                   Échec du ticket
                 </button>
                 <button
-                  className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center text-sm"
-                  onClick={() => { updateTicketStatus(ticket._id, 'resolved'); onClose(); }}
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-[#36393F]"
+                  onClick={() => { updateTicketStatus(ticket._id, 'resolved'); closeContextMenu(); }}
                   disabled={updateLoading[ticket._id]}
                 >
-                  <CheckCircle className="w-4 h-4 mr-2" />
+                  <CheckCircle className="w-4 h-4 mr-2 text-green-400 flex-shrink-0" />
                   Ticket résolu
                 </button>
               </>
@@ -1288,6 +1328,17 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         {canChangeStatus && (ticket.status === 'online' || ticket.status === 'onsite') && (
           <>
             <button
+              className="flex items-center w-full text-left px-4 py-2 text-sm text-blue-400 hover:bg-[#36393F]"
+              onClick={() => { 
+                setSelectedTicketForAppointment(ticket);
+                setShowAppointmentModal(true);
+                closeContextMenu();
+              }}
+              disabled={updateLoading[ticket._id]}
+            >
+              <Calendar className={`w-5 h-5 ${!ticket.appointment ? 'animate-pulse' : ''}`} />
+            </button>
+            <button
               className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#36393F]"
               onClick={() => { updateTicketStatus(ticket._id, 'failed'); closeContextMenu(); }}
               disabled={updateLoading[ticket._id]}
@@ -1357,6 +1408,48 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     }
   };
 
+  // Ajouter la fonction pour gérer la sélection d'un rendez-vous
+  const handleAppointmentSelected = async (date: Date, timeSlot: { startTime: string; endTime: string }) => {
+    if (!selectedTicketForAppointment || !selectedTicketForAppointment.assignedTo) {
+      setError('Ticket ou freelance non trouvé');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Non authentifié');
+        return;
+      }
+
+      const response = await fetch('http://localhost:3001/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ticketId: selectedTicketForAppointment._id,
+          freelancerId: selectedTicketForAppointment.assignedTo._id,
+          date: date.toISOString(),
+          startTime: timeSlot.startTime,
+          endTime: timeSlot.endTime,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la création du rendez-vous');
+      }
+
+      setShowAppointmentModal(false);
+      setSelectedTicketForAppointment(null);
+      // Rafraîchir la liste des tickets
+      fetchTickets();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-4 text-gray-300">Chargement des tickets...</div>;
   }
@@ -1401,6 +1494,29 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
           </div>
         )}
       </div>
+      {showAppointmentModal && selectedTicketForAppointment && selectedTicketForAppointment.assignedTo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#2F3136] rounded-lg p-6 w-full max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-white">Prendre rendez-vous</h2>
+              <button
+                onClick={() => {
+                  setShowAppointmentModal(false);
+                  setSelectedTicketForAppointment(null);
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <AppointmentScheduler
+              freelancerId={selectedTicketForAppointment.assignedTo._id}
+              ticketId={selectedTicketForAppointment._id}
+              onAppointmentSelected={handleAppointmentSelected}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

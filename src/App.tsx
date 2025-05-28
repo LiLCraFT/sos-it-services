@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import AppRoutes from './routes';
 import { APP_CONFIG } from './config/app';
+import FreelancerAvailability from './pages/FreelancerAvailability';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   useEffect(() => {
@@ -19,7 +21,17 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <AppRoutes />
+        <Routes>
+          <Route path="/*" element={<AppRoutes />} />
+          <Route
+            path="/freelancer/availability"
+            element={
+              <PrivateRoute>
+                <FreelancerAvailability />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
       </Router>
     </AuthProvider>
   );

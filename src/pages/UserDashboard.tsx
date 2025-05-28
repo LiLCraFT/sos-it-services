@@ -75,7 +75,7 @@ const UserDashboard = () => {
   const tabParam = queryParams.get('tab');
   
   // État pour le type d'abonnement, initialisé avec "none" (à la carte) par défaut
-  const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("none");
+  const [subscriptionType, setSubscriptionType] = useState<'none' | 'solo' | 'family'>('none');
   const [tempSubscriptionType, setTempSubscriptionType] = useState<"none" | "solo" | "family">("none");
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
 
@@ -575,10 +575,15 @@ const UserDashboard = () => {
   useEffect(() => {
     // Si user est chargé, initialiser le type d'abonnement
     if (user && user.subscriptionType) {
-      setSubscriptionType(user.subscriptionType);
-      setTempSubscriptionType(user.subscriptionType);
+      const type = user.subscriptionType as 'none' | 'solo' | 'family';
+      setSubscriptionType(type);
+      setTempSubscriptionType(type);
     }
   }, [user]);
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [darkModeEnabled, setDarkModeEnabled] = useState(true);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
@@ -1235,24 +1240,42 @@ const UserDashboard = () => {
                     <div className="pl-8 space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-white">Email de confirmation pour les tickets</span>
-                        <label className="inline-flex items-center cursor-pointer">
-                          <input type="checkbox" value="" className="sr-only peer" checked />
-                          <div className="relative w-11 h-6 bg-[#2F3136] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5865F2]"></div>
-                        </label>
+                        <div className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            value="" 
+                            className="sr-only peer" 
+                            checked={notificationsEnabled}
+                            onChange={(e) => setNotificationsEnabled(e.target.checked)}
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-white">Email de mise à jour du statut</span>
-                        <label className="inline-flex items-center cursor-pointer">
-                          <input type="checkbox" value="" className="sr-only peer" checked />
-                          <div className="relative w-11 h-6 bg-[#2F3136] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5865F2]"></div>
-                        </label>
+                        <div className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            value="" 
+                            className="sr-only peer" 
+                            checked={darkModeEnabled}
+                            onChange={(e) => setDarkModeEnabled(e.target.checked)}
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-white">Notifications push</span>
-                        <label className="inline-flex items-center cursor-pointer">
-                          <input type="checkbox" value="" className="sr-only peer" />
-                          <div className="relative w-11 h-6 bg-[#2F3136] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5865F2]"></div>
-                        </label>
+                        <div className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            value="" 
+                            className="sr-only peer" 
+                            checked={autoSaveEnabled}
+                            onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        </div>
                       </div>
                     </div>
                   </div>
