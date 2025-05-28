@@ -10,6 +10,7 @@ import UserList from '../components/UserList';
 import { Modal } from '../components/ui/Modal';
 import PaymentSettings from '../pages/PaymentSettings';
 import SubscriptionManager from '../components/SubscriptionManager';
+import { usePaymentMethods } from '../hooks/usePaymentMethods';
 
 // URL de l'image par défaut
 
@@ -41,6 +42,7 @@ type TabConfig = {
 
 const UserDashboard = () => {
   const { user, isAuthenticated, isLoading, logout, updateUser } = useAuth();
+  const { paymentMethods, loading: paymentMethodsLoading } = usePaymentMethods();
   const navigate = useNavigate();
   const location = useLocation();
   const [uploading, setUploading] = useState(false);
@@ -957,7 +959,7 @@ const UserDashboard = () => {
 
                     <button
                       onClick={() => {
-                        if (!user?.hasPaymentMethod) {
+                        if (!paymentMethodsLoading && paymentMethods.length === 0) {
                           setShowPaymentModal(true);
                         } else {
                           setShowCreateTicket(true);
