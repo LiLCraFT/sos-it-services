@@ -1,17 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Crown, Wrench } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePaymentMethods } from '../hooks/usePaymentMethods';
 
 const SubscriptionManager = () => {
   const { user } = useAuth();
+  const { paymentMethods } = usePaymentMethods();
+  const hasPaymentMethod = paymentMethods.length > 0;
   const [subscriptionType, setSubscriptionType] = useState<"none" | "solo" | "family">("none");
   const [tempSubscriptionType, setTempSubscriptionType] = useState<"none" | "solo" | "family">("none");
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && user.subscriptionType) {
-      setSubscriptionType(user.subscriptionType);
-      setTempSubscriptionType(user.subscriptionType);
+      const allowedTypes = ['none', 'solo', 'family'] as const;
+      const safeType = allowedTypes.includes(user.subscriptionType as any)
+        ? (user.subscriptionType as typeof allowedTypes[number])
+        : 'none';
+      setSubscriptionType(safeType);
+      setTempSubscriptionType(safeType);
     }
   }, [user]);
 
@@ -21,6 +30,42 @@ const SubscriptionManager = () => {
       case "family": return "Plan Famille";
       case "none": 
       default: return "A la carte";
+    }
+  };
+
+  const handleSubscriptionChange = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Vérifier si l'utilisateur a une méthode de paiement pour les abonnements payants
+      if ((tempSubscriptionType === 'solo' || tempSubscriptionType === 'family') && !hasPaymentMethod) {
+        setError("Vous devez ajouter une méthode de paiement avant de souscrire à un abonnement");
+        return;
+      }
+
+      const response = await fetch('http://localhost:3001/api/subscription/change', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          subscriptionType: tempSubscriptionType
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Erreur lors du changement d\'abonnement');
+      }
+
+      setSubscriptionType(tempSubscriptionType);
+      setIsChangingSubscription(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -40,19 +85,26 @@ const SubscriptionManager = () => {
         <p className="text-gray-400 pl-8 text-sm">
           {subscriptionType !== "none" ? "Abonnement sans engagement" : "Pas d'abonnement en cours"}
         </p>
+        {error && (
+          <div className="pl-8 mt-2 text-red-500 text-sm">
+            {error}
+          </div>
+        )}
         <div className="pl-8 mt-4">
           <select
             className="px-4 py-2 bg-[#36393F] text-white rounded-md border border-[#5865F2] focus:outline-none mr-2"
             value={tempSubscriptionType}
             onChange={e => {
               const value = e.target.value as 'none' | 'solo' | 'family';
-              if ((value === 'solo' || value === 'family') && !user?.hasPaymentMethod) {
-                // setShowPaymentModal(true); // à activer si tu veux un modal
+              if ((value === 'solo' || value === 'family') && !hasPaymentMethod) {
+                setError("Vous devez ajouter une méthode de paiement avant de souscrire à un abonnement");
                 return;
               }
+              setError(null);
               setTempSubscriptionType(value);
               setIsChangingSubscription(value !== subscriptionType);
             }}
+            disabled={isLoading}
           >
             <option value="none">A la carte - 0€ / mois</option>
             <option value="solo">Solo - 29,99€ / mois (1 personne)</option>
@@ -64,20 +116,20 @@ const SubscriptionManager = () => {
               return (
                 <div className="inline-flex space-x-2">
                   <button 
-                    onClick={() => {
-                      setSubscriptionType(tempSubscriptionType);
-                      setIsChangingSubscription(false);
-                    }}
-                    className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none"
+                    onClick={handleSubscriptionChange}
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-[#5865F2] text-white rounded-md hover:bg-[#4752C4] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Valider
+                    {isLoading ? 'Chargement...' : 'Valider'}
                   </button>
                   <button 
                     onClick={() => {
                       setTempSubscriptionType(subscriptionType);
                       setIsChangingSubscription(false);
+                      setError(null);
                     }}
-                    className="px-4 py-2 bg-transparent border border-gray-500 text-gray-500 rounded-md hover:bg-gray-500/10 focus:outline-none"
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-transparent border border-gray-500 text-gray-500 rounded-md hover:bg-gray-500/10 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Annuler
                   </button>
@@ -85,7 +137,10 @@ const SubscriptionManager = () => {
               );
             }
             return !isNone && (
-              <button className="px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none">
+              <button 
+                className="px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 focus:outline-none"
+                disabled={isLoading}
+              >
                 Résilier mon abonnement
               </button>
             );
