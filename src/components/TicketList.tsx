@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle, Check, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, FileIcon, Download, X, CheckCircle, MoreVertical, ExternalLink, List, Grid, ChevronUp, ChevronDown, Trash2, Hand, History, RefreshCw, CheckSquare, Circle, Search, Archive } from 'lucide-react';
+import { AlertCircle, Clock, AlertTriangle, FileText, MessageCircle, Folder, Calendar, User, Flag, UserCheck, Paperclip, Image, Download, X, CheckCircle, ExternalLink, List, ChevronUp, ChevronDown, Trash2, History, RefreshCw, CheckSquare, Search, Archive } from 'lucide-react';
 import { Modal } from './ui/Modal';
 import FreelancerDetailsModal from './FreelancerDetailsModal';
 import Pagination from './ui/Pagination';
-import { Spinner } from './ui/Spinner';
 import AppointmentScheduler from './AppointmentScheduler';
 
 interface Attachment {
@@ -70,15 +69,6 @@ interface TicketListProps {
 type SortField = 'status' | 'title' | 'category' | 'priority' | 'createdAt' | 'createdBy';
 type SortDirection = 'asc' | 'desc';
 
-const TICKET_STATUSES = [
-  'libre',
-  'diagnostic',
-  'online',
-  'onsite',
-  'failed',
-  'resolved',
-  'closed',
-];
 
 const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const { user, isAuthenticated } = useAuth();
@@ -95,13 +85,13 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [modalTicket, setModalTicket] = useState<Ticket | null>(null);
   const [activeTab, setActiveTab] = useState<string>('tous');
-  const [viewSwitch, setViewSwitch] = useState<'cards' | 'table'>(viewMode);
+  const [] = useState<'cards' | 'table'>(viewMode);
   const [showFreelancerModal, setShowFreelancerModal] = useState(false);
-  const [modalFreelancer, setModalFreelancer] = useState<any>(null);
-  const [showCloseModal, setShowCloseModal] = useState(false);
-  const [closeDescription, setCloseDescription] = useState('');
-  const [closeRating, setCloseRating] = useState(5);
-  const [closeModalTicket, setCloseModalTicket] = useState<Ticket | null>(null);
+  const [modalFreelancer] = useState<any>(null);
+  const [, setShowCloseModal] = useState(false);
+  const [] = useState('');
+  const [] = useState(5);
+  const [, setCloseModalTicket] = useState<Ticket | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 10;
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
@@ -210,12 +200,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
     }
   }, [isAuthenticated, user]);
 
-  const toggleDropdown = (ticketId: string) => {
-    setDropdownOpen(prev => ({
-      ...prev,
-      [ticketId]: !prev[ticketId]
-    }));
-  };
 
   const closeDropdown = (ticketId: string) => {
     setDropdownOpen(prev => ({
@@ -1495,27 +1479,21 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         )}
       </div>
       {showAppointmentModal && selectedTicketForAppointment && selectedTicketForAppointment.assignedTo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#2F3136] rounded-lg p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-white">Prendre rendez-vous</h2>
-              <button
-                onClick={() => {
-                  setShowAppointmentModal(false);
-                  setSelectedTicketForAppointment(null);
-                }}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <AppointmentScheduler
-              freelancerId={selectedTicketForAppointment.assignedTo._id}
-              ticketId={selectedTicketForAppointment._id}
-              onAppointmentSelected={handleAppointmentSelected}
-            />
-          </div>
-        </div>
+        <Modal
+          isOpen={showAppointmentModal}
+          onClose={() => {
+            setShowAppointmentModal(false);
+            setSelectedTicketForAppointment(null);
+          }}
+          title="Prendre rendez-vous"
+          maxWidth="xl"
+        >
+          <AppointmentScheduler
+            freelancerId={selectedTicketForAppointment.assignedTo._id}
+            ticketId={selectedTicketForAppointment._id}
+            onAppointmentSelected={handleAppointmentSelected}
+          />
+        </Modal>
       )}
     </div>
   );

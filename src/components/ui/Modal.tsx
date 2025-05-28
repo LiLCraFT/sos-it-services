@@ -59,12 +59,14 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
       onClick={handleOutsideClick}
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
       <div
         ref={modalRef}
         className={`bg-[#2F3136] rounded-lg shadow-xl w-full ${maxWidthClasses[maxWidth]} mx-4 transform transition-all duration-300 ease-in-out`}
+        style={{ position: 'relative', zIndex: 999999 }}
       >
         <div className="bg-[#5865F2] p-6">
           <div className="flex items-center justify-between">
