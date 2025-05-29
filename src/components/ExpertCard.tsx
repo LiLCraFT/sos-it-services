@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Linkedin, Twitter, Github, MapPin } from 'lucide-react';
+import { Linkedin, Twitter, Github, MapPin } from 'lucide-react';
 import { getImageUrl, DEFAULT_IMAGE } from '../utils/imageUtils';
 import { ExpertRating } from './ExpertRating';
+import { useAuth } from '../contexts/AuthContext';
+import { useChatbot } from '../contexts/ChatbotContext';
 
 export interface ExpertCardProps {
   _id: string;
@@ -11,8 +13,8 @@ export interface ExpertCardProps {
   profileImage: string;
   rating?: number;
   city?: string;
+  linkedin?: string;
   social?: {
-    linkedin?: string;
     twitter?: string;
     github?: string;
   };
@@ -25,17 +27,19 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
   profileImage,
   social = {},
   rating,
-  city
+  city,
+  linkedin
 }) => {
-  // État pour gérer l'erreur de chargement de l'image
-  const [imageError, setImageError] = useState(false);
+  const { user } = useAuth();
+  const { showMessage } = useChatbot();
+  const [, setImageError] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(() => {
     const url = getImageUrl(profileImage);
     console.log('URL initiale de l\'image:', url);
     return url;
   });
+  const [] = useState(false);
 
-  // Mettre à jour l'URL de l'image si profileImage change
   useEffect(() => {
     if (profileImage) {
       const newUrl = getImageUrl(profileImage);
@@ -45,7 +49,6 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
     }
   }, [profileImage]);
 
-  // Gestionnaire d'erreur d'image
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.error('Erreur de chargement de l\'image:', e);
     console.log('URL qui a échoué:', imageUrl);
@@ -53,10 +56,25 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
     setImageUrl(`${DEFAULT_IMAGE}?v=${Date.now()}`);
   };
 
-  // Gestionnaire de succès de chargement d'image
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.log('Image chargée avec succès:', e);
     console.log('URL de l\'image chargée:', imageUrl);
+  };
+
+  const handleLinkedInClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      showMessage('Vous devez être connecté pour accéder au profil LinkedIn', 'warning');
+      return;
+    }
+    
+    if (!linkedin) {
+      showMessage('Le profil LinkedIn n\'est pas disponible', 'error');
+      return;
+    }
+
+    window.open(linkedin, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -71,16 +89,14 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
           onLoad={handleImageLoad}
           crossOrigin="anonymous"
         />
-        {social.linkedin && (
-          <a 
-            href={social.linkedin} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="absolute bottom-4 left-4 bg-[#0077B5] p-2 rounded-full hover:bg-[#005582] transition-colors z-10"
-            style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+        {linkedin && (
+          <button 
+            onClick={handleLinkedInClick}
+            className="absolute bottom-4 left-4 bg-[#0077B5]/50 hover:bg-[#0077B5] p-1.5 rounded-full transition-all duration-300 z-10"
+            style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
           >
-            <Linkedin size={24} className="text-white" />
-          </a>
+            <Linkedin size={18} className="text-white/80 hover:text-white transition-colors duration-300" />
+          </button>
         )}
         {/* Badge note ou Nouveau */}
         {rating && rating > 0 ? (
