@@ -3,6 +3,7 @@ import { Card, CardContent } from './ui/Card';
 import { Github, Linkedin, Twitter, User, Users, Award, BadgeCheck, Star, MapPin } from 'lucide-react';
 import { getImageUrl, DEFAULT_IMAGE } from '../utils/imageUtils';
 import { Spinner } from './ui/Spinner';
+import { ExpertCard } from './ExpertCard';
 
 interface TeamMember {
   _id: string;
@@ -247,7 +248,7 @@ const Team: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {teamMembers.map((member) => {
               console.log('Rendu du membre:', member);
-              return <TeamCard key={member._id} {...member} />;
+              return <ExpertCard key={member._id} {...member} />;
             })}
           </div>
         ) : (
