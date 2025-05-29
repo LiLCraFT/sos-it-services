@@ -80,6 +80,7 @@ export async function GET(req: NextRequest) {
         phone: user.phone,
         birthDate: user.birthDate,
         city: user.city,
+        postalCode: user.postalCode,
         role: user.role,
         profileImage: user.profileImage,
         subscriptionType: user.subscriptionType,
