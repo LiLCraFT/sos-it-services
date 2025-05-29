@@ -71,8 +71,14 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="bg-[#5865F2] p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <CreditCard className="w-6 h-6 text-white mr-2" />
-              <h3 className="text-2xl font-bold text-white">{title}</h3>
+              {typeof title === 'string' ? (
+                <>
+                  <CreditCard className="w-6 h-6 text-white mr-2" />
+                  <h3 className="text-2xl font-bold text-white">{title}</h3>
+                </>
+              ) : (
+                <h3 className="text-2xl font-bold text-white">{title}</h3>
+              )}
             </div>
             <button
               onClick={onClose}

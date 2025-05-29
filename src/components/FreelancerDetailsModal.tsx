@@ -33,7 +33,10 @@ const FreelancerDetailsModal: React.FC<FreelancerDetailsModalProps> = ({ isOpen,
   const [imageError, setImageError] = useState(false);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    if (!dateString) return 'Non renseigné';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Non renseigné';
+    return date.toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

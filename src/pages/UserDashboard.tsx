@@ -1313,7 +1313,13 @@ const UserDashboard = () => {
                     </button>
                   </div>
                 </div>
-                <UserList viewMode={viewMode} userType="regular" />
+                {user && (
+                  <UserList
+                    key={user._id}
+                    {...user}
+                    viewMode={viewMode}
+                  />
+                )}
               </div>
             )}
 

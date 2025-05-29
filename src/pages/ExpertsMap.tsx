@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LoadScript, GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { APP_CONFIG } from '../config/app';
-import { MapPin, Star, Linkedin, Github, Twitter } from 'lucide-react';
-import { getImageUrl, DEFAULT_IMAGE } from '../utils/imageUtils';
+import { MapPin } from 'lucide-react';
 import { ExpertCard } from '../components/ExpertCard';
 import { ExpertRating } from '../components/ExpertRating';
 
@@ -21,6 +20,11 @@ interface Expert {
     twitter?: string;
     github?: string;
   };
+  email?: string;
+  phone?: string;
+  createdAt?: string;
+  isEmailVerified: boolean;
+  isAdminVerified: boolean;
 }
 
 const containerStyle = {
@@ -140,8 +144,8 @@ const DEPARTEMENTS = [
 
 export default function ExpertsMap() {
   const [experts, setExperts] = useState<Expert[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
@@ -201,11 +205,22 @@ export default function ExpertsMap() {
             } catch (err) {
               console.error('Erreur lors de la récupération de la note pour', expert._id, err);
             }
-            if (expert.postalCode) {
-              const coordinates = await geocodePostalCode(expert.postalCode);
-              return { ...expert, coordinates, rating };
-            }
-            return { ...expert, rating };
+            // Harmonisation des champs pour compatibilité avec FreelancerDetailsModal
+            return {
+              _id: expert._id,
+              firstName: expert.firstName,
+              lastName: expert.lastName,
+              email: expert.email || '',
+              phone: expert.phone || '',
+              city: expert.city || '',
+              role: expert.role || '',
+              profileImage: expert.profileImage || '',
+              createdAt: expert.createdAt || '',
+              isEmailVerified: (expert as any).isEmailVerified ?? false,
+              isAdminVerified: (expert as any).isAdminVerified ?? false,
+              rating: rating,
+              // Ajout d'autres champs si besoin
+            };
           })
         );
         setExperts(expertsWithCoordinates);
@@ -402,7 +417,12 @@ export default function ExpertsMap() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {filteredExperts.length > 0 ? (
             filteredExperts.map(expert => (
-              <ExpertCard key={expert._id} {...expert} />
+              <ExpertCard
+                key={expert._id}
+                {...expert}
+                email={expert.email}
+                phone={expert.phone}
+              />
             ))
           ) : (
             <div className="text-gray-300 col-span-full text-center">Aucun expert trouvé pour ce département.</div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
+import { User, Calendar, Mail, MapPin, ChevronUp, ChevronDown, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import UserDetailsModal from './UserDetailsModal';
+import FreelancerDetailsModal from './FreelancerDetailsModal';
 import Pagination from './ui/Pagination';
 import { getImageUrl } from '../utils/imageUtils';
 
@@ -42,7 +42,7 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
 );
 
 const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) => {
-  const { user } = useAuth();
+  useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +51,8 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   const [sortField, setSortField] = useState<SortField>('lastName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [actionInProgress, setActionInProgress] = useState<Record<string, boolean>>({});
-  const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
+  const [menuPosition] = useState<{top: number, left: number} | null>(null);
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
-  const isFounder = user?.role === 'fondateur';
   
   // Nouveaux états pour les filtres
   const [clientTypeFilter, setClientTypeFilter] = useState<string | null>(null);
@@ -66,7 +65,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-  const [imageError, setImageError] = useState<Record<string, boolean>>({});
+  const [, setImageError] = useState<Record<string, boolean>>({});
 
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
@@ -131,32 +130,6 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     }
   };
 
-  const toggleDropdown = (userId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    
-    if (dropdownOpen[userId]) {
-      // Si déjà ouvert, fermer
-      closeDropdown(userId);
-      return;
-    }
-    
-    // Calculer la position du menu à partir de l'événement
-    const buttonRect = event.currentTarget.getBoundingClientRect();
-    
-    // Positionner le menu à droite du bouton
-    setMenuPosition({
-      top: buttonRect.bottom + window.scrollY,
-      left: Math.max(10, buttonRect.left + window.scrollX - 220) // Décalage pour aligner le menu à gauche
-    });
-    
-    setActiveUserId(userId);
-    
-    // Mettre à jour l'état d'ouverture du dropdown
-    setDropdownOpen(prev => ({
-      ...prev,
-      [userId]: true
-    }));
-  };
 
   const closeDropdown = (userId: string) => {
     setDropdownOpen(prev => ({
@@ -212,49 +185,6 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     });
   };
 
-  const changeUserRole = async (userId: string, newRole: string) => {
-    // Ne pas permettre de modifier le rôle d'un fondateur
-    const userToChange = users.find(u => u._id === userId);
-    if (userToChange?.role === 'fondateur') {
-      alert('Impossible de modifier le rôle d\'un fondateur');
-      return;
-    }
-
-    try {
-      setActionInProgress({ ...actionInProgress, [userId]: true });
-      
-      const token = localStorage.getItem('authToken');
-      
-      const response = await fetch(`${API_URL}/api/users/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ role: newRole })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour du rôle');
-      }
-      
-      // Mettre à jour la liste locale des utilisateurs
-      setUsers(prevUsers => 
-        prevUsers.map(u => 
-          u._id === userId 
-            ? { ...u, role: newRole } 
-            : u
-        )
-      );
-      
-      alert(`Rôle de l'utilisateur modifié avec succès`);
-      closeDropdown(userId);
-    } catch (err: any) {
-      alert(err.message || 'Une erreur est survenue');
-    } finally {
-      setActionInProgress({ ...actionInProgress, [userId]: false });
-    }
-  };
 
   const deleteUser = async (userId: string) => {
     try {
@@ -475,9 +405,6 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
   // Fonction pour fermer le menu contextuel
   const closeContextMenu = () => setContextMenu(null);
 
-  const handleCardClick = (userId: string) => {
-    setSelectedUser(users.find(user => user._id === userId) || null);
-  };
 
   const renderStatus = (user: UserData) => (
     <div className="flex items-center justify-center space-x-2">
@@ -581,7 +508,6 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
             const user = users.find(u => u._id === contextMenu.userId);
             if (!user) return null;
             const isFreelancer = user.clientType === 'Freelancer';
-            const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
             return (
               <div
                 ref={contextMenuRef}
@@ -717,7 +643,6 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
           const user = users.find(u => u._id === contextMenu.userId);
           if (!user) return null;
           const isFreelancer = user.clientType === 'Freelancer';
-          const isAdmin = user.role === 'admin' || user.role === 'fondateur' || user.role === 'freelancer_admin';
           return (
             <div
               ref={contextMenuRef}
@@ -798,7 +723,7 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     
     return (
       <div 
-        ref={el => dropdownRefs.current[activeUserId] = el}
+        ref={el => { dropdownRefs.current[activeUserId] = el; }}
         className="fixed z-50 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225]"
         style={{
           top: `${menuPosition.top}px`,
@@ -941,10 +866,14 @@ const UserList: React.FC<UserListProps> = ({ viewMode, userType = 'regular' }) =
     <div onClick={() => activeUserId && closeDropdown(activeUserId)}>
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
       {renderDropdownMenu()}
-      <UserDetailsModal
+      <FreelancerDetailsModal
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
-        user={selectedUser}
+        freelancer={selectedUser ? {
+          ...selectedUser,
+          isEmailVerified: selectedUser.isEmailVerified ?? false,
+          isAdminVerified: selectedUser.isAdminVerified ?? false,
+        } : null}
       />
     </div>
   );
