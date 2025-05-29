@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Icon } from 'leaflet';
-import { getImageUrl } from '../utils/imageUtils';
+import { useState, useEffect } from 'react';
+import { LoadScript, GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
+import { APP_CONFIG } from '../config/app';
 
 interface Expert {
   _id: string;
@@ -16,65 +14,67 @@ interface Expert {
   coordinates?: [number, number];
 }
 
-const ExpertsMap: React.FC = () => {
+const containerStyle = {
+  width: '100%',
+  height: '600px',
+};
+
+const defaultCenter = {
+  lat: 46.603354, // Centre de la France
+  lng: 1.888334,
+};
+
+export default function ExpertsMap() {
   const [experts, setExperts] = useState<Expert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
-  // Icône personnalisée pour les marqueurs
-  const customIcon = new Icon({
-    iconUrl: '/images/marker-icon.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-  });
-
-  // Fonction pour géocoder un code postal
+  // Fonction pour géocoder un code postal (utilise l'API Google Maps chargée)
   const geocodePostalCode = async (postalCode: string): Promise<[number, number] | null> => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&country=France&postalcode=${encodeURIComponent(postalCode)}&limit=1`,
+    if (!window.google || !window.google.maps) {
+      console.error('Google Maps API not loaded');
+      return null;
+    }
+    return new Promise((resolve) => {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode(
         {
-          headers: {
-            'User-Agent': 'SOS-IT-Services-App'
+          address: `${postalCode}, France`,
+          componentRestrictions: { country: 'FR' }
+        },
+        (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            const location = results[0].geometry.location;
+            console.log('Geocoding', postalCode, '->', location?.lat(), location?.lng());
+            if (status !== 'OK') {
+              console.error('Geocoding failed for', postalCode, 'status:', status);
+            }
+            resolve([location.lat(), location.lng()]);
+          } else {
+            resolve(null);
           }
         }
       );
-      
-      if (!response.ok) {
-        throw new Error('Erreur lors de la géolocalisation');
-      }
-
-      const data = await response.json();
-      if (data && data.length > 0) {
-        return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-      }
-      return null;
-    } catch (err) {
-      console.error(`Erreur lors de la géolocalisation du code postal ${postalCode}:`, err);
-      return null;
-    }
+    });
   };
 
+  // Charger les experts et leurs coordonnées une fois la map chargée
   useEffect(() => {
+    if (!mapInstance) return;
     const fetchExperts = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/users?role=freelancer,freelancer_admin', {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
+        setLoading(true);
+        const response = await fetch('http://localhost:3001/api/users?role=freelancer,freelancer_admin');
         if (!response.ok) {
           throw new Error('Erreur lors du chargement des experts');
         }
-
         const data = await response.json();
-        const expertsData = data.users || [];
-
-        // Géocoder chaque expert
+        console.log('API experts data:', data);
         const expertsWithCoordinates = await Promise.all(
-          expertsData.map(async (expert: Expert) => {
+          (data.users || []).map(async (expert: Expert) => {
             if (expert.postalCode) {
               const coordinates = await geocodePostalCode(expert.postalCode);
               return { ...expert, coordinates };
@@ -82,85 +82,82 @@ const ExpertsMap: React.FC = () => {
             return expert;
           })
         );
-
         setExperts(expertsWithCoordinates);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        const firstExpertWithCoords = expertsWithCoordinates.find(e => e.coordinates);
+        if (firstExpertWithCoords?.coordinates) {
+          setMapCenter({
+            lat: firstExpertWithCoords.coordinates[0],
+            lng: firstExpertWithCoords.coordinates[1]
+          });
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        setError('Erreur lors du chargement des experts');
       } finally {
         setLoading(false);
       }
     };
-
     fetchExperts();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#2F3136] flex items-center justify-center">
-        <div className="text-white">Chargement de la carte...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#2F3136] flex items-center justify-center">
-        <div className="text-red-500">Erreur: {error}</div>
-      </div>
-    );
-  }
-
-  // Filtrer les experts qui ont des coordonnées valides
-  const expertsWithValidCoordinates = experts.filter(expert => expert.coordinates);
+  }, [mapInstance]);
 
   return (
-    <div className="min-h-screen bg-[#2F3136] p-4 pt-20">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-6">Trouvez un expert près de chez vous</h1>
-        <div className="bg-[#36393F] rounded-lg p-4 h-[calc(100vh-12rem)] relative">
-          <MapContainer
-            center={[46.603354, 1.888334]} // Centre de la France
-            zoom={6}
-            style={{ height: '100%', width: '100%', position: 'relative', zIndex: 0 }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            {expertsWithValidCoordinates.map((expert) => (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-white mb-6">Carte des experts</h1>
+      <LoadScript googleMapsApiKey={APP_CONFIG.googleMapsApiKey}>
+        <GoogleMap
+          mapContainerStyle={containerStyle}
+          center={mapCenter}
+          zoom={6}
+          onLoad={map => setMapInstance(map)}
+        >
+          {experts.map((expert) => {
+            if (!expert.coordinates) return null;
+            return (
               <Marker
                 key={expert._id}
-                position={expert.coordinates!}
-                icon={customIcon}
-              >
-                <Popup>
-                  <div className="p-2">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={getImageUrl(expert.profileImage)}
-                        alt={`${expert.firstName} ${expert.lastName}`}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div>
-                        <h3 className="font-semibold">{expert.firstName} {expert.lastName}</h3>
-                        <p className="text-sm text-gray-600">{expert.city}</p>
-                        {expert.rating && (
-                          <div className="flex items-center mt-1">
-                            <span className="text-yellow-500">★</span>
-                            <span className="ml-1 text-sm">{expert.rating.toFixed(1)}</span>
-                          </div>
-                        )}
+                position={{
+                  lat: expert.coordinates[0],
+                  lng: expert.coordinates[1]
+                }}
+                onClick={() => setSelectedExpert(expert)}
+              />
+            );
+          })}
+          {selectedExpert && selectedExpert.coordinates && (
+            <InfoWindow
+              position={{
+                lat: selectedExpert.coordinates[0],
+                lng: selectedExpert.coordinates[1]
+              }}
+              onCloseClick={() => setSelectedExpert(null)}
+            >
+              <div className="p-2">
+                <div className="flex items-center space-x-2">
+                  <img
+                    src={selectedExpert.profileImage || 'http://localhost:3001/api/default-image'}
+                    alt={`${selectedExpert.firstName} ${selectedExpert.lastName}`}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {selectedExpert.firstName} {selectedExpert.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-600">{selectedExpert.role}</p>
+                    {selectedExpert.rating && (
+                      <div className="flex items-center mt-1">
+                        <span className="text-yellow-400">★</span>
+                        <span className="text-sm text-gray-600 ml-1">
+                          {selectedExpert.rating.toFixed(1)}
+                        </span>
                       </div>
-                    </div>
+                    )}
                   </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-        </div>
-      </div>
+                </div>
+              </div>
+            </InfoWindow>
+          )}
+        </GoogleMap>
+      </LoadScript>
     </div>
   );
-};
-
-export default ExpertsMap; 
+} 

@@ -8,5 +8,6 @@ export const APP_CONFIG = {
     monEspace: '/mon-espace',
     tickets: '/tickets/:id',
     expertsMap: '/experts-map'
-  }
+  },
+  googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY|| '' 
 }; 
