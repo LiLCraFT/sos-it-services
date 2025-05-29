@@ -84,7 +84,8 @@ export async function GET(req: NextRequest) {
         role: user.role,
         profileImage: user.profileImage,
         subscriptionType: user.subscriptionType,
-        clientType: user.clientType
+        clientType: user.clientType,
+        linkedin: user.linkedin
       }
     });
   } catch (error) {

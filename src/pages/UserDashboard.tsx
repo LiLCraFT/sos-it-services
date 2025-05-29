@@ -1,11 +1,10 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, Wrench, UserPlus } from 'lucide-react';
+import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Ticket, Edit, Check, X, Grid, List, CreditCard, FileText, Crown, Users, Moon, Sun, Bell, Globe, Lock, Monitor, Database, UserPlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
 import { useLoadScript } from '@react-google-maps/api';
-import { Autocomplete } from '@react-google-maps/api';
 import FreelancerList from '../components/FreelancerList';
 import UserList from '../components/UserList';
 import { Modal } from '../components/ui/Modal';
@@ -13,7 +12,6 @@ import PaymentSettings from '../pages/PaymentSettings';
 import SubscriptionManager from '../components/SubscriptionManager';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { APP_CONFIG } from '../config/app';
-import { SingleValue, ActionMeta } from 'react-select';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import { geocodeByAddress } from 'react-google-places-autocomplete';
 
@@ -27,7 +25,7 @@ type AddressOption = {
   label: string;
 };
 
-type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'postalCode' | 'birthDate';
+type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'postalCode' | 'birthDate' | 'linkedin';
 
 // Définition des onglets disponibles
 type TabId = 'profile' | 'dashboard' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices' | 'preferences' | 'ticket_database';
@@ -52,12 +50,6 @@ type AddressComponents = {
   country?: string;
 };
 
-// Type pour les composants renvoyés par l'API Google
-interface AddressComponent {
-  long_name: string;
-  short_name: string;
-  types: string[];
-}
 
 // Ajout du composant réutilisable PaymentMethodCard
 
@@ -67,7 +59,7 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [uploading, setUploading] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [, setProfileImage] = useState<string | null>(null);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>(() => {
@@ -86,11 +78,12 @@ const UserDashboard = () => {
     city: user?.city || '',
     postalCode: user?.postalCode || '',
     birthDate: user?.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
+    linkedin: user?.linkedin || '',
   });
   const [addressOption, setAddressOption] = useState<AddressOption | null>(null);
-  const [addressComponents, setAddressComponents] = useState<AddressComponents>({});
+  const [, setAddressComponents] = useState<AddressComponents>({});
   const [loading, setLoading] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [, setImageError] = useState(false);
   
   // Récupérer le paramètre tab de l'URL
   const queryParams = new URLSearchParams(location.search);
@@ -98,13 +91,13 @@ const UserDashboard = () => {
   
   // État pour le type d'abonnement, initialisé avec "none" (à la carte) par défaut
   const [subscriptionType, setSubscriptionType] = useState<'none' | 'solo' | 'family'>('none');
-  const [tempSubscriptionType, setTempSubscriptionType] = useState<"none" | "solo" | "family">("none");
-  const [isChangingSubscription, setIsChangingSubscription] = useState(false);
+  const [, setTempSubscriptionType] = useState<"none" | "solo" | "family">("none");
+  const [] = useState(false);
 
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const [] = useState<google.maps.places.Autocomplete | null>(null);
   const [libraries] = useState(['places']);
 
-  const { isLoaded } = useLoadScript({
+  useLoadScript({
     googleMapsApiKey: APP_CONFIG.googleMapsApiKey,
     libraries: libraries as any,
   });
@@ -211,6 +204,7 @@ const UserDashboard = () => {
   // Mettre à jour les données du formulaire quand l'utilisateur change
   useEffect(() => {
     if (user) {
+      console.log('User data:', user); // Debug log
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -219,6 +213,7 @@ const UserDashboard = () => {
         city: user.city || '',
         postalCode: user.postalCode || '',
         birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
+        linkedin: user.linkedin || '',
       });
     }
   }, [user]);
@@ -240,6 +235,18 @@ const UserDashboard = () => {
   useEffect(() => {
     if (user) {
       setImageError(false);
+      // Réinitialiser le formData avec les données utilisateur à jour
+      setFormData(prevData => ({
+        ...prevData,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        city: user.city || '',
+        postalCode: user.postalCode || '',
+        birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
+        linkedin: user.linkedin || '',
+      }));
     }
   }, [user]);
 
@@ -337,6 +344,7 @@ const UserDashboard = () => {
         city: user.city || '',
         postalCode: user.postalCode || '',
         birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
+        linkedin: user.linkedin || '',
       });
     }
     setEditingField(null);
@@ -430,19 +438,7 @@ const UserDashboard = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify({
-          // Inclure toutes les données de l'utilisateur pour éviter d'écraser les autres champs
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          phone: user.phone,
-          address: user.address,
-          city: user.city,
-          postalCode: user.postalCode,
-          birthDate: user.birthDate,
-          // Écraser les champs modifiés
-          ...fieldData
-        })
+        body: JSON.stringify(fieldData)
       });
       
       if (!response.ok) {
@@ -452,10 +448,30 @@ const UserDashboard = () => {
       const data = await response.json();
       
       // Mettre à jour les informations utilisateur dans le contexte d'authentification
-      if (data.user) {
-        updateUser(data.user);
-        // Also update localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
+      if (data) {
+        // Mettre à jour le contexte d'authentification avec toutes les données
+        const updatedUser = {
+          ...user,
+          ...data,
+          // S'assurer que le champ LinkedIn est bien inclus
+          linkedin: data.linkedin || user.linkedin || ''
+        };
+        updateUser(updatedUser);
+        
+        // Mettre à jour le localStorage
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // Synchroniser tout le formData avec les nouvelles données utilisateur
+        setFormData({
+          firstName: updatedUser.firstName || '',
+          lastName: updatedUser.lastName || '',
+          phone: updatedUser.phone || '',
+          address: updatedUser.address || '',
+          city: updatedUser.city || '',
+          postalCode: updatedUser.postalCode || '',
+          birthDate: updatedUser.birthDate ? new Date(updatedUser.birthDate).toISOString().split('T')[0] : '',
+          linkedin: updatedUser.linkedin || '',
+        });
       } else {
         console.error('Format de réponse inattendu:', data);
         throw new Error('Format de réponse inattendu');
@@ -482,6 +498,17 @@ const UserDashboard = () => {
     // Gestion spéciale pour les dates
     const displayValue = field === 'birthDate' ? formatDate(value) : value;
     
+    // Debug log pour le champ LinkedIn
+    if (field === 'linkedin') {
+      console.log('LinkedIn field:', {
+        field,
+        value,
+        formDataValue: formData[field],
+        userValue: user?.linkedin,
+        isEditing
+      });
+    }
+    
     return (
       <div className="p-4 bg-[#36393F] rounded-md">
         <div className="flex items-center justify-between mb-2">
@@ -498,7 +525,7 @@ const UserDashboard = () => {
               <Edit className="w-4 h-4" />
             </button>
           )}
-          {isEditing && !isReadOnlyField && (
+          {isEditing && (
             <div className="flex items-center space-x-2">
               <button
                 onClick={saveField}
@@ -577,10 +604,11 @@ const UserDashboard = () => {
               <input
                 type={field === 'phone' ? 'tel' : 'text'}
                 name={field}
-                value={formData[field]}
+                value={formData[field] || ''}
                 onChange={handleChange}
                 className="bg-[#2F3136] text-white block w-full rounded-md border-0 py-2 shadow-sm focus:ring-2 focus:ring-[#5865F2] focus:outline-none"
                 readOnly={isReadOnlyField}
+                placeholder={field === 'linkedin' ? 'https://linkedin.com/in/votre-profil' : ''}
               />
             )}
             {isReadOnlyField && (
@@ -590,7 +618,7 @@ const UserDashboard = () => {
             )}
           </div>
         ) : (
-          <p className="text-white pl-8">{displayValue}</p>
+          <p className="text-white pl-8">{displayValue || 'Non renseigné'}</p>
         )}
       </div>
     );
@@ -788,7 +816,10 @@ const UserDashboard = () => {
                 <div className="space-y-8">
                   {/* Identité */}
                   <div>
-                    <h4 className="text-lg font-semibold text-[#5865F2] mb-4">Informations d'identité</h4>
+                    <div className="flex items-center mb-4">
+                      <User className="w-5 h-5 text-[#5865F2] mr-2" />
+                      <h4 className="text-lg font-semibold text-[#5865F2]">Informations d'identité</h4>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {renderField('firstName', 'Prénom', <User className="w-5 h-5 text-gray-400" />, user?.firstName || '')}
                       {renderField('lastName', 'Nom', <User className="w-5 h-5 text-gray-400" />, user?.lastName || '')}
@@ -797,7 +828,10 @@ const UserDashboard = () => {
                   </div>
                   {/* Lieu */}
                   <div>
-                    <h4 className="text-lg font-semibold text-[#5865F2] mb-4">Informations de lieu</h4>
+                    <div className="flex items-center mb-4">
+                      <MapPin className="w-5 h-5 text-[#5865F2] mr-2" />
+                      <h4 className="text-lg font-semibold text-[#5865F2]">Informations de lieu</h4>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {renderField('address', 'Adresse', <MapPin className="w-5 h-5 text-gray-400" />, user?.address || '')}
                       {renderField('city', 'Ville', <MapPin className="w-5 h-5 text-gray-400" />, user?.city || '')}
@@ -806,7 +840,10 @@ const UserDashboard = () => {
                   </div>
                   {/* Contact */}
                   <div>
-                    <h4 className="text-lg font-semibold text-[#5865F2] mb-4">Informations de contact</h4>
+                    <div className="flex items-center mb-4">
+                      <Phone className="w-5 h-5 text-[#5865F2] mr-2" />
+                      <h4 className="text-lg font-semibold text-[#5865F2]">Informations de contact</h4>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="p-4 bg-[#36393F] rounded-md">
                         <div className="flex items-center space-x-3 mb-2">
@@ -820,7 +857,10 @@ const UserDashboard = () => {
                   </div>
                   {/* Autres infos */}
                   <div>
-                    <h4 className="text-lg font-semibold text-[#5865F2] mb-4">Autres informations</h4>
+                    <div className="flex items-center mb-4">
+                      <Key className="w-5 h-5 text-[#5865F2] mr-2" />
+                      <h4 className="text-lg font-semibold text-[#5865F2]">Autres informations</h4>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="p-4 bg-[#36393F] rounded-md">
                         <div className="flex items-center space-x-3 mb-2">
@@ -859,6 +899,7 @@ const UserDashboard = () => {
                           )}
                         </div>
                       </div>
+                      {renderField('linkedin', 'LinkedIn', <Globe className="w-5 h-5 text-gray-400" />, user?.linkedin || '')}
                     </div>
                   </div>
                 </div>

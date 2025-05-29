@@ -133,50 +133,63 @@ export async function PUT(
 ) {
   try {
     await dbConnect();
-    
-    const { userId, role } = getUserFromToken(req);
+    const { 
+      firstName, 
+      lastName, 
+      address, 
+      phone, 
+      birthDate, 
+      city, 
+      postalCode,
+      linkedin 
+    } = await req.json();
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
-    }
-
-    // Users can only update their own info unless they're admin/founder
-    if (userId !== params.id) {
-      const requester = await User.findById(userId);
-      if (!requester || !hasAdminRights(requester.role)) {
-        return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
-      }
-    }
-    
-    const data = await req.json();
-    
-    // Prevent role escalation
-    if (data.role) {
-      const requester = await User.findById(userId);
-      if (!requester || !hasAdminRights(requester.role)) {
-        delete data.role;
-      }
-    }
-    
-    // Do not allow password updates through this endpoint
-    delete data.password;
-    
-    // S'assurer que postalCode est bien pris en compte
-    // (rien à faire de spécial, il sera inclus dans data si envoyé)
-    
-    const user = await User.findByIdAndUpdate(
-      params.id,
-      { $set: data },
-      { new: true, runValidators: true }
-    ).select('-password');
-    
+    const user = await User.findById(params.id);
     if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Utilisateur non trouvé' },
+        { status: 404 }
+      );
     }
-    
-    return NextResponse.json({ user }, { status: 200 });
+
+    // Mise à jour des champs
+    user.firstName = firstName || user.firstName;
+    user.lastName = lastName || user.lastName;
+    user.address = address || user.address;
+    user.phone = phone || user.phone;
+    user.birthDate = birthDate || user.birthDate;
+    user.city = city || user.city;
+    user.postalCode = postalCode || user.postalCode;
+    user.linkedin = linkedin !== undefined ? linkedin : user.linkedin; // Gérer le champ linkedin
+
+    await user.save();
+
+    // Retourner l'utilisateur mis à jour sans le mot de passe
+    const updatedUser = {
+      _id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      address: user.address,
+      phone: user.phone,
+      birthDate: user.birthDate,
+      city: user.city,
+      postalCode: user.postalCode,
+      role: user.role,
+      profileImage: user.profileImage,
+      subscriptionType: user.subscriptionType,
+      clientType: user.clientType,
+      linkedin: user.linkedin,
+      hasPaymentMethod: user.hasPaymentMethod
+    };
+
+    return NextResponse.json(updatedUser);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error updating user:', error);
+    return NextResponse.json(
+      { error: error.message || 'Erreur lors de la mise à jour de l\'utilisateur' },
+      { status: 500 }
+    );
   }
 }
 

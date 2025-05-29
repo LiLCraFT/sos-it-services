@@ -15,6 +15,7 @@ interface User {
   subscriptionType?: string;
   clientType?: string;
   hasPaymentMethod?: boolean;
+  linkedin?: string;
 }
 
 interface AuthContextType {

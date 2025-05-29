@@ -150,7 +150,8 @@ export async function POST(req: NextRequest) {
       birthDate, 
       city, 
       postalCode,
-      role 
+      role,
+      linkedin 
     } = await req.json();
     
     // Vérification des données requises
@@ -182,6 +183,7 @@ export async function POST(req: NextRequest) {
       city,
       postalCode,
       role: role || 'user',
+      linkedin: linkedin || '', // Initialiser le champ linkedin
     });
     
     // On ne renvoie pas le mot de passe
@@ -196,6 +198,7 @@ export async function POST(req: NextRequest) {
       city: user.city,
       postalCode: user.postalCode,
       role: user.role,
+      linkedin: user.linkedin, // Inclure le champ linkedin dans la réponse
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
