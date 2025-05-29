@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Shield, Calendar, Mail, Phone, MapPin, MoreVertical, ChevronUp, ChevronDown, Grid, List, CheckCircle, XCircle, Trash, Edit, Filter, Clock, Star } from 'lucide-react';
+import { User, Calendar, Mail, Phone, MapPin, ChevronUp, ChevronDown, CheckCircle, XCircle, Trash, Edit, Filter, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Tooltip from './Tooltip';
 import FreelancerDetailsModal from './FreelancerDetailsModal';
@@ -32,7 +32,7 @@ interface FreelancerListProps {
 // URL de l'API backend
 const API_URL = 'http://localhost:3001';
 
-const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'freelancer' }) => {
+const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode }) => {
   const { user } = useAuth();
   const [freelancers, setFreelancers] = useState<FreelancerData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
   const [sortField, setSortField] = useState<SortField>('lastName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [actionInProgress, setActionInProgress] = useState<Record<string, boolean>>({});
-  const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
+  const [menuPosition] = useState<{top: number, left: number} | null>(null);
   const [activeFreelancerId, setActiveFreelancerId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ userId: string; x: number; y: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
@@ -148,32 +148,6 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
     }
   };
 
-  const toggleDropdown = (freelancerId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    
-    if (dropdownOpen[freelancerId]) {
-      // Si déjà ouvert, fermer
-      closeDropdown(freelancerId);
-      return;
-    }
-    
-    // Calculer la position du menu à partir de l'événement
-    const buttonRect = event.currentTarget.getBoundingClientRect();
-    
-    // Positionner le menu à droite du bouton
-    setMenuPosition({
-      top: buttonRect.bottom + window.scrollY,
-      left: Math.max(10, buttonRect.left + window.scrollX - 220) // Décalage pour aligner le menu à gauche
-    });
-    
-    setActiveFreelancerId(freelancerId);
-    
-    // Mettre à jour l'état d'ouverture du dropdown
-    setDropdownOpen(prev => ({
-      ...prev,
-      [freelancerId]: true
-    }));
-  };
 
   const closeDropdown = (freelancerId: string) => {
     setDropdownOpen(prev => ({
@@ -326,7 +300,9 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
     
     return (
       <div 
-        ref={el => dropdownRefs.current[activeFreelancerId] = el}
+        ref={(el: HTMLDivElement | null) => {
+          if (el) dropdownRefs.current[activeFreelancerId] = el;
+        }}
         className="fixed z-50 w-56 rounded-md shadow-lg bg-[#2F3136] border border-[#202225]"
         style={{
           top: `${menuPosition.top}px`,

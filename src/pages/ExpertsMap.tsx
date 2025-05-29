@@ -153,31 +153,6 @@ export default function ExpertsMap() {
   const [visitorDepartement, setVisitorDepartement] = useState<string>('');
 
   // Fonction pour géocoder un code postal (utilise l'API Google Maps chargée)
-  const geocodePostalCode = async (postalCode: string): Promise<[number, number] | null> => {
-    if (!window.google || !window.google.maps) {
-      return null;
-    }
-    return new Promise((resolve) => {
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode(
-        {
-          address: `${postalCode}, France`,
-          componentRestrictions: { country: 'FR' }
-        },
-        (results, status) => {
-          if (status === 'OK' && results && results[0]) {
-            const location = results[0].geometry.location;
-            if (status !== 'OK') {
-              resolve(null);
-            }
-            resolve([location.lat(), location.lng()]);
-          } else {
-            resolve(null);
-          }
-        }
-      );
-    });
-  };
 
   // Charger les experts et leurs coordonnées une fois la map chargée
   useEffect(() => {

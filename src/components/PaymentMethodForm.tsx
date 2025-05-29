@@ -20,7 +20,7 @@ interface PaymentMethodFormProps {
 }
 
 const PaymentForm = ({ onSuccess, onCancel }: PaymentMethodFormProps) => {
-  const { user } = useAuth();
+  useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cardholderName, setCardholderName] = useState('');

@@ -57,12 +57,12 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
     }
   }, [profileImage]);
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleImageError = () => {
     setImageError(true);
     setImageUrl(`${DEFAULT_IMAGE}?v=${Date.now()}`);
   };
 
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleImageLoad = () => {
   };
 
   const handleCardClick = (e: React.MouseEvent) => {

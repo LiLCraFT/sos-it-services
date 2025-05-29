@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from './ui/Card';
-import { Github, Linkedin, Twitter, User, Users, Award, BadgeCheck, Star, MapPin } from 'lucide-react';
-import { getImageUrl, DEFAULT_IMAGE } from '../utils/imageUtils';
+import { Users, BadgeCheck, MapPin } from 'lucide-react';
 import { Spinner } from './ui/Spinner';
 import { ExpertCard } from './ExpertCard';
 
@@ -20,98 +18,6 @@ interface TeamMember {
   };
 }
 
-const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImage, social = {}, rating }) => {
-  // État pour gérer l'erreur de chargement de l'image
-  const [imageError, setImageError] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string>(() => {
-    const url = getImageUrl(profileImage);
-    return url;
-  });
-
-  // Mettre à jour l'URL de l'image si profileImage change
-  useEffect(() => {
-    if (profileImage) {
-      const newUrl = getImageUrl(profileImage);
-      setImageUrl(newUrl);
-      setImageError(false);
-    }
-  }, [profileImage]);
-
-  // Gestionnaire d'erreur d'image
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    setImageError(true);
-    setImageUrl(`${DEFAULT_IMAGE}?v=${Date.now()}`);
-  };
-
-  // Gestionnaire de succès de chargement d'image
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-  };
-
-  return (
-    <Card className="h-full cursor-pointer">
-      <CardContent className="p-0">
-        <div className="w-full aspect-square bg-gray-800 relative">
-          <img 
-            key={imageUrl}
-            src={imageUrl}
-            alt={`${firstName} ${lastName}`} 
-            className="w-full h-full object-cover"
-            onError={handleImageError}
-            onLoad={handleImageLoad}
-            crossOrigin="anonymous"
-          />
-          {social.linkedin && (
-            <a 
-              href={social.linkedin} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="absolute bottom-4 right-4 bg-[#0077B5] p-2 rounded-full hover:bg-[#005582] transition-colors z-10"
-              style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
-            >
-              <Linkedin size={24} className="text-white" />
-            </a>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#36393F] to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end">
-            <div className="p-4 w-full">
-              <div className="flex justify-center space-x-3">
-                {social.twitter && (
-                  <a href={social.twitter} target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#5865F2] transition-colors">
-                    <Twitter size={20} />
-                  </a>
-                )}
-                {social.github && (
-                  <a href={social.github} target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#5865F2] transition-colors">
-                    <Github size={20} />
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="text-lg font-semibold text-white">{firstName} {lastName}</h3>
-          <p className="text-[#5865F2] mb-2">{role === 'fondateur' ? 'Fondateur' : 
-                                            role === 'freelancer' || role === 'freelancer_admin' ? 'Freelancer' : 
-                                            role === 'admin' ? 'Administrateur' : 'Expert'}</p>
-          {rating !== undefined && rating > 0 && (
-            <div className="flex items-center mt-1">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-4 h-4 ${star <= Math.round(rating) ? 'text-yellow-400' : 'text-gray-400'} ${star === 1 ? '' : 'ml-1'}`}
-                    fill={star <= Math.round(rating) ? 'currentColor' : 'none'}
-                  />
-                ))}
-              </div>
-              <span className="text-yellow-400 ml-2">{rating.toFixed(1)}</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 const Team: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
