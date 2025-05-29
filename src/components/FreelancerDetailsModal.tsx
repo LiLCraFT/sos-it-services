@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from './ui/Modal';
-import { User, Mail, Phone, MapPin, Calendar, Shield, Briefcase, Star, Save, Edit } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Shield, Briefcase, Star, Save, Edit } from 'lucide-react';
 
 interface FreelancerDetailsModalProps {
   isOpen: boolean;
