@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useModal } from './ModalContext';
 import { X } from 'lucide-react';
+import { Chatbot as ChatbotAvatar } from '../components/Chatbot';
 
 type MessageType = 'info' | 'success' | 'error' | 'warning';
 
@@ -144,6 +145,8 @@ export const ChatbotProvider: React.FC<{ children: React.ReactNode }> = ({ child
           </div>
         </div>
       )}
+      {/* Avatar du chatbot toujours visible en bas à droite, design home */}
+      <ChatbotAvatar />
     </ChatbotContext.Provider>
   );
 };
