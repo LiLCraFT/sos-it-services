@@ -3,6 +3,7 @@ import { User, MapPin, Phone, Calendar, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import { geocodeByAddress } from 'react-google-places-autocomplete';
+import { APP_CONFIG } from '../config/app';
 
 // Type pour l'adresse sélectionnée
 type AddressOption = {
@@ -272,7 +273,7 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
             </div>
             <div className="pl-10 w-full">
               <GooglePlacesAutocomplete
-                apiKey="YOUR_GOOGLE_MAPS_API_KEY"
+                apiKey={APP_CONFIG.googleMapsApiKey}
                 selectProps={{
                   value: addressOption,
                   onChange: setAddressOption,

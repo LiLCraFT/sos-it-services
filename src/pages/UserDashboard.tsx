@@ -4,13 +4,18 @@ import { User, Settings, Mail, Key, LogOut, MapPin, Phone, Calendar, Upload, Tic
 import { useState, useEffect } from 'react';
 import TicketList from '../components/TicketList';
 import CreateTicketForm from '../components/CreateTicketForm';
-import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { useLoadScript } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
 import FreelancerList from '../components/FreelancerList';
 import UserList from '../components/UserList';
 import { Modal } from '../components/ui/Modal';
 import PaymentSettings from '../pages/PaymentSettings';
 import SubscriptionManager from '../components/SubscriptionManager';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
+import { APP_CONFIG } from '../config/app';
+import { SingleValue, ActionMeta } from 'react-select';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { geocodeByAddress } from 'react-google-places-autocomplete';
 
 // URL de l'image par défaut
 
@@ -37,6 +42,22 @@ type TabConfig = {
   // Rôles exclus de l'accès à cet onglet
   excludeRoles?: string[];
 };
+
+// Type pour les composants d'adresse
+type AddressComponents = {
+  street_number?: string;
+  route?: string;
+  locality?: string; // city
+  postal_code?: string;
+  country?: string;
+};
+
+// Type pour les composants renvoyés par l'API Google
+interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
 
 // Ajout du composant réutilisable PaymentMethodCard
 
@@ -67,7 +88,7 @@ const UserDashboard = () => {
     birthDate: user?.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
   });
   const [addressOption, setAddressOption] = useState<AddressOption | null>(null);
-  const [postalCode, setPostalCode] = useState('');
+  const [addressComponents, setAddressComponents] = useState<AddressComponents>({});
   const [loading, setLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   
@@ -79,6 +100,14 @@ const UserDashboard = () => {
   const [subscriptionType, setSubscriptionType] = useState<'none' | 'solo' | 'family'>('none');
   const [tempSubscriptionType, setTempSubscriptionType] = useState<"none" | "solo" | "family">("none");
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
+
+  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const [libraries] = useState(['places']);
+
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: APP_CONFIG.googleMapsApiKey,
+    libraries: libraries as any,
+  });
 
   // Configuration des onglets du dashboard
   const tabConfigs: TabConfig[] = [
@@ -312,7 +341,7 @@ const UserDashboard = () => {
     }
     setEditingField(null);
     setAddressOption(null);
-    setPostalCode('');
+    setAddressComponents({});
   };
 
   // Gérer les changements dans les champs de formulaire
@@ -321,31 +350,55 @@ const UserDashboard = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Gérer la sélection d'adresse avec l'autocomplétion
-  const handleAddressSelect = (option: any) => {
+  // Effet pour gérer la sélection d'adresse
+  useEffect(() => {
+    if (addressOption) {
+      handlePlaceSelect(addressOption);
+    }
+  }, [addressOption]);
+
+  const handlePlaceSelect = async (option: AddressOption | null) => {
     if (!option) return;
     
-    setAddressOption(option);
-    setFormData(prev => ({ ...prev, address: option.label }));
-    
-    // Simuler l'extraction du code postal pour cette démonstration
-    // Dans une implémentation réelle, vous utiliserez l'API de géocodage pour obtenir ces informations
-    const addressParts = option.label.split(', ');
-    if (addressParts.length > 1) {
-      // Simuler l'extraction de la ville et du code postal
-      const cityWithPostal = addressParts[addressParts.length - 2];
-      const postalCodeMatch = cityWithPostal.match(/\d{5}/);
+    try {
+      const results = await geocodeByAddress(option.label);
+      const addressComponents = results[0].address_components;
       
-      if (postalCodeMatch) {
-        const postal = postalCodeMatch[0];
-        setPostalCode(postal);
-        
-        // Extraire la ville sans le code postal
-        const cityName = cityWithPostal.replace(postal, '').trim();
-        setFormData(prev => ({ ...prev, city: cityName }));
-      } else {
-        setFormData(prev => ({ ...prev, city: cityWithPostal }));
-      }
+      // Extraire les composants de l'adresse
+      const streetNumber = addressComponents.find(
+        (component) => component.types[0] === "street_number"
+      )?.long_name;
+      const route = addressComponents.find(
+        (component) => component.types[0] === "route"
+      )?.long_name;
+      const locality = addressComponents.find(
+        (component) => component.types[0] === "locality"
+      )?.long_name;
+      const postalCode = addressComponents.find(
+        (component) => component.types[0] === "postal_code"
+      )?.long_name;
+      const country = addressComponents.find(
+        (component) => component.types[0] === "country"
+      )?.long_name;
+
+      // Mettre à jour le formulaire avec les nouvelles valeurs
+      setFormData((prev) => ({
+        ...prev,
+        address: `${streetNumber || ""} ${route || ""}`.trim(),
+        city: locality || "",
+        postalCode: postalCode || "",
+      }));
+
+      // Mettre à jour les composants d'adresse pour l'affichage
+      setAddressComponents({
+        street_number: streetNumber,
+        route: route,
+        locality: locality,
+        postal_code: postalCode,
+        country: country,
+      });
+    } catch (error) {
+      console.error("Erreur lors de la géocodification:", error);
     }
   };
 
@@ -357,16 +410,22 @@ const UserDashboard = () => {
       setLoading(true);
       
       // Préparer les données à envoyer
-      const fieldData = { [editingField]: formData[editingField] };
+      let fieldData: any = {};
       
-      // Si le champ est la ville et qu'il y a un code postal, l'ajouter
-      if (editingField === 'city' && postalCode) {
-        fieldData.city = `${formData.city} (${postalCode})`;
+      // Si on modifie l'adresse, on envoie tous les champs d'adresse
+      if (editingField === 'address') {
+        fieldData = {
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode
+        };
+      } else {
+        fieldData = { [editingField]: formData[editingField] };
       }
 
       const API_URL = 'http://localhost:3001';
       const response = await fetch(`${API_URL}/api/users/${user._id}`, {
-        method: 'PUT',  // Utiliser PUT au lieu de PATCH car le backend n'implémente pas PATCH
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -379,8 +438,9 @@ const UserDashboard = () => {
           phone: user.phone,
           address: user.address,
           city: user.city,
+          postalCode: user.postalCode,
           birthDate: user.birthDate,
-          // Écraser seulement le champ modifié
+          // Écraser les champs modifiés
           ...fieldData
         })
       });
@@ -416,6 +476,8 @@ const UserDashboard = () => {
   // Rendu du champ en fonction de son état (édition ou affichage)
   const renderField = (field: EditableField, label: string, icon: React.ReactNode, value: string) => {
     const isEditing = editingField === field;
+    const isAddressField = field === 'address';
+    const isReadOnlyField = field === 'city' || field === 'postalCode';
     
     // Gestion spéciale pour les dates
     const displayValue = field === 'birthDate' ? formatDate(value) : value;
@@ -427,7 +489,7 @@ const UserDashboard = () => {
             {icon}
             <h4 className="font-medium text-gray-300">{label}</h4>
           </div>
-          {!(label === 'Email' || label === 'Rôle') && !isEditing && (
+          {!(label === 'Email' || label === 'Rôle') && !isEditing && !isReadOnlyField && (
             <button 
               onClick={() => startEditing(field)}
               className="text-gray-400 hover:text-white focus:outline-none"
@@ -436,7 +498,7 @@ const UserDashboard = () => {
               <Edit className="w-4 h-4" />
             </button>
           )}
-          {isEditing && (
+          {isEditing && !isReadOnlyField && (
             <div className="flex items-center space-x-2">
               <button
                 onClick={saveField}
@@ -459,13 +521,13 @@ const UserDashboard = () => {
         
         {isEditing ? (
           <div className="pl-8">
-            {field === 'address' ? (
+            {isAddressField ? (
               <div className="w-full">
                 <GooglePlacesAutocomplete
-                  apiKey="YOUR_GOOGLE_MAPS_API_KEY"
+                  apiKey={APP_CONFIG.googleMapsApiKey}
                   selectProps={{
                     value: addressOption,
-                    onChange: handleAddressSelect,
+                    onChange: setAddressOption,
                     placeholder: formData.address || 'Rechercher une adresse...',
                     styles: {
                       control: (provided) => ({
@@ -518,11 +580,12 @@ const UserDashboard = () => {
                 value={formData[field]}
                 onChange={handleChange}
                 className="bg-[#2F3136] text-white block w-full rounded-md border-0 py-2 shadow-sm focus:ring-2 focus:ring-[#5865F2] focus:outline-none"
+                readOnly={isReadOnlyField}
               />
             )}
-            {field === 'city' && postalCode && (
+            {isReadOnlyField && (
               <div className="mt-2 text-sm text-gray-400">
-                Code postal: {postalCode}
+                Ce champ est automatiquement rempli à partir de l'adresse sélectionnée
               </div>
             )}
           </div>

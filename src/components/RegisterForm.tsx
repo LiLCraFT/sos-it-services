@@ -3,11 +3,32 @@ import { Button } from './ui/Button';
 import { Mail, Lock, User, Phone, MapPin, Calendar, AlertCircle, Briefcase, Building } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { geocodeByAddress } from 'react-google-places-autocomplete';
+import { APP_CONFIG } from '../config/app';
 
 interface RegisterFormProps {
   onSuccess: () => void;
   onLoginClick?: () => void;
 }
+
+// Type pour l'adresse sélectionnée
+type AddressOption = {
+  value: {
+    description: string;
+    place_id: string;
+  };
+  label: string;
+};
+
+// Type pour les composants d'adresse
+type AddressComponents = {
+  street_number?: string;
+  route?: string;
+  locality?: string; // city
+  postal_code?: string;
+  country?: string;
+};
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) => {
   const [formData, setFormData] = useState({
@@ -29,6 +50,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [addressOption, setAddressOption] = useState<AddressOption | null>(null);
+  const [addressComponents, setAddressComponents] = useState<AddressComponents>({});
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -57,6 +80,59 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
       setPasswordError('');
     }
   }, [formData.password, formData.confirmPassword]);
+
+  useEffect(() => {
+    if (addressOption) {
+      handlePlaceSelect(addressOption);
+    }
+  }, [addressOption]);
+
+  const handlePlaceSelect = async (option: AddressOption) => {
+    try {
+      const results = await geocodeByAddress(option.value.description);
+      const addressComponents: AddressComponents = {};
+      let streetNumber = '';
+      let route = '';
+
+      results[0].address_components.forEach((component: any) => {
+        const types = component.types;
+        
+        if (types.includes('street_number')) {
+          streetNumber = component.long_name;
+          addressComponents.street_number = component.long_name;
+        }
+        
+        if (types.includes('route')) {
+          route = component.long_name;
+          addressComponents.route = component.long_name;
+        }
+        
+        if (types.includes('locality')) {
+          setFormData(prev => ({ ...prev, city: component.long_name }));
+          addressComponents.locality = component.long_name;
+        }
+        
+        if (types.includes('postal_code')) {
+          setFormData(prev => ({ ...prev, postalCode: component.long_name }));
+          addressComponents.postal_code = component.long_name;
+        }
+        
+        if (types.includes('country')) {
+          addressComponents.country = component.long_name;
+        }
+      });
+
+      // Combine street number and route to form the street address
+      const streetAddress = `${streetNumber} ${route}`.trim();
+      if (streetAddress) {
+        setFormData(prev => ({ ...prev, address: streetAddress }));
+      }
+
+      setAddressComponents(addressComponents);
+    } catch (error) {
+      console.error('Error selecting place:', error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -323,19 +399,49 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
             Adresse <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MapPin className="h-5 w-5 text-gray-400" />
+            <div className="w-full">
+              <GooglePlacesAutocomplete
+                apiKey={APP_CONFIG.googleMapsApiKey}
+                selectProps={{
+                  value: addressOption,
+                  onChange: setAddressOption,
+                  placeholder: formData.address || 'Rechercher une adresse...',
+                  styles: {
+                    control: (provided) => ({
+                      ...provided,
+                      backgroundColor: '#202225',
+                      color: 'white',
+                      border: '1px solid #40444B',
+                      borderRadius: '0.75rem',
+                      boxShadow: 'none',
+                      padding: '0.125rem 0',
+                    }),
+                    input: (provided) => ({
+                      ...provided,
+                      color: 'white',
+                    }),
+                    placeholder: (provided) => ({
+                      ...provided,
+                      color: '#9CA3AF',
+                    }),
+                    singleValue: (provided) => ({
+                      ...provided,
+                      color: 'white',
+                    }),
+                    option: (provided, state) => ({
+                      ...provided,
+                      backgroundColor: state.isFocused ? '#5865F2' : '#202225',
+                      color: 'white',
+                    }),
+                    menu: (provided) => ({
+                      ...provided,
+                      backgroundColor: '#202225',
+                      zIndex: 10,
+                    }),
+                  },
+                }}
+              />
             </div>
-            <input
-              id="address"
-              name="address"
-              type="text"
-              value={formData.address}
-              onChange={handleChange}
-              required
-              className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
-              placeholder="Votre adresse"
-            />
           </div>
         </div>
         
@@ -357,9 +463,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                 required
                 className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
                 placeholder="Votre ville"
+                disabled={true}
               />
             </div>
           </div>
+          
           <div>
             <label htmlFor="postalCode" className="block text-sm font-medium text-white mb-1">
               Code postal <span className="text-red-500">*</span>
@@ -379,6 +487,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                 placeholder="75001"
                 pattern="\d{5}"
                 maxLength={5}
+                disabled={true}
               />
             </div>
           </div>
