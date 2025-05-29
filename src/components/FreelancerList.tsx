@@ -127,7 +127,6 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       setError(null);
       
       const token = localStorage.getItem('authToken');
-      console.log('fetchFreelancers: token utilisé pour Authorization:', token);
       
       const response = await fetch(`${API_URL}/api/freelancers`, {
         headers: {
@@ -235,7 +234,6 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       setActionInProgress({ ...actionInProgress, [freelancerId]: true });
       
       const token = localStorage.getItem('authToken');
-      console.log('Token:', token); // Debug log
       
       if (!token) {
         throw new Error('Token d\'authentification manquant');
@@ -243,9 +241,6 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       
       const isCurrentlyAdmin = currentRole === 'freelancer_admin';
       const isAdmin = !isCurrentlyAdmin;
-      
-      console.log('Envoi de la requête à:', `${API_URL}/api/freelancers`); // Debug log
-      console.log('Données envoyées:', { freelancerId, isAdmin }); // Debug log
       
       const response = await fetch(`${API_URL}/api/freelancers`, {
         method: 'PATCH',
@@ -261,7 +256,6 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        console.error('Réponse d\'erreur:', errorData); // Debug log
         throw new Error(errorData?.message || `Erreur ${response.status}: ${response.statusText}`);
       }
       
@@ -277,7 +271,6 @@ const FreelancerList: React.FC<FreelancerListProps> = ({ viewMode, userType = 'f
       alert(`Droits d'administration ${isAdmin ? 'accordés' : 'retirés'} avec succès`);
       closeDropdown(freelancerId);
     } catch (err: any) {
-      console.error('Erreur détaillée:', err);
       alert(err.message || 'Une erreur est survenue lors de la mise à jour du rôle');
     } finally {
       setActionInProgress({ ...actionInProgress, [freelancerId]: false });

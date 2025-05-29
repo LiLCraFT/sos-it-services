@@ -13,7 +13,6 @@ import {
 
 // Utiliser la clé publique depuis les variables d'environnement
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
-console.log('Stripe Public Key:', import.meta.env.VITE_STRIPE_PUBLIC_KEY); // Debug log
 
 interface PaymentMethodFormProps {
   onSuccess: () => void;

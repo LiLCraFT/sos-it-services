@@ -155,7 +155,6 @@ export default function ExpertsMap() {
   // Fonction pour géocoder un code postal (utilise l'API Google Maps chargée)
   const geocodePostalCode = async (postalCode: string): Promise<[number, number] | null> => {
     if (!window.google || !window.google.maps) {
-      console.error('Google Maps API not loaded');
       return null;
     }
     return new Promise((resolve) => {
@@ -168,9 +167,8 @@ export default function ExpertsMap() {
         (results, status) => {
           if (status === 'OK' && results && results[0]) {
             const location = results[0].geometry.location;
-            console.log('Geocoding', postalCode, '->', location?.lat(), location?.lng());
             if (status !== 'OK') {
-              console.error('Geocoding failed for', postalCode, 'status:', status);
+              resolve(null);
             }
             resolve([location.lat(), location.lng()]);
           } else {
@@ -192,7 +190,6 @@ export default function ExpertsMap() {
           throw new Error('Erreur lors du chargement des experts');
         }
         const data = await response.json();
-        console.log('API experts data:', data);
         const expertsWithCoordinates = await Promise.all(
           (data.users || []).map(async (expert: Expert) => {
             let rating = undefined;
@@ -244,12 +241,9 @@ export default function ExpertsMap() {
   // Géolocalisation automatique au chargement
   useEffect(() => {
     if (navigator.geolocation) {
-      console.log('Géolocalisation disponible');
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          console.log('Position obtenue:', position);
           const { latitude, longitude } = position.coords;
-          console.log('Coordonnées:', { latitude, longitude });
           
           // Utiliser le geocoder pour obtenir le département
           if (window.google && window.google.maps) {
@@ -257,7 +251,6 @@ export default function ExpertsMap() {
             geocoder.geocode(
               { location: { lat: latitude, lng: longitude } },
               (results, status) => {
-                console.log('Résultat du geocoding:', { status, results });
                 if (status === 'OK' && results && results[0]) {
                   // Chercher le département dans les composants d'adresse
                   const addressComponents = results[0].address_components;
@@ -265,31 +258,20 @@ export default function ExpertsMap() {
                     component => component.types.includes('administrative_area_level_2')
                   );
                   if (departement) {
-                    console.log('Département trouvé:', departement);
                     setVisitorDepartement(departement.short_name);
-                  } else {
-                    console.log('Département non trouvé dans les composants');
                   }
-                } else {
-                  console.error('Erreur de geocoding:', status);
                 }
               }
             );
-          } else {
-            console.error('Google Maps API non chargée');
           }
         },
         (error) => {
-          console.error('Erreur de géolocalisation:', error);
           switch(error.code) {
             case error.PERMISSION_DENIED:
-              console.error('Permission refusée');
               break;
             case error.POSITION_UNAVAILABLE:
-              console.error('Position non disponible');
               break;
             case error.TIMEOUT:
-              console.error('Timeout');
               break;
             default:
               console.error('Erreur inconnue');

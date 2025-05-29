@@ -45,7 +45,6 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
   const [, setImageError] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(() => {
     const url = getImageUrl(profileImage);
-    console.log('URL initiale de l\'image:', url);
     return url;
   });
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -53,22 +52,17 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
   useEffect(() => {
     if (profileImage) {
       const newUrl = getImageUrl(profileImage);
-      console.log('Mise à jour de l\'URL de l\'image:', newUrl);
       setImageUrl(newUrl);
       setImageError(false);
     }
   }, [profileImage]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error('Erreur de chargement de l\'image:', e);
-    console.log('URL qui a échoué:', imageUrl);
     setImageError(true);
     setImageUrl(`${DEFAULT_IMAGE}?v=${Date.now()}`);
   };
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.log('Image chargée avec succès:', e);
-    console.log('URL de l\'image chargée:', imageUrl);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {

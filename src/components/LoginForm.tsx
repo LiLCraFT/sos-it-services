@@ -34,8 +34,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      console.log('LoginForm: Démarrage de l\'authentification Google...');
-      console.log('LoginForm: API_URL:', API_URL);
       
       const response = await fetch(`${API_URL}/api/auth/google`, {
         method: 'POST',
@@ -49,12 +47,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
       }
       
       const data = await response.json();
-      console.log('LoginForm: URL de redirection Google reçue:', data.url);
       
       // Rediriger vers l'URL Google
       window.location.href = data.url;
     } catch (err) {
-      console.error('LoginForm: Erreur lors de l\'authentification Google:', err);
       setError(err instanceof Error ? err.message : 'Erreur de connexion avec Google');
       setIsLoading(false);
     }

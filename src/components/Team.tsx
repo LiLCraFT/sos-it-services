@@ -25,7 +25,6 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
   const [imageError, setImageError] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(() => {
     const url = getImageUrl(profileImage);
-    console.log('URL initiale de l\'image:', url);
     return url;
   });
 
@@ -33,7 +32,6 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
   useEffect(() => {
     if (profileImage) {
       const newUrl = getImageUrl(profileImage);
-      console.log('Mise à jour de l\'URL de l\'image:', newUrl);
       setImageUrl(newUrl);
       setImageError(false);
     }
@@ -41,16 +39,12 @@ const TeamCard: React.FC<TeamMember> = ({ firstName, lastName, role, profileImag
 
   // Gestionnaire d'erreur d'image
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error('Erreur de chargement de l\'image:', e);
-    console.log('URL qui a échoué:', imageUrl);
     setImageError(true);
     setImageUrl(`${DEFAULT_IMAGE}?v=${Date.now()}`);
   };
 
   // Gestionnaire de succès de chargement d'image
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.log('Image chargée avec succès:', e);
-    console.log('URL de l\'image chargée:', imageUrl);
   };
 
   return (
@@ -139,26 +133,17 @@ const Team: React.FC = () => {
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('Erreur de réponse:', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorData
-          });
           throw new Error(`Erreur ${response.status}: ${errorData.error || response.statusText}`);
         }
         
         const data = await response.json();
-        console.log('Données brutes reçues:', data);
         
         let members: TeamMember[] = [];
         if (Array.isArray(data)) {
-          console.log('Données reçues sous forme de tableau');
           members = data;
         } else if (data.users) {
-          console.log('Données reçues sous forme d\'objet avec users');
           members = data.users;
         } else {
-          console.warn('Format de données inattendu:', data);
           members = [];
         }
 
@@ -166,7 +151,6 @@ const Team: React.FC = () => {
         for (const member of members) {
           if (member.role === 'freelancer' || member.role === 'freelancer_admin') {
             try {
-              console.log(`Récupération de la note pour ${member.firstName} ${member.lastName} (${member._id})`);
               const ratingResponse = await fetch(`http://localhost:3001/api/users/${member._id}/rating`, {
                 headers: {
                   'Authorization': token ? `Bearer ${token}` : '',
@@ -176,31 +160,15 @@ const Team: React.FC = () => {
               
               if (ratingResponse.ok) {
                 const ratingData = await ratingResponse.json();
-                console.log(`Note reçue pour ${member.firstName} ${member.lastName}:`, ratingData);
                 member.rating = ratingData.rating;
-              } else {
-                console.error(`Erreur lors de la récupération de la note pour ${member.firstName} ${member.lastName}:`, await ratingResponse.text());
               }
             } catch (error) {
-              console.error(`Erreur lors de la récupération de la note pour ${member.firstName} ${member.lastName}:`, error);
             }
           }
         }
 
-        // Log détaillé de chaque membre
-        members.forEach((member, index) => {
-          console.log(`Membre ${index + 1}:`, {
-            id: member._id,
-            nom: `${member.firstName} ${member.lastName}`,
-            role: member.role,
-            profileImage: member.profileImage,
-            rating: member.rating
-          });
-        });
-
         setTeamMembers(members);
       } catch (err) {
-        console.error('Erreur lors du chargement des membres:', err);
         setError(`Impossible de charger les experts: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
         setTeamMembers([]);
       } finally {
@@ -247,7 +215,6 @@ const Team: React.FC = () => {
         {teamMembers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {teamMembers.map((member) => {
-              console.log('Rendu du membre:', member);
               return <ExpertCard key={member._id} {...member} />;
             })}
           </div>

@@ -108,7 +108,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         return;
       }
       
-      console.log('Fetching tickets...'); // Log pour déboguer
       const response = await fetch('http://localhost:3001/api/tickets', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -129,11 +128,8 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
       }
       
       const data = await response.json();
-      console.log('Tickets received:', data.tickets.length); // Log pour déboguer
-      console.log('First ticket (if any):', data.tickets.length > 0 ? data.tickets[0] : 'No tickets'); // Log pour déboguer
       setTickets(data.tickets);
     } catch (err) {
-      console.error('Error fetching tickets:', err); // Log pour déboguer
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
@@ -218,8 +214,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
         return;
       }
       
-      console.log('Updating ticket status:', { ticketId, status }); // Debug log
-      
       const response = await fetch(`http://localhost:3001/api/tickets/${ticketId}`, {
         method: 'PUT',
         headers: {
@@ -235,7 +229,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
       }
       
       const data = await response.json();
-      console.log('Update response:', data); // Debug log
       
       // Mettre à jour l'état local du ticket avec les données complètes du serveur
       setTickets(prevTickets => 
@@ -250,7 +243,6 @@ const TicketList: React.FC<TicketListProps> = ({ viewMode }) => {
       closeDropdown(ticketId);
       closeContextMenu();
     } catch (err) {
-      console.error('Error updating ticket:', err); // Debug log
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setUpdateLoading(prev => ({ ...prev, [ticketId]: false }));

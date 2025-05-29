@@ -238,9 +238,6 @@ const Navbar: React.FC = () => {
     }));
   };
 
-  // Log temporaire pour debug
-  console.log('Navbar user:', user);
-
   return (
     <>
       <nav 

@@ -204,7 +204,6 @@ const UserDashboard = () => {
   // Mettre à jour les données du formulaire quand l'utilisateur change
   useEffect(() => {
     if (user) {
-      console.log('User data:', user); // Debug log
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -306,7 +305,6 @@ const UserDashboard = () => {
       }
       
       const data = await response.json();
-      console.log('Upload response:', data); // Log pour déboguer
       
       if (data.profileImage) {
         setProfileImage(data.profileImage);
@@ -314,7 +312,6 @@ const UserDashboard = () => {
       }
       
     } catch (error) {
-      console.error('Erreur lors du téléchargement de l\'image:', error);
       alert('Erreur lors du téléchargement de l\'image');
     } finally {
       setUploading(false);
@@ -406,7 +403,6 @@ const UserDashboard = () => {
         country: country,
       });
     } catch (error) {
-      console.error("Erreur lors de la géocodification:", error);
     }
   };
 
@@ -473,7 +469,6 @@ const UserDashboard = () => {
           linkedin: updatedUser.linkedin || '',
         });
       } else {
-        console.error('Format de réponse inattendu:', data);
         throw new Error('Format de réponse inattendu');
       }
       
@@ -482,7 +477,6 @@ const UserDashboard = () => {
       setAddressOption(null);
       
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du champ:', error);
       alert('Une erreur est survenue lors de la mise à jour du profil.');
     } finally {
       setLoading(false);
@@ -497,17 +491,6 @@ const UserDashboard = () => {
     
     // Gestion spéciale pour les dates
     const displayValue = field === 'birthDate' ? formatDate(value) : value;
-    
-    // Debug log pour le champ LinkedIn
-    if (field === 'linkedin') {
-      console.log('LinkedIn field:', {
-        field,
-        value,
-        formDataValue: formData[field],
-        userValue: user?.linkedin,
-        isEditing
-      });
-    }
     
     return (
       <div className="p-4 bg-[#36393F] rounded-md">
@@ -703,14 +686,10 @@ const UserDashboard = () => {
                     alt={`${user?.firstName} ${user?.lastName}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.log('Image load error:', e);
-                      setImageError(true);
                       const img = e.target as HTMLImageElement;
                       img.src = 'http://localhost:3001/api/default-image';
                     }}
                     onLoad={() => {
-                      console.log('Image loaded successfully');
-                      setImageError(false);
                     }}
                     crossOrigin="anonymous"
                     key={user?.profileImage || 'default'}

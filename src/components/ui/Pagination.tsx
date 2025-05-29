@@ -7,22 +7,17 @@ interface PaginationProps {
 }
 
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
-  console.log('Pagination render:', { currentPage, totalPages });
-
   const handlePageClick = (page: number) => {
-    console.log('Page clicked:', page);
     onPageChange(page);
   };
 
   const handlePrevClick = () => {
-    console.log('Prev clicked');
     if (currentPage > 1) {
       onPageChange(currentPage - 1);
     }
   };
 
   const handleNextClick = () => {
-    console.log('Next clicked');
     if (currentPage < totalPages) {
       onPageChange(currentPage + 1);
     }
