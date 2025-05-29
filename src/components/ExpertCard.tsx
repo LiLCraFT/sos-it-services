@@ -61,11 +61,18 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
     console.log('URL de l\'image chargée:', imageUrl);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      showMessage('Vous devez être connecté pour accéder au profil Freelancer', 'warning');
+    }
+  };
+
   const handleLinkedInClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
     if (!user) {
-      showMessage('Vous devez être connecté pour accéder au profil LinkedIn', 'warning');
+      showMessage('Vous devez être connecté pour accéder au profil Freelancer', 'warning');
       return;
     }
     
@@ -78,7 +85,10 @@ export const ExpertCard: React.FC<ExpertCardProps> = ({
   };
 
   return (
-    <div className="bg-[#2F3136] rounded-lg overflow-hidden hover:translate-y-[-5px] transition-transform duration-300">
+    <div
+      className={"bg-[#2F3136] rounded-lg overflow-hidden hover:translate-y-[-5px] transition-transform duration-300 cursor-pointer"}
+      onClick={handleCardClick}
+    >
       <div className="aspect-square bg-gray-800 relative">
         <img 
           key={imageUrl}
