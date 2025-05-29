@@ -22,7 +22,7 @@ type AddressOption = {
   label: string;
 };
 
-type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'birthDate';
+type EditableField = 'firstName' | 'lastName' | 'phone' | 'address' | 'city' | 'postalCode' | 'birthDate';
 
 // Définition des onglets disponibles
 type TabId = 'profile' | 'dashboard' | 'freelancers' | 'users' | 'tickets' | 'subscription' | 'invoices' | 'preferences' | 'ticket_database';
@@ -63,6 +63,7 @@ const UserDashboard = () => {
     phone: user?.phone || '',
     address: user?.address || '',
     city: user?.city || '',
+    postalCode: user?.postalCode || '',
     birthDate: user?.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
   });
   const [addressOption, setAddressOption] = useState<AddressOption | null>(null);
@@ -187,6 +188,7 @@ const UserDashboard = () => {
         phone: user.phone || '',
         address: user.address || '',
         city: user.city || '',
+        postalCode: user.postalCode || '',
         birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
       });
     }
@@ -304,6 +306,7 @@ const UserDashboard = () => {
         phone: user.phone || '',
         address: user.address || '',
         city: user.city || '',
+        postalCode: user.postalCode || '',
         birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
       });
     }
@@ -719,65 +722,80 @@ const UserDashboard = () => {
             {activeTab === 'profile' && (
               <>
                 <h3 className="text-xl font-semibold text-white mb-6">Informations du compte</h3>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {renderField('firstName', 'Prénom', <User className="w-5 h-5 text-gray-400" />, user?.firstName || '')}
-                    {renderField('lastName', 'Nom', <User className="w-5 h-5 text-gray-400" />, user?.lastName || '')}
-                  </div>
-                  
-                  {/* Email non modifiable */}
-                  <div className="p-4 bg-[#36393F] rounded-md">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <Mail className="w-5 h-5 text-gray-400" />
-                      <h4 className="font-medium text-gray-300">Email</h4>
+                <div className="space-y-8">
+                  {/* Identité */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-[#5865F2] mb-4">Informations d'identité</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {renderField('firstName', 'Prénom', <User className="w-5 h-5 text-gray-400" />, user?.firstName || '')}
+                      {renderField('lastName', 'Nom', <User className="w-5 h-5 text-gray-400" />, user?.lastName || '')}
+                      {renderField('birthDate', 'Date de naissance', <Calendar className="w-5 h-5 text-gray-400" />, user?.birthDate || '')}
                     </div>
-                    <p className="text-white pl-8">{user?.email}</p>
                   </div>
-                  
-                  {renderField('phone', 'Téléphone', <Phone className="w-5 h-5 text-gray-400" />, user?.phone || '')}
-                  {renderField('address', 'Adresse', <MapPin className="w-5 h-5 text-gray-400" />, user?.address || '')}
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {renderField('city', 'Ville', <MapPin className="w-5 h-5 text-gray-400" />, user?.city || '')}
-                    {renderField('birthDate', 'Date de naissance', <Calendar className="w-5 h-5 text-gray-400" />, user?.birthDate || '')}
-                  </div>
-                  
-                  {/* Rôle non modifiable */}
-                  <div className="p-4 bg-[#36393F] rounded-md">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <Key className="w-5 h-5 text-gray-400" />
-                      <h4 className="font-medium text-gray-300">Rôle</h4>
+                  {/* Lieu */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-[#5865F2] mb-4">Informations de lieu</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {renderField('address', 'Adresse', <MapPin className="w-5 h-5 text-gray-400" />, user?.address || '')}
+                      {renderField('city', 'Ville', <MapPin className="w-5 h-5 text-gray-400" />, user?.city || '')}
+                      {renderField('postalCode', 'Code postal', <MapPin className="w-5 h-5 text-gray-400" />, user?.postalCode || '')}
                     </div>
-                    <div className="pl-8 flex items-center space-x-2">
-                      {user?.role === 'fondateur' ? (
-                        <>
-                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/20 text-red-400">
-                            Fondateur
-                          </span>
-                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
-                            Admin
-                          </span>
-                        </>
-                      ) : user?.role === 'freelancer_admin' ? (
-                        <>
-                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
-                            Freelancer
-                          </span>
-                          <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
-                            Admin
-                          </span>
-                        </>
-                      ) : (
-                        <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
-                          user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
-                          user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
-                          'bg-[#5865F2]/20 text-[#5865F2]'
-                        }`}>
-                          {user?.role === 'admin' ? 'Admin' :
-                           user?.role === 'freelancer' ? 'Freelancer' :
-                           user?.clientType || 'Utilisateur'}
-                        </span>
-                      )}
+                  </div>
+                  {/* Contact */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-[#5865F2] mb-4">Informations de contact</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="p-4 bg-[#36393F] rounded-md">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <Mail className="w-5 h-5 text-gray-400" />
+                          <h4 className="font-medium text-gray-300">Email</h4>
+                        </div>
+                        <p className="text-white pl-8">{user?.email}</p>
+                      </div>
+                      {renderField('phone', 'Téléphone', <Phone className="w-5 h-5 text-gray-400" />, user?.phone || '')}
+                    </div>
+                  </div>
+                  {/* Autres infos */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-[#5865F2] mb-4">Autres informations</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="p-4 bg-[#36393F] rounded-md">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <Key className="w-5 h-5 text-gray-400" />
+                          <h4 className="font-medium text-gray-300">Rôle</h4>
+                        </div>
+                        <div className="pl-8 flex items-center space-x-2">
+                          {user?.role === 'fondateur' ? (
+                            <>
+                              <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-red-500/20 text-red-400">
+                                Fondateur
+                              </span>
+                              <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                                Admin
+                              </span>
+                            </>
+                          ) : user?.role === 'freelancer_admin' ? (
+                            <>
+                              <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-500">
+                                Freelancer
+                              </span>
+                              <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/20 text-orange-400">
+                                Admin
+                              </span>
+                            </>
+                          ) : (
+                            <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                              user?.role === 'admin' ? 'bg-orange-500/20 text-orange-400' :
+                              user?.role === 'freelancer' ? 'bg-yellow-500/20 text-yellow-500' :
+                              'bg-[#5865F2]/20 text-[#5865F2]'
+                            }`}>
+                              {user?.role === 'admin' ? 'Admin' :
+                              user?.role === 'freelancer' ? 'Freelancer' :
+                              user?.clientType || 'Utilisateur'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

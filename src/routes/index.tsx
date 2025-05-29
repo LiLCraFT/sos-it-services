@@ -6,6 +6,7 @@ import DepannageInformatique from '../pages/DepannageInformatique';
 import CreationSiteWeb from '../pages/CreationSiteWeb';
 import UserDashboard from '../pages/UserDashboard';
 import TicketDetail from '../pages/TicketDetail';
+import ExpertsMap from '../pages/ExpertsMap';
 import PrivateRoute from './PrivateRoute';
 
 const AppRoutes = () => {
@@ -15,6 +16,7 @@ const AppRoutes = () => {
         <Route path={APP_CONFIG.routes.home} element={<HomePage />} />
         <Route path={APP_CONFIG.routes.depannage} element={<DepannageInformatique />} />
         <Route path={APP_CONFIG.routes.creationSite} element={<CreationSiteWeb />} />
+        <Route path={APP_CONFIG.routes.expertsMap} element={<ExpertsMap />} />
         
         {/* Routes protégées */}
         <Route

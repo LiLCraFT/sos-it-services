@@ -47,8 +47,8 @@ export async function GET(req: NextRequest) {
     const roleFilter = url.searchParams.get('role');
     
     // Si on demande spécifiquement les membres de l'équipe (fondateur, freelancer, freelancer_admin)
-    // on autorise l'accès public
-    const isTeamRequest = roleFilter === 'fondateur,freelancer,freelancer_admin';
+    // ou uniquement les freelancers, on autorise l'accès public
+    const isTeamRequest = roleFilter === 'fondateur,freelancer,freelancer_admin' || roleFilter === 'freelancer,freelancer_admin';
     
     if (!isTeamRequest) {
       // Pour les autres requêtes, on vérifie l'authentification
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
     }
     
     // Ne retourner que les champs nécessaires
-    const users = await User.find(query).select('_id firstName lastName email role clientType profileImage isEmailVerified isAdminVerified emailVerificationToken city createdAt rating');
+    const users = await User.find(query).select('_id firstName lastName email role clientType profileImage isEmailVerified isAdminVerified emailVerificationToken city postalCode createdAt rating');
       
     return NextResponse.json({ users }, { status: 200 });
   } catch (error: any) {
@@ -104,6 +104,8 @@ export async function GET(req: NextRequest) {
  *               - phone
  *               - birthDate
  *               - city
+ *               - postalCode
+ *               - role
  *             properties:
  *               email:
  *                 type: string
@@ -121,6 +123,8 @@ export async function GET(req: NextRequest) {
  *                 type: string
  *                 format: date
  *               city:
+ *                 type: string
+ *               postalCode:
  *                 type: string
  *               role:
  *                 type: string
@@ -145,11 +149,12 @@ export async function POST(req: NextRequest) {
       phone, 
       birthDate, 
       city, 
+      postalCode,
       role 
     } = await req.json();
     
     // Vérification des données requises
-    if (!email || !password || !firstName || !lastName || !address || !phone || !birthDate || !city) {
+    if (!email || !password || !firstName || !lastName || !address || !phone || !birthDate || !city || !postalCode) {
       return NextResponse.json(
         { error: 'Tous les champs sont requis' },
         { status: 400 }
@@ -175,6 +180,7 @@ export async function POST(req: NextRequest) {
       phone,
       birthDate,
       city,
+      postalCode,
       role: role || 'user',
     });
     
@@ -188,6 +194,7 @@ export async function POST(req: NextRequest) {
       phone: user.phone,
       birthDate: user.birthDate,
       city: user.city,
+      postalCode: user.postalCode,
       role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

@@ -31,6 +31,7 @@ export interface IUser extends Document {
   rating?: number;
   stripeCustomerId?: string;
   hasPaymentMethod: boolean;
+  postalCode?: string;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -137,6 +138,10 @@ const UserSchema = new Schema<IUser>(
     hasPaymentMethod: {
       type: Boolean,
       default: false,
+    },
+    postalCode: {
+      type: String,
+      trim: true,
     },
   },
   {

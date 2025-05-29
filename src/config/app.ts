@@ -6,6 +6,7 @@ export const APP_CONFIG = {
     depannage: '/depannage-informatique',
     creationSite: '/creation-site-web',
     monEspace: '/mon-espace',
-    tickets: '/tickets/:id'
+    tickets: '/tickets/:id',
+    expertsMap: '/experts-map'
   }
 }; 

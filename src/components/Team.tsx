@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from './ui/Card';
-import { Github, Linkedin, Twitter, User, Users, Award, BadgeCheck, Star } from 'lucide-react';
+import { Github, Linkedin, Twitter, User, Users, Award, BadgeCheck, Star, MapPin } from 'lucide-react';
 import { getImageUrl, DEFAULT_IMAGE } from '../utils/imageUtils';
 import { Spinner } from './ui/Spinner';
 
@@ -256,6 +256,16 @@ const Team: React.FC = () => {
             {error && <p className="text-red-400 mt-2">{error}</p>}
           </div>
         )}
+
+        <div className="flex justify-center mt-8">
+          <a
+            href="/experts-map"
+            className="inline-flex items-center text-[#5865F2] hover:text-[#4752C4] transition-colors"
+          >
+            <MapPin className="mr-2" size={20} />
+            Trouver un expert près de chez vous
+          </a>
+        </div>
       </div>
     </section>
   );

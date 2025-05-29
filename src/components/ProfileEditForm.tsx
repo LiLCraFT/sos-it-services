@@ -30,7 +30,7 @@ interface AddressComponent {
 }
 
 const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser } = useAuth() as { user: (typeof useAuth extends () => infer T ? T : never)["user"] & { postalCode?: string }, updateUser: any };
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -39,11 +39,11 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
     phone: user?.phone || '',
     address: user?.address || '',
     city: user?.city || '',
+    postalCode: user?.postalCode || '',
     birthDate: user?.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
   });
   const [addressOption, setAddressOption] = useState<AddressOption | null>(null);
   const [addressComponents, setAddressComponents] = useState<AddressComponents>({});
-  const [postalCode, setPostalCode] = useState<string>('');
 
   useEffect(() => {
     if (addressOption) {
@@ -77,7 +77,7 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
         }
         
         if (types.includes('postal_code')) {
-          setPostalCode(component.long_name);
+          setFormData(prev => ({ ...prev, postalCode: component.long_name }));
           addressComponents.postal_code = component.long_name;
         }
         
@@ -111,13 +111,14 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
       setLoading(true);
       
       // Format city with postal code in parentheses
-      const city = addressComponents.locality && postalCode 
-        ? `${addressComponents.locality} (${postalCode})`
+      const city = addressComponents.locality && formData.postalCode 
+        ? `${addressComponents.locality} (${formData.postalCode})`
         : formData.city;
       
       const updatedFormData = {
         ...formData,
-        city
+        city,
+        postalCode: formData.postalCode,
       };
 
       // Use the API_URL from the same place where it's defined in AuthContext
@@ -195,6 +196,27 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
                 onChange={handleChange}
                 className="bg-[#2F3136] text-white pl-10 block w-full rounded-md border-0 py-2.5 shadow-sm focus:ring-2 focus:ring-[#5865F2] focus:outline-none"
                 required
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="postalCode" className="block text-sm font-medium text-gray-300 mb-2">
+              Code postal
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MapPin className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                id="postalCode"
+                name="postalCode"
+                value={formData.postalCode}
+                onChange={handleChange}
+                className="bg-[#2F3136] text-white pl-10 block w-full rounded-md border-0 py-2.5 shadow-sm focus:ring-2 focus:ring-[#5865F2] focus:outline-none"
+                placeholder="75001"
+                pattern="\d{5}"
+                maxLength={5}
               />
             </div>
           </div>
@@ -296,7 +318,7 @@ const ProfileEditForm = ({ onCancel, onSuccess }: { onCancel: () => void; onSucc
         
         <div>
           <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-2">
-            Ville {postalCode && `(${postalCode})`}
+            Ville {formData.postalCode && `(${formData.postalCode})`}
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

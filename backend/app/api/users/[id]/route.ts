@@ -161,6 +161,9 @@ export async function PUT(
     // Do not allow password updates through this endpoint
     delete data.password;
     
+    // S'assurer que postalCode est bien pris en compte
+    // (rien à faire de spécial, il sera inclus dans data si envoyé)
+    
     const user = await User.findByIdAndUpdate(
       params.id,
       { $set: data },

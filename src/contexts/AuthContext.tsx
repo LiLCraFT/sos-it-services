@@ -9,6 +9,7 @@ interface User {
   phone?: string;
   birthDate?: string;
   city?: string;
+  postalCode?: string;
   role: string;
   profileImage?: string;
   subscriptionType?: string;

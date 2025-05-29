@@ -23,6 +23,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     phone: '',
     birthDate: '',
     city: '',
+    postalCode: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -90,6 +91,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         phone: formData.phone,
         birthDate: formData.clientType === 'Professionnel' ? null : formData.birthDate,
         city: formData.city,
+        postalCode: formData.postalCode,
       };
 
       // Appel à l'API pour créer un compte
@@ -355,6 +357,28 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
                 required
                 className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
                 placeholder="Votre ville"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="postalCode" className="block text-sm font-medium text-white mb-1">
+              Code postal <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MapPin className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="postalCode"
+                name="postalCode"
+                type="text"
+                value={formData.postalCode}
+                onChange={handleChange}
+                required
+                className="bg-[#202225] text-white placeholder-gray-400 block w-full pl-10 pr-3 py-2 border border-[#40444B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:border-transparent"
+                placeholder="75001"
+                pattern="\d{5}"
+                maxLength={5}
               />
             </div>
           </div>
