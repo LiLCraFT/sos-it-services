@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LoadScript, GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { APP_CONFIG } from '../config/app';
+import { MapPin } from 'lucide-react';
 
 interface Expert {
   _id: string;
@@ -101,8 +102,11 @@ export default function ExpertsMap() {
   }, [mapInstance]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-white mb-6">Carte des experts</h1>
+    <div className="max-w-7xl mx-auto px-4 py-8 pt-24">
+      <h1 className="text-2xl font-bold text-white mb-6 flex items-center">
+        <MapPin className="w-7 h-7 text-[#5865F2] mr-2" />
+        Carte des experts
+      </h1>
       <LoadScript googleMapsApiKey={APP_CONFIG.googleMapsApiKey}>
         <GoogleMap
           mapContainerStyle={containerStyle}
@@ -120,6 +124,12 @@ export default function ExpertsMap() {
                   lng: expert.coordinates[1]
                 }}
                 onClick={() => setSelectedExpert(expert)}
+                icon={{
+                  url: '/images/logo-image.png',
+                  scaledSize: new window.google.maps.Size(40, 40),
+                  origin: new window.google.maps.Point(0, 0),
+                  anchor: new window.google.maps.Point(20, 40),
+                }}
               />
             );
           })}
